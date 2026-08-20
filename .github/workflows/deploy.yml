@@ -40,53 +40,35 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "RAILWAY_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
-      - name: Find the project and link to it
+      - name: Read the project the token opens
         run: |
           set -euo pipefail
 
-          echo '--- who does this token belong to? ---'
-          railway status --json > status.json 2>&1 || true
-          cat status.json
+          railway status --json > status.json 2>&1
+          echo '--- project ---'
+          jq '{id, name, workspace: .workspace.name}' status.json
+          echo '--- services ---'
+          jq -r '.services.edges[]?.node | "\(.name)\t\(.id)"' status.json || true
+          echo '--- environments ---'
+          jq -r '.environments.edges[]?.node | "\(.name)\t\(.id)"' status.json || true
 
-          echo '--- projects in the workspace ---'
-          railway list --json > projects.json 2>&1 || railway list > projects.json 2>&1 || true
-          cat projects.json
-
-          # A project is an object that carries an id, a name, and the shape of
-          # a project rather than of a service.
-          PROJECTS="$(jq -r '[.. | objects
-                              | select(has("id") and has("name"))
-                              | select(has("environments") or has("services") or has("createdAt"))
-                              | {id: .id, name: .name}]
-                             | unique_by(.id)' projects.json 2>/dev/null || echo '[]')"
-          echo "$PROJECTS"
-
-          COUNT="$(echo "$PROJECTS" | jq 'length')"
-          echo "candidates: $COUNT"
-
-          if [ "$COUNT" = "0" ]; then
-            echo '::error::No project found for this token. Create one in Railway first.'
+          PROJECT_ID="$(jq -r '.id // empty' status.json)"
+          if [ -z "$PROJECT_ID" ]; then
+            echo '::error::The token does not resolve to a project.'
             exit 1
           fi
+          echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
 
-          PROJECT_ID="$(echo "$PROJECTS" | jq -r '.[0].id')"
-          PROJECT_NAME="$(echo "$PROJECTS" | jq -r '.[0].name')"
-          if [ "$COUNT" != "1" ]; then
-            echo "::warning::$COUNT projects visible; taking the first: $PROJECT_NAME"
-          fi
-          echo "Linking to $PROJECT_NAME ($PROJECT_ID)"
-
-          railway link --project "$PROJECT_ID" --environment production \
-            || railway link --project "$PROJECT_ID"
-
-          echo '--- linked ---'
-          railway status --json > status.json 2>&1 || true
-          cat status.json
+          # A project token already carries its project, so linking is a
+          # convenience rather than a requirement: never fail on it.
+          railway link --project "$PROJECT_ID" --environment production >/dev/null 2>&1 \
+            || railway link --project "$PROJECT_ID" >/dev/null 2>&1 \
+            || echo 'link skipped — the token carries the project already'
 
       - name: The database
         run: |
           set -euo pipefail
-          if grep -qi '"name": *"Postgres"' status.json 2>/dev/null; then
+          if jq -e '[.services.edges[]?.node.name] | index("Postgres")' status.json >/dev/null; then
             echo 'Postgres is already there.'
           else
             echo 'Adding Postgres.'
@@ -96,7 +78,7 @@ jobs:
       - name: The application service
         run: |
           set -euo pipefail
-          if grep -q "\"name\": *\"$SERVICE\"" status.json 2>/dev/null; then
+          if jq -e --arg s "$SERVICE" '[.services.edges[]?.node.name] | index($s)' status.json >/dev/null; then
             echo "$SERVICE is already there."
           else
             echo "Adding $SERVICE."
