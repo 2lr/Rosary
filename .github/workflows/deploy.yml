@@ -156,33 +156,27 @@ jobs:
                '{input:{projectId:$p, environmentId:$e, serviceId:$s, variables:$v}}')" >/dev/null
           echo 'Variables set.'
 
-      - name: Link the checkout to the project
+      - name: Note the deployment already there
         run: |
           set -euo pipefail
 
-          # `railway up` reads the linkage from the CLI's own config rather than
-          # from the token, so write it directly: `railway link` needs an account
-          # token to enumerate workspaces, which a project token cannot do.
-          mkdir -p "$HOME/.railway"
-          jq -n \
-            --arg path "$PWD" \
-            --arg project "$PROJECT_ID" \
-            --arg name "$PROJECT_NAME" \
-            --arg env "$ENV_ID" \
-            --arg service "$SERVICE_ID" \
-            --arg serviceName "$SERVICE" \
-            '{projects: {($path): {
-                projectPath: $path,
-                name: $name,
-                project: $project,
-                environment: $env,
-                environmentName: "production",
-                service: $service,
-                serviceName: $serviceName
-              }}}' > "$HOME/.railway/config.json"
-          cat "$HOME/.railway/config.json"
+          # The CLI resolves the project from the token on its own — the config
+          # file written by hand last time was rejected on every call ("Unable to
+          # parse config file, regenerating"), so make sure no stale one is left
+          # to trip it up.
+          rm -f "$HOME/.railway/config.json"
 
-          railway status || echo 'status still unhappy — the upload will tell us for certain'
+          # Remember the current deployment so the follow step waits for the one
+          # this run uploads rather than reporting on its predecessor.
+          jq -n --arg q 'query($input: DeploymentListInput!) { deployments(input: $input, first: 1) { edges { node { id status } } } }' \
+                --argjson v "$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" '{input:{projectId:$p, environmentId:$e, serviceId:$s}}')" \
+                '{query:$q, variables:$v}' > payload.json
+          PREV="$(curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+            -H "Project-Access-Token: $RAILWAY_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data @payload.json | jq -r '.data.deployments.edges[0].node.id // empty')"
+          echo "Previous deployment: ${PREV:-none}"
+          echo "PREV_DEPLOY_ID=$PREV" >> "$GITHUB_ENV"
 
       - name: Deploy
         run: |
@@ -223,6 +217,11 @@ jobs:
             NODE="$(gql "$LATEST" "$SCOPE" | jq -r '.data.deployments.edges[0].node // empty')"
             [ -n "$NODE" ] || { echo "attempt $attempt: no deployment yet"; sleep 10; continue; }
             DEPLOY_ID="$(echo "$NODE" | jq -r '.id')"
+            if [ -n "${PREV_DEPLOY_ID:-}" ] && [ "$DEPLOY_ID" = "$PREV_DEPLOY_ID" ]; then
+              echo "attempt $attempt: still the previous deployment"
+              sleep 10
+              continue
+            fi
             STATUS="$(echo "$NODE" | jq -r '.status')"
             echo "attempt $attempt: $STATUS"
             case "$STATUS" in
