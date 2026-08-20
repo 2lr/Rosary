@@ -175,6 +175,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ## Mettre en ligne
 
+Pas à pas dans **[DEPLOY.md](DEPLOY.md)** — Vercel + Neon en dix minutes, ou
+`docker compose up` sur une machine à vous.
+
 L'application est un projet Next.js standard : elle se déploie telle quelle sur
 Vercel, Fly.io, Railway ou dans un conteneur.
 

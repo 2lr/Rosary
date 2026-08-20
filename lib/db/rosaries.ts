@@ -109,8 +109,8 @@ export async function findRosary(id: string, userId: string): Promise<Rosary | n
 
 export async function listRosaries(userId: string, limit = 50): Promise<Rosary[]> {
   const rows = await all<RosaryRow>(
-    'SELECT * FROM rosaries WHERE user_id = ? ORDER BY started_at DESC LIMIT ?',
-    [userId, limit],
+    `SELECT * FROM rosaries WHERE user_id = ? ORDER BY started_at DESC LIMIT ${Math.max(1, Math.min(500, Math.floor(limit)))}`,
+    [userId],
   );
   return rows.map(toRosary);
 }
@@ -138,28 +138,39 @@ export async function saveProgress(
   },
 ): Promise<Rosary | null> {
   const now = new Date().toISOString();
-  const completedAt = patch.status === 'completed' ? now : null;
 
-  await run(
-    `UPDATE rosaries
-     SET progress = ?, decades_completed = ?, hail_marys = ?, status = ?, updated_at = ?,
-         completed_at = CASE WHEN ? IS NULL THEN completed_at ELSE ? END,
-         intention = CASE WHEN ? = 1 THEN ? ELSE intention END
-     WHERE id = ? AND user_id = ?`,
-    [
-      JSON.stringify(patch.progress),
-      patch.decadesCompleted,
-      patch.hailMarys,
-      patch.status,
-      now,
-      completedAt,
-      completedAt,
-      patch.intention !== undefined ? 1 : 0,
-      patch.intention ?? null,
-      id,
-      userId,
-    ],
-  );
+  // The columns to touch are decided here rather than with CASE expressions in
+  // the SQL: Postgres cannot infer the type of a bare parameter inside a CASE,
+  // and refuses the statement outright.
+  const assignments = [
+    'progress = ?',
+    'decades_completed = ?',
+    'hail_marys = ?',
+    'status = ?',
+    'updated_at = ?',
+  ];
+  const values: unknown[] = [
+    JSON.stringify(patch.progress),
+    patch.decadesCompleted,
+    patch.hailMarys,
+    patch.status,
+    now,
+  ];
+
+  if (patch.status === 'completed') {
+    assignments.push('completed_at = ?');
+    values.push(now);
+  }
+  if (patch.intention !== undefined) {
+    assignments.push('intention = ?');
+    values.push(patch.intention);
+  }
+
+  await run(`UPDATE rosaries SET ${assignments.join(', ')} WHERE id = ? AND user_id = ?`, [
+    ...values,
+    id,
+    userId,
+  ]);
 
   return findRosary(id, userId);
 }

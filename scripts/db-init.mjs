@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -22,9 +22,12 @@ for (const file of ['.env.local', '.env']) {
   }
 }
 
-// The schema lives in TypeScript, so read it as text rather than importing it.
-const source = readFileSync(resolve(ROOT, 'lib/db/schema.ts'), 'utf8');
-const statements = [...source.matchAll(/`([^`]*)`/g)].map((m) => m[1].trim()).filter(Boolean);
+// Node strips the types, so the schema module is the single source of truth
+// here as well as at runtime — scraping the file for backticked text also
+// picked up prose from its comments.
+const { SCHEMA_STATEMENTS, MIGRATION_STATEMENTS } = await import(
+  pathToFileURL(resolve(ROOT, 'lib/db/schema.ts')).href
+);
 
 const url = process.env.DATABASE_URL?.trim();
 
@@ -37,9 +40,14 @@ if (url && /^postgres(ql)?:\/\//.test(url)) {
       : undefined,
   });
   await client.connect();
-  for (const statement of statements) await client.query(statement);
+  for (const statement of SCHEMA_STATEMENTS) await client.query(statement);
+  for (const statement of MIGRATION_STATEMENTS) {
+    // Adding a column that is already there is the normal case on any database
+    // that has been through this once.
+    await client.query(statement).catch(() => undefined);
+  }
   await client.end();
-  console.log(`Schema ready on Postgres (${statements.length} statements).`);
+  console.log(`Schema ready on Postgres (${SCHEMA_STATEMENTS.length} tables and indexes).`);
 } else {
   const file = process.env.SQLITE_PATH?.trim() || 'data/rosary.db';
   const { mkdirSync } = await import('node:fs');
@@ -47,7 +55,14 @@ if (url && /^postgres(ql)?:\/\//.test(url)) {
   const { default: Database } = await import('better-sqlite3');
   const db = new Database(resolve(ROOT, file));
   db.pragma('journal_mode = WAL');
-  for (const statement of statements) db.prepare(statement).run();
+  for (const statement of SCHEMA_STATEMENTS) db.prepare(statement).run();
+  for (const statement of MIGRATION_STATEMENTS) {
+    try {
+      db.prepare(statement).run();
+    } catch {
+      // The column is already there.
+    }
+  }
   db.close();
-  console.log(`Schema ready in ${file} (${statements.length} statements).`);
+  console.log(`Schema ready in ${file} (${SCHEMA_STATEMENTS.length} tables and indexes).`);
 }

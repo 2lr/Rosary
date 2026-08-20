@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    # The production database. The suite itself is pure, but the schema and the
+    # queries are exercised against the engine that actually runs in production.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rosary
+          POSTGRES_PASSWORD: rosary
+          POSTGRES_DB: rosary
+        options: >-
+          --health-cmd "pg_isready -U rosary"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          SESSION_SECRET: ci-secret-not-used-outside-this-job
+
+      - name: Schema applies to Postgres, twice
+        run: |
+          npm run db:init
+          npm run db:init
+        env:
+          DATABASE_URL: postgres://rosary:rosary@localhost:5432/rosary
