@@ -1,0 +1,54 @@
+name: Railway probe
+
+# Read-only. Reports what the token opens and what the CLI of the day accepts,
+# so the deploy workflow can be written from facts rather than from guesses.
+# Never prints the token itself.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install -g @railway/cli
+
+      - name: Version and commands
+        run: |
+          railway --version
+          echo '--- top level ---'
+          railway --help || true
+          echo '--- up ---'
+          railway up --help || true
+          echo '--- link ---'
+          railway link --help || true
+          echo '--- add ---'
+          railway add --help || true
+          echo '--- variables ---'
+          railway variables --help || true
+          echo '--- domain ---'
+          railway domain --help || true
+
+      - name: What does the token open?
+        env:
+          SECRET: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo '--- as an account token (RAILWAY_API_TOKEN) ---'
+          if RAILWAY_API_TOKEN="$SECRET" railway whoami; then
+            echo 'account token: yes'
+            echo '--- projects visible ---'
+            RAILWAY_API_TOKEN="$SECRET" railway list || true
+          else
+            echo 'account token: no'
+          fi
+
+          echo '--- as a project token (RAILWAY_TOKEN) ---'
+          if RAILWAY_TOKEN="$SECRET" railway status; then
+            echo 'project token: yes'
+          else
+            echo 'project token: no'
+          fi

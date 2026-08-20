@@ -4,9 +4,9 @@ name: Deploy
 # Nothing happens until RAILWAY_TOKEN is set in the repository secrets, so the
 # workflow is safe to merge before the project exists.
 
+# Deliberately on demand only for now: the Railway project has to exist and be
+# wired up before a push should be allowed to ship anything.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
