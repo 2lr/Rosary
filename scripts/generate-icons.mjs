@@ -58,10 +58,11 @@ function encodePng(width, height, rgba) {
 
 const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * Math.max(0, Math.min(1, t)));
 
-const NIGHT = [10, 10, 20];
-const NIGHT_2 = [24, 19, 38];
-const GOLD = [232, 207, 154];
-const GOLD_DEEP = [184, 147, 76];
+const CREAM = [251, 246, 236];
+const CREAM_2 = [241, 230, 212];
+const INK = [74, 55, 40];
+const GOLD = [169, 123, 50];
+const FLESH = [236, 220, 190];
 
 /** Signed coverage of a disc, softened over one supersampled pixel. */
 function disc(px, py, cx, cy, r) {
@@ -114,33 +115,49 @@ function render(size, { maskable = false } = {}) {
       const u = x / n;
       const v = y / n;
 
-      // Background: night, warmed by a glow behind the loop.
-      let colour = mix(NIGHT, NIGHT_2, v * 0.9 + 0.1);
+      // Background: warm paper, lit behind the loop.
+      let colour = mix(CREAM, CREAM_2, v * 0.9 + 0.1);
       const glow = Math.max(
         0,
         1 - Math.hypot((x - cx) / (n * 0.55), (y - loopY) / (n * 0.55)),
       );
-      colour = mix(colour, GOLD_DEEP, glow * glow * 0.22);
+      colour = mix(colour, GOLD, glow * glow * 0.1);
 
-      let ink = 0;
-
-      // Chain.
-      ink = Math.max(ink, ring(x, y, cx, loopY, loopR, n * 0.0035) * 0.5);
-
-      for (const bead of beads) ink = Math.max(ink, disc(x, y, bead.x, bead.y, bead.r));
-
-      // Medal and pendant chain.
-      ink = Math.max(ink, disc(x, y, cx, medalY, n * 0.032 * scale));
-      ink = Math.max(
-        ink,
-        bar(x, y, cx, (medalY + crossY - crossHalfH) / 2, n * 0.0035, (crossY - crossHalfH - medalY) / 2) * 0.6,
+      // The rosary: chain, beads and the medal.
+      let gold = 0;
+      gold = Math.max(gold, ring(x, y, cx, loopY, loopR, n * 0.0035) * 0.5);
+      for (const bead of beads) gold = Math.max(gold, disc(x, y, bead.x, bead.y, bead.r));
+      gold = Math.max(gold, disc(x, y, cx, medalY, n * 0.032 * scale));
+      gold = Math.max(
+        gold,
+        bar(
+          x,
+          y,
+          cx,
+          (medalY + crossY - crossHalfH) / 2,
+          n * 0.0035,
+          (crossY - crossHalfH - medalY) / 2,
+        ) * 0.6,
       );
+      if (gold > 0) colour = mix(colour, GOLD, gold);
 
-      // Crucifix.
-      ink = Math.max(ink, bar(x, y, cx, crossY, crossBar / 2, crossHalfH));
-      ink = Math.max(ink, bar(x, y, cx, crossY - crossHalfH * 0.28, crossHalfW, crossBar / 2));
+      // The crucifix, in wood.
+      let wood = 0;
+      wood = Math.max(wood, bar(x, y, cx, crossY, crossBar / 2, crossHalfH));
+      wood = Math.max(wood, bar(x, y, cx, crossY - crossHalfH * 0.28, crossHalfW, crossBar / 2));
+      if (wood > 0) colour = mix(colour, INK, wood);
 
-      if (ink > 0) colour = mix(colour, GOLD, ink);
+      // The body on it: arms along the beam, torso and legs down the shaft.
+      const armsY = crossY - crossHalfH * 0.28;
+      const headY = crossY - crossHalfH * 0.62;
+      let flesh = 0;
+      flesh = Math.max(flesh, bar(x, y, cx, armsY, crossHalfW * 0.82, crossBar * 0.24));
+      flesh = Math.max(
+        flesh,
+        bar(x, y, cx, crossY + crossHalfH * 0.12, crossBar * 0.34, crossHalfH * 0.42),
+      );
+      flesh = Math.max(flesh, disc(x, y, cx, headY, crossBar * 0.46));
+      if (flesh > 0) colour = mix(colour, FLESH, flesh);
 
       // Accumulate into the output pixel.
       const ox = Math.floor(x / SS);

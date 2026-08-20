@@ -4,20 +4,33 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AppNav from '@/components/AppNav';
 import LanguageToggle from '@/components/LanguageToggle';
+import AppearanceCard, { type Appearance } from '@/components/AppearanceCard';
 import { Button, Card, Field } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
+import type { Stats } from '@/lib/rosary/stats';
 
 type InstallPrompt = Event & { prompt: () => Promise<void> };
 
 export default function SettingsScreen({
   user,
+  stats,
 }: {
-  user: { email: string; displayName: string | null; lang: Lang };
+  user: Appearance & {
+    id: string;
+    email: string;
+    displayName: string | null;
+    lang: Lang;
+  };
+  stats: Stats;
 }) {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>(user.lang);
   const [name, setName] = useState(user.displayName ?? '');
+  const [appearance, setAppearance] = useState<Appearance>({
+    colors: user.colors,
+    shape: user.shape,
+  });
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<InstallPrompt | null>(null);
@@ -41,7 +54,12 @@ export default function SettingsScreen({
     await fetch('/api/me', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lang, displayName: name.trim() || null }),
+      body: JSON.stringify({
+        lang,
+        displayName: name.trim() || null,
+        colors: appearance.colors,
+        shape: appearance.shape,
+      }),
     });
     setBusy(false);
     setSaved(true);
@@ -88,6 +106,17 @@ export default function SettingsScreen({
           {saved ? t('settings.saved') : t('settings.save')}
         </Button>
       </Card>
+
+      <AppearanceCard
+        t={t}
+        stats={stats}
+        userId={user.id}
+        value={appearance}
+        onChange={(next) => {
+          setAppearance(next);
+          setSaved(false);
+        }}
+      />
 
       <Card className="mt-3 space-y-3 px-4 py-5">
         <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">

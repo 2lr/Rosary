@@ -27,7 +27,7 @@ export default function AppNav({ t }: { t: Translator }) {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-28 bg-gradient-to-t from-[var(--bloom-bg-0)] via-[var(--bloom-bg-0)]/85 to-transparent"
       />
-      <div className="surface flex items-center justify-around rounded-full px-2 py-1.5 shadow-xl shadow-black/40">
+      <div className="surface flex items-center justify-around rounded-full px-2 py-1.5 shadow-[0_10px_30px_-12px_rgb(90_68_40/0.4)]">
         {items.map((item) => {
           const active = pathname === item.href;
           return (

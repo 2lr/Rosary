@@ -72,7 +72,7 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
       </div>
 
       <div className="relative mt-2 flex justify-center">
-        <RosaryArt bloom={bloom} className="h-64 w-auto opacity-90" fill={0.18} />
+        <RosaryArt bloom={bloom} className="h-64 w-auto opacity-90" fill={1} />
       </div>
 
       <header className="mt-4 text-center animate-rise">

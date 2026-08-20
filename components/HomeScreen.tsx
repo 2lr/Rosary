@@ -78,7 +78,7 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
       <div className="relative mt-1 flex justify-center">
         <RosaryArt
           bloom={bloom}
-          fill={bloom.nextStage ? bloom.toNext : 1}
+          fill={1}
           className="h-[17rem] w-auto"
           title={`${bloom.stage.name[lang]}`}
         />
@@ -97,7 +97,7 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
 
         {bloom.nextStage && (
           <div className="mx-auto mt-3.5 max-w-[15rem]">
-            <div className="h-1 overflow-hidden rounded-full bg-white/10">
+            <div className="h-1 overflow-hidden rounded-full bg-[var(--bloom-fill-2)]">
               <div
                 className="h-full rounded-full bg-[var(--bloom-accent)] transition-[width] duration-700"
                 style={{ width: `${Math.round(bloom.toNext * 100)}%` }}
@@ -195,7 +195,7 @@ function StartOption({
       type="button"
       onClick={onClick}
       className={cx(
-        'tap surface w-full rounded-3xl px-4 py-3.5 text-left transition hover:bg-white/10 active:scale-[0.99]',
+        'tap surface w-full rounded-3xl px-4 py-3.5 text-left transition hover:bg-[var(--bloom-fill-2)] active:scale-[0.99]',
         accent && 'border-[var(--bloom-accent)]/35',
       )}
     >

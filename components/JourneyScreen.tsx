@@ -64,7 +64,7 @@ export default function JourneyScreen({
       <div className="pointer-events-none relative mt-1 flex justify-center">
         <RosaryArt
           bloom={bloom}
-          fill={bloom.nextStage ? bloom.toNext : 1}
+          fill={1}
           className="h-52 w-auto"
         />
       </div>
@@ -92,7 +92,7 @@ export default function JourneyScreen({
               style={{
                 background:
                   cell.decades === 0
-                    ? 'rgb(255 255 255 / 0.06)'
+                    ? 'var(--bloom-fill)'
                     : `color-mix(in srgb, var(--bloom-accent) ${Math.min(100, 26 + cell.decades * 11)}%, transparent)`,
               }}
             />
@@ -111,7 +111,7 @@ export default function JourneyScreen({
               <span className="w-32 shrink-0 truncate text-xs text-muted">
                 {MYSTERY_SETS[id].name[lang]}
               </span>
-              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/8">
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bloom-fill-2)]">
                 <span
                   className="block h-full rounded-full"
                   style={{
@@ -153,7 +153,7 @@ export default function JourneyScreen({
                   <span
                     className={cx(
                       'h-1.5 w-1.5 rounded-full',
-                      reached ? 'bg-[var(--bloom-accent)]' : 'bg-white/20',
+                      reached ? 'bg-[var(--bloom-accent)]' : 'bg-[var(--bloom-fill-3)]',
                     )}
                   />
                   <span className="font-display text-base">{stage.name[lang]}</span>
@@ -209,7 +209,7 @@ export default function JourneyScreen({
                     {rosary.status === 'in_progress' && (
                       <Link
                         href={`/pray/${rosary.id}`}
-                        className="tap rounded-full bg-[var(--bloom-accent)] px-3 py-1.5 text-xs font-medium text-night-950"
+                        className="tap rounded-full bg-[var(--bloom-accent)] px-3 py-1.5 text-xs font-medium text-[var(--bloom-on-accent)]"
                       >
                         {t('journey.resume')}
                       </Link>

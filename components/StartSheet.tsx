@@ -70,7 +70,7 @@ export default function StartSheet({ kind, lang, defaultSet, onClose, onStarted 
                   'tap rounded-2xl border px-3 py-3 text-left text-sm transition',
                   set === id
                     ? 'border-[var(--bloom-accent)]/60 bg-[var(--bloom-accent)]/12 text-[var(--bloom-ink)]'
-                    : 'border-white/10 bg-white/5 text-muted hover:bg-white/8',
+                    : 'border-[var(--bloom-border)] bg-[var(--bloom-fill)] text-muted hover:bg-[var(--bloom-fill-2)]',
                 )}
               >
                 <span className="block font-display text-base leading-tight">
@@ -120,7 +120,7 @@ export default function StartSheet({ kind, lang, defaultSet, onClose, onStarted 
           value={intention}
           onChange={(e) => setIntention(e.target.value)}
           placeholder={t('home.intentionPlaceholder')}
-          className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[16px] leading-relaxed outline-none transition placeholder:text-white/25 focus:border-[var(--bloom-accent)]/60"
+          className="w-full resize-none rounded-2xl border border-[var(--bloom-border)] bg-[var(--bloom-fill)] px-4 py-3 text-[16px] leading-relaxed outline-none transition placeholder:text-[var(--bloom-placeholder)] focus:border-[var(--bloom-accent)]/60"
         />
       </div>
 
@@ -153,7 +153,7 @@ function ModeCard({
         'tap rounded-2xl border px-3 py-3 text-left transition',
         active
           ? 'border-[var(--bloom-accent)]/60 bg-[var(--bloom-accent)]/12'
-          : 'border-white/10 bg-white/5 hover:bg-white/8',
+          : 'border-[var(--bloom-border)] bg-[var(--bloom-fill)] hover:bg-[var(--bloom-fill-2)]',
       )}
     >
       <span className="block font-display text-base">{title}</span>

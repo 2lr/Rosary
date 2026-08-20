@@ -1,6 +1,8 @@
 import type { Lang } from '@/lib/i18n/config';
 import { MYSTERY_SETS, MYSTERY_SET_ORDER } from './mysteries';
 import type { Stats } from './stats';
+import { fit, hexToHsl, hsl, hslToHex, isHexColor, lerp, lerpHue, type Hsl } from './color';
+import type { LoopShape } from './shapes';
 
 export type Stage = {
   index: number;
@@ -101,19 +103,32 @@ export const STAGES: Stage[] = [
 ];
 
 export type Palette = {
-  /** Background gradient stops, darkest first. */
+  /** Page gradient, lightest first. */
   bg: [string, string, string];
-  /** Chain / filigree colour. */
+  ink: string;
+  /** Card background and its hairline. */
+  surface: string;
+  border: string;
+  /** Chain and filigree. */
   chain: string;
   /** Hail Mary beads. */
   bead: string;
   /** Our Father beads. */
   paterBead: string;
-  /** Highlight used for the active bead and accents. */
+  /** Beads not yet prayed. */
+  beadIdle: string;
+  /** Highlight for the active bead, buttons and accents. */
   accent: string;
-  /** Soft glow behind the loop. */
+  /** Text and icons that sit on the accent. */
+  onAccent: string;
+  /** Soft light behind the loop. */
   glow: string;
-  ink: string;
+  /** The crucifix. */
+  wood: string;
+  flesh: string;
+  cloth: string;
+  outline: string;
+  halo: string;
 };
 
 export type Bloom = {
@@ -125,6 +140,8 @@ export type Bloom = {
   /** Deterministic per-user variation. */
   seed: number;
   palette: Palette;
+  /** The outline the beads are threaded onto. */
+  shape: LoopShape;
   /** Number of roses drawn around the loop. */
   petals: number;
   /** Rays of light behind the loop. */
@@ -133,16 +150,19 @@ export type Bloom = {
   stars: number;
   /** 0 → 1, how luminous the whole piece is. */
   luminosity: number;
-  /** Whether gold filigree is drawn between the decades. */
+  /** Whether filigree is drawn between the decades. */
   filigree: boolean;
   /** Whether the beads are faceted like stained glass. */
   faceted: boolean;
   /** Whether a halo surrounds the centre medal. */
   halo: boolean;
-  /** Dominant hue in degrees, blended from the mysteries actually prayed. */
+  /** Dominant hue in degrees. */
   hue: number;
-  /** Secondary hue, used for the Our Father beads. */
   hueAlt: number;
+  /** True when the colours come from the user's own choice. */
+  custom: boolean;
+  /** Accent, beads and chain as hex, whether chosen or derived. */
+  trio: [string, string, string];
 };
 
 /** Small deterministic string hash, so a user's artwork is always their own. */
@@ -164,23 +184,14 @@ export function stageFor(decades: number): { stage: Stage; next: Stage | null } 
   return { stage, next };
 }
 
-function mix(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
 /** The hue a rosary starts from, and the one it returns to when balanced. */
 const GOLD_HUE = 36;
-
-/** Interpolates hues the short way around the wheel. */
-function mixHue(a: number, b: number, t: number): number {
-  const delta = (((b - a) % 360) + 540) % 360 - 180;
-  return (a + delta * t + 360) % 360;
-}
 
 /**
  * Blends the accent hues of the mystery sets the user has actually prayed.
  * Someone who only prays the glorious mysteries gets a violet rosary; someone
- * who prays all four gets a hue that sits between them.
+ * who prays all four evenly comes back to gold, because an average of hues that
+ * cancel out carries no meaning.
  */
 function blendHue(bySet: Stats['bySet']): { hue: number; hueAlt: number; spread: number } {
   let x = 0;
@@ -201,49 +212,101 @@ function blendHue(bySet: Stats['bySet']): { hue: number; hueAlt: number; spread:
   if (total === 0) return { hue: GOLD_HUE, hueAlt: 24, spread: 0 };
 
   const meanHue = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-  // How lopsided the devotion is: 1 when a single set dominates, ~0 when the
-  // four sets balance and the mean hue becomes meaningless.
   const dominance = Math.hypot(x, y) / total;
-  const hue = mixHue(GOLD_HUE, meanHue, dominance);
-  const spread = used.length / MYSTERY_SET_ORDER.length;
-  return { hue, hueAlt: (hue + 28) % 360, spread };
+  const hue = lerpHue(GOLD_HUE, meanHue, dominance);
+  return { hue, hueAlt: (hue + 28) % 360, spread: used.length / MYSTERY_SET_ORDER.length };
 }
 
-function paletteFor(stageIndex: number, hue: number, hueAlt: number, luminosity: number): Palette {
-  const t = stageIndex / (STAGES.length - 1);
-  const sat = mix(14, 52, t);
-  const light = mix(34, 66, t);
+/**
+ * The palette is written in a light key: a warm cream page with the rosary
+ * drawn on it, the way a rosary is actually seen — in daylight, on cloth.
+ * Stage only deepens the colour; it never darkens the paper.
+ */
+function paletteFor(
+  t: number,
+  luminosity: number,
+  colors: { accent: Hsl; bead: Hsl; chain: Hsl },
+): Palette {
+  const { accent, bead, chain } = colors;
+  // The paper stays warm whatever colours are chosen: interpolating its hue
+  // towards a blue accent would swing the cream to green.
+  const paper = GOLD_HUE;
 
   return {
     bg: [
-      `hsl(${(hue + 210) % 360} ${mix(12, 26, t).toFixed(0)}% ${mix(6, 9, t).toFixed(0)}%)`,
-      `hsl(${(hue + 250) % 360} ${mix(16, 34, t).toFixed(0)}% ${mix(9, 15, t).toFixed(0)}%)`,
-      `hsl(${hue.toFixed(0)} ${mix(10, 40, t).toFixed(0)}% ${mix(11, 21, t).toFixed(0)}%)`,
+      hsl({ h: paper, s: 44, l: 97 }),
+      hsl({ h: paper, s: 38, l: 94 }),
+      // Only a hint of the chosen colour: the page should stay cream.
+      hsl({ h: accent.h, s: lerp(12, 22, t), l: lerp(95, 92, t) }),
     ],
-    chain: `hsl(${hueAlt.toFixed(0)} ${mix(8, 46, t).toFixed(0)}% ${mix(42, 74, t).toFixed(0)}%)`,
-    bead: `hsl(${hue.toFixed(0)} ${sat.toFixed(0)}% ${light.toFixed(0)}%)`,
-    paterBead: `hsl(${hueAlt.toFixed(0)} ${(sat + 12).toFixed(0)}% ${(light + 10).toFixed(0)}%)`,
-    accent: `hsl(${((hue + 6) % 360).toFixed(0)} ${mix(46, 86, t).toFixed(0)}% ${mix(68, 78, t).toFixed(0)}%)`,
-    glow: `hsl(${hue.toFixed(0)} ${mix(30, 80, t).toFixed(0)}% ${mix(40, 62, t).toFixed(0)}% / ${(0.1 + luminosity * 0.32).toFixed(3)})`,
-    ink: `hsl(${((hue + 40) % 360).toFixed(0)} 24% 92%)`,
+    ink: hsl({ h: 26, s: 22, l: 17 }),
+    surface: hsl({ h: paper, s: 60, l: 99 }, 0.66),
+    border: hsl({ h: paper, s: 26, l: 38 }, 0.15),
+    chain: hsl(chain),
+    bead: hsl(bead),
+    paterBead: hsl({ h: chain.h, s: chain.s + 8, l: chain.l - 8 }),
+    beadIdle: hsl({ h: paper, s: 26, l: 78 }),
+    accent: hsl(accent),
+    onAccent: hsl({ h: paper, s: 62, l: 97 }),
+    glow: hsl({ h: accent.h, s: lerp(52, 74, t), l: lerp(74, 68, t) }, 0.07 + luminosity * 0.14),
+    wood: hsl({ h: 24, s: lerp(24, 34, t), l: lerp(27, 22, t) }),
+    flesh: hsl({ h: 36, s: lerp(30, 44, t), l: 86 }),
+    cloth: hsl({ h: 34, s: lerp(28, 42, t), l: 71 }),
+    outline: hsl({ h: 28, s: 30, l: lerp(48, 41, t) }),
+    halo: hsl({ h: accent.h, s: lerp(50, 84, t), l: lerp(56, 50, t) }),
   };
 }
 
-export function bloomFrom(stats: Stats, userId: string): Bloom {
+/** Bounds that keep each role legible whatever colour is chosen for it. */
+const ROLE_BOUNDS = {
+  accent: { s: [34, 86] as [number, number], l: [38, 52] as [number, number] },
+  bead: { s: [18, 74] as [number, number], l: [44, 66] as [number, number] },
+  chain: { s: [14, 64] as [number, number], l: [40, 62] as [number, number] },
+};
+
+export type BloomPreferences = {
+  /** Accent, beads and chain, in that order. */
+  colors?: readonly string[] | null;
+  shape?: LoopShape | null;
+};
+
+export function bloomFrom(
+  stats: Stats,
+  userId: string,
+  preferences: BloomPreferences = {},
+): Bloom {
   const { stage, next } = stageFor(stats.totalDecades);
   const seed = seedFrom(userId);
-  const { hue: baseHue, hueAlt, spread } = blendHue(stats.bySet);
+  const t = stage.index / (STAGES.length - 1);
 
+  const chosen =
+    preferences.colors && preferences.colors.length === 3 && preferences.colors.every(isHexColor)
+      ? (preferences.colors.map(hexToHsl) as [Hsl, Hsl, Hsl])
+      : null;
+
+  const { hue: baseHue, hueAlt: derivedAlt } = blendHue(stats.bySet);
   // A small, stable per-user rotation keeps two rosaries from looking identical.
-  const hue = (baseHue + (seed - 0.5) * 22 + 360) % 360;
+  const derivedHue = (baseHue + (seed - 0.5) * 22 + 360) % 360;
+
+  const colors = chosen
+    ? {
+        accent: fit(chosen[0], ROLE_BOUNDS.accent),
+        bead: fit(chosen[1], ROLE_BOUNDS.bead),
+        chain: fit(chosen[2], ROLE_BOUNDS.chain),
+      }
+    : {
+        accent: { h: (derivedHue + 4) % 360, s: lerp(48, 82, t), l: lerp(47, 41, t) },
+        bead: { h: derivedHue, s: lerp(18, 66, t), l: lerp(64, 54, t) },
+        chain: { h: derivedAlt, s: lerp(16, 46, t), l: lerp(54, 46, t) },
+      };
+
+  const hue = colors.accent.h;
+  const hueAlt = colors.chain.h;
 
   const span = next ? next.threshold - stage.threshold : 1;
   const toNext = next ? Math.min(1, (stats.totalDecades - stage.threshold) / span) : 1;
 
-  const luminosity = Math.min(
-    1,
-    stage.index / (STAGES.length - 1) + Math.min(stats.currentStreak, 30) / 90,
-  );
+  const luminosity = Math.min(1, t + Math.min(stats.currentStreak, 30) / 90);
 
   return {
     stage,
@@ -251,12 +314,12 @@ export function bloomFrom(stats: Stats, userId: string): Bloom {
     toNext,
     decadesToNext: next ? Math.max(0, next.threshold - stats.totalDecades) : 0,
     seed,
-    palette: paletteFor(stage.index, hue, hueAlt, luminosity),
-    petals:
-      stage.index === 0
-        ? 0
-        : Math.round(mix(5, 24, stage.index / (STAGES.length - 1)) + spread * 6),
-    rays: stage.index >= 5 ? Math.round(mix(12, 36, toNext)) : stage.index >= 3 ? 8 : 0,
+    shape: preferences.shape ?? 'round',
+    custom: chosen !== null,
+    trio: [hslToHex(colors.accent), hslToHex(colors.bead), hslToHex(colors.chain)],
+    palette: paletteFor(t, luminosity, colors),
+    petals: stage.index === 0 ? 0 : Math.round(lerp(5, 26, t)),
+    rays: stage.index >= 5 ? Math.round(lerp(12, 36, toNext)) : stage.index >= 3 ? 8 : 0,
     stars: Math.min(24, stats.currentStreak),
     luminosity,
     filigree: stage.index >= 2,

@@ -3,7 +3,10 @@ import type { Step } from './types';
 
 export type LoopView = {
   beads: LoopBead[];
+  /** The four pendant beads, ordered from the medal down to the crucifix. */
   pendant: BeadState[];
+  medal: BeadState;
+  cross: BeadState;
   /** Loop bead index the user is currently on, or -1. */
   activeIndex: number;
   /** Which chaplet of a full rosary is being shown (1-based). */
@@ -11,15 +14,20 @@ export type LoopView = {
   chaplets: number;
 };
 
-function stateOf(step: Step, done: Set<number>, current: number): BeadState {
+function stateOf(step: Step | undefined, done: Set<number>, current: number): BeadState {
+  if (!step) return 'todo';
   if (step.id === current) return 'active';
   return done.has(step.id) ? 'done' : 'todo';
 }
 
 /**
- * Projects the sequence onto the 55 beads of a physical rosary loop plus the
- * five beads of the pendant. A twenty-decade rosary reuses the same loop once
- * per chaplet, which is exactly how it is prayed in the hand.
+ * Projects the sequence onto a real rosary: the crucifix for the Creed, then
+ * one Our Father bead, three Hail Mary beads and the centre medal, then a loop
+ * of fifty-five beads — five times an Our Father followed by ten Hail Marys.
+ * That is fifty-nine beads, which is what you count in the hand.
+ *
+ * A twenty-decade rosary reuses the same loop once per chaplet, which is also
+ * how it is prayed.
  */
 export function loopView(steps: Step[], done: Set<number>, current: number): LoopView {
   const beads: LoopBead[] = Array.from({ length: 55 }, (_, i) => ({
@@ -27,18 +35,20 @@ export function loopView(steps: Step[], done: Set<number>, current: number): Loo
     state: 'todo',
   }));
 
-  // Pendant, ordered from the medal down to the crucifix.
-  const pendant: BeadState[] = ['todo', 'todo', 'todo', 'todo', 'todo'];
   const opening = steps.filter((s) => s.decade === undefined && s.kind !== 'closing');
-  // opening = [cross, creed, ourFather, hailMary ×3, gloryBe]
-  const pendantSteps = [
-    opening.find((s) => s.prayer === 'gloryBe'),
-    ...opening.filter((s) => s.prayer === 'hailMary').slice(0, 3).reverse(),
-    opening.find((s) => s.prayer === 'ourFather'),
+  const creed = opening.find((s) => s.prayer === 'creed');
+  const openingOurFather = opening.find((s) => s.prayer === 'ourFather');
+  const openingHailMarys = opening.filter((s) => s.prayer === 'hailMary').slice(0, 3);
+  const openingGloryBe = opening.find((s) => s.prayer === 'gloryBe');
+
+  // Ordered from the medal downwards, so the first Hail Mary sits nearest the
+  // Our Father bead the user has just left.
+  const pendant: BeadState[] = [
+    stateOf(openingHailMarys[2], done, current),
+    stateOf(openingHailMarys[1], done, current),
+    stateOf(openingHailMarys[0], done, current),
+    stateOf(openingOurFather, done, current),
   ];
-  pendantSteps.forEach((step, i) => {
-    if (step) pendant[i] = stateOf(step, done, current);
-  });
 
   const currentStep = steps.find((s) => s.id === current);
   const currentDecade = currentStep?.decade ?? null;
@@ -65,5 +75,13 @@ export function loopView(steps: Step[], done: Set<number>, current: number): Loo
     if (beads[index].state === 'active') activeIndex = index;
   }
 
-  return { beads, pendant, activeIndex, chaplet, chaplets };
+  return {
+    beads,
+    pendant,
+    medal: stateOf(openingGloryBe, done, current),
+    cross: stateOf(creed, done, current),
+    activeIndex,
+    chaplet,
+    chaplets,
+  };
 }

@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth/guard';
 import { findOpenRosary } from '@/lib/db/rosaries';
 import { getStats } from '@/lib/db/stats';
 import { bloomFrom } from '@/lib/rosary/growth';
+import { preferencesOf } from '@/lib/rosary/preferences';
 import { mysterySetForDate } from '@/lib/rosary/mysteries';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export default async function HomePage() {
   if (!user) redirect('/');
 
   const [stats, openRosary] = await Promise.all([getStats(user.id), findOpenRosary(user.id)]);
-  const bloom = bloomFrom(stats, user.id);
+  const bloom = bloomFrom(stats, user.id, preferencesOf(user));
 
   return (
     <>

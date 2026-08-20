@@ -36,7 +36,7 @@ export default function Sheet({
         type="button"
         aria-label={closeLabel}
         onClick={onClose}
-        className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+        className="absolute inset-0 bg-[var(--bloom-scrim)] backdrop-blur-sm"
       />
       <div
         ref={panel}
@@ -44,9 +44,9 @@ export default function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[2rem] border border-white/10 bg-[var(--bloom-bg-1)] px-5 pb-8 pt-3 shadow-2xl outline-none sm:rounded-[2rem] pad-bottom"
+        className="relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[2rem] border border-[var(--bloom-border)] bg-[var(--bloom-bg-0)] px-5 pb-8 pt-3 shadow-2xl outline-none sm:rounded-[2rem] pad-bottom"
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20 sm:hidden" />
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--bloom-fill-3)] sm:hidden" />
         <h2 className="font-display text-2xl">{title}</h2>
         <div className="mt-4">{children}</div>
       </div>

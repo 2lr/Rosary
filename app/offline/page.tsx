@@ -8,7 +8,7 @@ export default function OfflinePage() {
         Vous êtes hors réseau. Le rosaire déjà commencé reste enregistré sur cet appareil et sera
         synchronisé au retour de la connexion.
       </p>
-      <hr className="my-7 w-16 border-white/15" />
+      <hr className="my-7 w-16 border-[var(--bloom-border)]" />
       <h2 className="font-display text-2xl">Offline</h2>
       <p className="mt-3 text-sm text-muted">
         You are off the network. A rosary already under way is kept on this device and will sync

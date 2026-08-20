@@ -14,7 +14,7 @@ import { buildSequence, firstUndoneStep, totalDecades } from '@/lib/rosary/seque
 import { loopView } from '@/lib/rosary/loop';
 import { bloomFrom, stageFor } from '@/lib/rosary/growth';
 import { ordinal } from '@/lib/i18n/config';
-import type { Bloom } from '@/lib/rosary/growth';
+import type { Bloom, BloomPreferences } from '@/lib/rosary/growth';
 import type { Stats } from '@/lib/rosary/stats';
 import type { Rosary, Step } from '@/lib/rosary/types';
 
@@ -22,10 +22,12 @@ export default function PrayScreen({
   rosary,
   bloom,
   stats,
+  preferences,
 }: {
   rosary: Rosary;
   bloom: Bloom;
   stats: Stats;
+  preferences: BloomPreferences;
 }) {
   const router = useRouter();
   const lang = rosary.lang;
@@ -47,6 +49,10 @@ export default function PrayScreen({
     rosary.progress.done.length === 0 ? 0 : firstUndoneStep(steps, new Set(rosary.progress.done)),
   );
   const [completed, setCompleted] = useState(rosary.status === 'completed');
+  // Frozen at mount: finishing calls router.refresh(), which would otherwise
+  // hand us statistics that already include the rosary just prayed and make
+  // every completion look like no progress at all.
+  const [baseline] = useState(stats);
   const scroller = useRef<HTMLDivElement>(null);
 
   const step = steps[Math.min(index, steps.length - 1)];
@@ -105,10 +111,11 @@ export default function PrayScreen({
   if (completed) {
     const decades = steps.filter((s) => s.kind === 'decade-end' && done.has(s.id)).length;
     const hailMarys = steps.filter((s) => s.prayer === 'hailMary' && done.has(s.id)).length;
-    const before = stageFor(stats.totalDecades).stage;
+    const before = stageFor(baseline.totalDecades).stage;
     const after = bloomFrom(
-      { ...stats, totalDecades: stats.totalDecades + decades },
+      { ...baseline, totalDecades: baseline.totalDecades + decades },
       rosary.userId,
+      preferences,
     );
     return (
       <CompletionScreen
@@ -155,11 +162,13 @@ export default function PrayScreen({
           bloom={bloom}
           beads={view.beads}
           pendant={view.pendant}
+          medal={view.medal}
+          cross={view.cross}
           className="h-44 w-auto sm:h-52"
           onBeadClick={(beadIndex) => jumpToBead(beadIndex, steps, view.chaplet, goTo)}
         />
         {view.chaplets > 1 && (
-          <span className="absolute right-2 top-2 rounded-full bg-white/8 px-2 py-1 text-[0.6rem] text-faint">
+          <span className="absolute right-2 top-2 rounded-full bg-[var(--bloom-fill-2)] px-2 py-1 text-[0.6rem] text-faint">
             {view.chaplet}/{view.chaplets}
           </span>
         )}
@@ -262,7 +271,7 @@ function DecadeRail({
                 ? 'w-6 bg-[var(--bloom-accent)]'
                 : n <= completed
                   ? 'w-3 bg-[var(--bloom-accent)]/45'
-                  : 'w-3 bg-white/12',
+                  : 'w-3 bg-[var(--bloom-fill-3)]',
             )}
           />
         );
@@ -281,10 +290,10 @@ function sectionLabel(
     return step.kind === 'closing' ? t('pray.conclusion') : t('pray.opening');
   }
   if (step.set) {
-    return `${MYSTERY_SETS[step.set].name[lang]} · ${t('pray.decadeOf', {
-      n: step.decade,
-      total: decadeTotal,
-    })}`;
+    // Decade first: it is the half that must survive truncation on a phone.
+    return `${t('pray.decadeOf', { n: step.decade, total: decadeTotal })} · ${
+      MYSTERY_SETS[step.set].name[lang]
+    }`;
   }
   return t('pray.decadeOf', { n: step.decade, total: decadeTotal });
 }
@@ -416,7 +425,7 @@ function WritingBox({
       onChange={(e) => onChange(e.target.value)}
       placeholder={t('pray.writePlaceholder')}
       maxLength={4000}
-      className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 font-display text-[1.05rem] leading-relaxed outline-none transition placeholder:text-white/25 focus:border-[var(--bloom-accent)]/60"
+      className="w-full resize-none rounded-2xl border border-[var(--bloom-border)] bg-[var(--bloom-fill)] px-4 py-3.5 font-display text-[1.05rem] leading-relaxed outline-none transition placeholder:text-[var(--bloom-placeholder)] focus:border-[var(--bloom-accent)]/60"
     />
   );
 }

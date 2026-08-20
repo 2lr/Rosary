@@ -145,9 +145,37 @@ describe('the bead loop', () => {
     expect(view.activeIndex).toBe(11);
   });
 
+  it('counts fifty-nine beads: four on the pendant and fifty-five on the loop', () => {
+    const { beads, pendant } = loopView(steps, new Set(), 0);
+    expect(beads.length + pendant.length).toBe(59);
+    expect(pendant).toHaveLength(4);
+  });
+
+  it('puts the Creed on the crucifix and the Glory Be on the medal', () => {
+    const creed = steps.find((s) => s.prayer === 'creed')!;
+    expect(loopView(steps, new Set(), creed.id).cross).toBe('active');
+
+    const gloryBe = steps.find((s) => s.decade === undefined && s.prayer === 'gloryBe')!;
+    expect(loopView(steps, new Set(), gloryBe.id).medal).toBe('active');
+  });
+
   it('lights the pendant from the cross upwards', () => {
-    const openingOurFather = steps.find((s) => s.decade === undefined && s.prayer === 'ourFather')!;
-    const { pendant } = loopView(steps, new Set(), openingOurFather.id);
-    expect(pendant[4]).toBe('active');
+    const opening = steps.filter((s) => s.decade === undefined && s.kind !== 'closing');
+    const ourFather = opening.find((s) => s.prayer === 'ourFather')!;
+    const hailMarys = opening.filter((s) => s.prayer === 'hailMary');
+
+    // Index 3 is the bead nearest the crucifix, index 0 the one at the medal.
+    expect(loopView(steps, new Set(), ourFather.id).pendant[3]).toBe('active');
+    expect(loopView(steps, new Set(), hailMarys[0].id).pendant[2]).toBe('active');
+    expect(loopView(steps, new Set(), hailMarys[2].id).pendant[0]).toBe('active');
+  });
+
+  it('marks the pendant beads already prayed as done', () => {
+    const opening = steps.filter((s) => s.decade === undefined && s.kind !== 'closing');
+    const done = new Set(opening.slice(0, 4).map((s) => s.id));
+    const { pendant } = loopView(steps, done, 99);
+    expect(pendant[3]).toBe('done');
+    expect(pendant[2]).toBe('done');
+    expect(pendant[0]).toBe('todo');
   });
 });

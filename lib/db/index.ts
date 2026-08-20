@@ -1,5 +1,5 @@
 import 'server-only';
-import { SCHEMA_STATEMENTS } from './schema';
+import { MIGRATION_STATEMENTS, SCHEMA_STATEMENTS } from './schema';
 
 export type Row = Record<string, unknown>;
 
@@ -68,6 +68,11 @@ async function connect(): Promise<Driver> {
 
   for (const statement of SCHEMA_STATEMENTS) {
     await driver.run(statement);
+  }
+  for (const statement of MIGRATION_STATEMENTS) {
+    // Adding a column that is already there is the normal case; anything else
+    // would have failed on the schema statements above.
+    await driver.run(statement).catch(() => undefined);
   }
   return driver;
 }

@@ -9,6 +9,8 @@ export const SCHEMA_STATEMENTS = [
      password_hash TEXT NOT NULL,
      display_name  TEXT,
      lang          TEXT NOT NULL DEFAULT 'fr',
+     colors        TEXT,
+     loop_shape    TEXT,
      created_at    TEXT NOT NULL
    )`,
   `CREATE TABLE IF NOT EXISTS rosaries (
@@ -31,4 +33,14 @@ export const SCHEMA_STATEMENTS = [
      ON rosaries (user_id, started_at DESC)`,
   `CREATE INDEX IF NOT EXISTS rosaries_user_status
      ON rosaries (user_id, status)`,
+];
+
+/**
+ * Applied after the schema, each one ignored if it fails. SQLite has no
+ * `ADD COLUMN IF NOT EXISTS`, so "already exists" is the expected outcome on
+ * every run but the first.
+ */
+export const MIGRATION_STATEMENTS = [
+  `ALTER TABLE users ADD COLUMN colors TEXT`,
+  `ALTER TABLE users ADD COLUMN loop_shape TEXT`,
 ];

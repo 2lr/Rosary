@@ -1,37 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Rosaire">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0a0a14"/>
-      <stop offset="1" stop-color="#181326"/>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf6ec"/>
+      <stop offset="1" stop-color="#f1e6d4"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="42%" r="55%">
-      <stop offset="0" stop-color="#b8934c" stop-opacity="0.28"/>
-      <stop offset="1" stop-color="#b8934c" stop-opacity="0"/>
+    <radialGradient id="glow" cx="50%" cy="40%" r="55%">
+      <stop offset="0" stop-color="#a97b32" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#a97b32" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#paper)"/>
   <rect width="512" height="512" fill="url(#glow)"/>
-  <g stroke="#e8cf9a" stroke-opacity="0.5" stroke-width="2" fill="none">
-    <circle cx="256" cy="215" r="154"/>
-  </g>
-  <g fill="#e8cf9a">
-    <circle cx="256" cy="392" r="16"/>
-  </g>
-  <g stroke="#e8cf9a" stroke-width="2" stroke-opacity="0.6">
-    <line x1="256" y1="408" x2="256" y2="432"/>
-  </g>
-  <g fill="#e8cf9a">
-    <rect x="246" y="432" width="20" height="70" rx="4"/>
-    <rect x="220" y="452" width="72" height="20" rx="4"/>
-  </g>
+
+  <circle cx="256" cy="205" r="150" fill="none" stroke="#a97b32" stroke-opacity="0.45" stroke-width="2"/>
+
   <!-- Twenty beads around the loop; the larger ones are the Our Fathers. -->
-  <g fill="#e8cf9a">
-    <circle cx="256" cy="61" r="13"/><circle cx="303" cy="68" r="9"/><circle cx="345" cy="90" r="9"/>
-    <circle cx="377" cy="123" r="9"/><circle cx="397" cy="165" r="9"/><circle cx="403" cy="211" r="9"/>
-    <circle cx="396" cy="257" r="13"/><circle cx="375" cy="299" r="9"/><circle cx="343" cy="332" r="9"/>
-    <circle cx="301" cy="353" r="9"/><circle cx="256" cy="360" r="9"/><circle cx="211" cy="353" r="9"/>
-    <circle cx="169" cy="332" r="13"/><circle cx="137" cy="299" r="9"/><circle cx="116" cy="257" r="9"/>
-    <circle cx="109" cy="211" r="9"/><circle cx="115" cy="165" r="9"/><circle cx="135" cy="123" r="13"/>
-    <circle cx="167" cy="90" r="9"/><circle cx="209" cy="68" r="9"/>
+  <g fill="#a97b32">
+    <circle cx="256" cy="55" r="13"/><circle cx="302" cy="62" r="9"/><circle cx="343" cy="83" r="9"/>
+    <circle cx="374" cy="115" r="9"/><circle cx="393" cy="156" r="9"/><circle cx="399" cy="201" r="9"/>
+    <circle cx="393" cy="246" r="13"/><circle cx="372" cy="287" r="9"/><circle cx="341" cy="319" r="9"/>
+    <circle cx="300" cy="340" r="9"/><circle cx="256" cy="347" r="9"/><circle cx="212" cy="340" r="9"/>
+    <circle cx="171" cy="319" r="13"/><circle cx="140" cy="287" r="9"/><circle cx="119" cy="246" r="9"/>
+    <circle cx="113" cy="201" r="9"/><circle cx="119" cy="156" r="9"/><circle cx="138" cy="115" r="13"/>
+    <circle cx="169" cy="83" r="9"/><circle cx="210" cy="62" r="9"/>
+    <circle cx="256" cy="378" r="15"/>
+  </g>
+  <line x1="256" y1="393" x2="256" y2="414" stroke="#a97b32" stroke-opacity="0.6" stroke-width="2"/>
+
+  <!-- The crucifix, with the body on it. -->
+  <g fill="#4a3728">
+    <rect x="248" y="414" width="16" height="88" rx="3"/>
+    <rect x="211" y="440" width="90" height="16" rx="3"/>
+  </g>
+  <g fill="#ecdcbe">
+    <rect x="222" y="445" width="68" height="6" rx="3"/>
+    <rect x="251" y="451" width="10" height="30" rx="4"/>
+    <circle cx="256" cy="436" r="7"/>
   </g>
 </svg>

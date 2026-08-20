@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth/guard';
 import { listRosaries } from '@/lib/db/rosaries';
 import { getStats } from '@/lib/db/stats';
 import { bloomFrom } from '@/lib/rosary/growth';
+import { preferencesOf } from '@/lib/rosary/preferences';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export default async function JourneyPage() {
   if (!user) redirect('/');
 
   const [stats, rosaries] = await Promise.all([getStats(user.id), listRosaries(user.id, 60)]);
-  const bloom = bloomFrom(stats, user.id);
+  const bloom = bloomFrom(stats, user.id, preferencesOf(user));
 
   return (
     <>

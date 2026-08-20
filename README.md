@@ -24,14 +24,32 @@ sur un compte.
 - **Grain par grain.** On coche chaque Notre Père, Je vous salue Marie et Gloire
   au Père. Un rosaire peut être découpé dans la journée : la progression est
   reprise exactement où elle s'est arrêtée, sur n'importe quel appareil.
+- **Un rosaire dessiné, pas une métaphore.** Le crucifix porte le corps du
+  Christ ; viennent ensuite le grain du Notre Père, les trois grains des Je vous
+  salue Marie, la médaille où l'on dit le Gloire au Père, puis la boucle de cinq
+  fois un Notre Père et dix Je vous salue Marie. Cinquante-neuf grains, comme
+  dans la main.
 - **Un rosaire qui se personnalise.** L'illustration est générée à partir de
   votre historique : plus vous priez, plus la couronne s'orne (roses, filigrane,
-  rayons, halo, grains taillés), et la palette se teinte des mystères que vous
-  priez le plus. Huit étapes, de « Semence » à « Couronne ».
+  rayons, halo, grains taillés). Huit étapes, de « Semence » à « Couronne ».
+  Vous choisissez la forme de la boucle — ronde, ovale ou carrée — et vos trois
+  couleurs (la lumière, les grains, la chaîne), ou vous laissez la palette venir
+  des mystères que vous priez le plus.
 - **Statistiques.** Rosaires, dizaines, Je vous salue Marie, série en cours,
   plus longue série, jours de prière, 90 derniers jours, historique.
 - **Hors ligne.** La progression est conservée localement et renvoyée au serveur
   dès le retour du réseau.
+
+## Le dessin
+
+Fond crème, encre chaude : le rosaire est montré comme on le voit, en plein
+jour, posé sur du tissu. La palette entière — page, cartes, boutons, grains —
+descend d'un seul jeu de variables CSS produit par `lib/rosary/growth.ts`, si
+bien qu'un changement de couleur ou d'étape traverse toute l'application.
+
+Les trois formes de boucle sont la même courbe : une superellipse dont on change
+les rayons et l'exposant. Les grains sont placés par longueur d'arc, sinon
+l'ovale les tasserait à ses extrémités.
 
 ## Textes
 
@@ -100,10 +118,12 @@ app/                     Routes Next.js (App Router)
   home/                  Tableau de bord : l'œuvre, l'étape, le départ d'un rosaire
   pray/[id]/             Le déroulé guidé, grain par grain
   journey/               Statistiques, étapes et historique
-  settings/              Langue, prénom, installation, compte
+  settings/              Langue, prénom, apparence, installation, compte
   api/                   Authentification, rosaires, statistiques
 components/              Interface ; RosaryArt.tsx dessine le rosaire génératif
-lib/rosary/              Prières, mystères, séquence, croissance, statistiques
+                         et Crucifix.tsx le crucifix qui le termine
+lib/rosary/              Prières, mystères, séquence, croissance, formes,
+                         couleurs, statistiques
 lib/db/                  Accès aux données (SQLite ou Postgres)
 lib/auth/                Mots de passe et sessions
 lib/i18n/                Dictionnaire français / anglais
@@ -141,8 +161,13 @@ for each decade — aloud or in writing. Tick every Our Father, Hail Mary and
 Glory Be; a rosary can be spread across the day and resumed exactly where it
 was left, on any device.
 
+The rosary is drawn as it is held: a crucifix with the body of Christ on it,
+then the Our Father bead, three Hail Mary beads, the centre medal, and a loop of
+five decades — fifty-nine beads in all.
+
 The artwork on the home screen is generated from your own history: the more you
-pray, the more the crown is adorned, and its palette takes the colour of the
+pray, the more the crown is adorned. Choose the shape of the loop — round, oval
+or square — and your own three colours, or let the palette come from the
 mysteries you pray most. Statistics cover rosaries, decades, Hail Marys, current
 and longest streak, days prayed and the last ninety days.
 

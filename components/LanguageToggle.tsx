@@ -27,7 +27,7 @@ export default function LanguageToggle({
           className={cx(
             'tap rounded-full px-3 py-1.5 font-medium transition',
             lang === candidate
-              ? 'bg-[var(--bloom-accent)] text-night-950'
+              ? 'bg-[var(--bloom-accent)] text-[var(--bloom-on-accent)]'
               : 'text-muted hover:text-[var(--bloom-ink)]',
           )}
         >

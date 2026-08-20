@@ -1,5 +1,5 @@
 import type { Lang } from '@/lib/i18n/config';
-import { MYSTERY_SETS, MYSTERY_SET_ORDER, type MysterySetId } from './mysteries';
+import { MYSTERY_SET_ORDER, type MysterySetId } from './mysteries';
 import { OPENING_VIRTUES } from './prayers';
 import type { PrayerMode, RosaryKind, Step } from './types';
 
@@ -104,39 +104,4 @@ export function countHailMarys(steps: Step[], done: Set<number>): number {
 export function firstUndoneStep(steps: Step[], done: Set<number>): number {
   const idx = steps.findIndex((s) => !done.has(s.id));
   return idx === -1 ? Math.max(0, steps.length - 1) : idx;
-}
-
-/** Groups the sequence into the sections shown in the progress rail. */
-export type Section = { label: string; from: number; to: number; decade: number | null };
-
-export function sections(steps: Step[], lang: Lang): Section[] {
-  const out: Section[] = [];
-  let current: Section | null = null;
-
-  for (const step of steps) {
-    const decade = step.decade ?? null;
-    const label =
-      decade === null
-        ? step.kind === 'closing'
-          ? lang === 'fr'
-            ? 'Conclusion'
-            : 'Conclusion'
-          : lang === 'fr'
-            ? 'Ouverture'
-            : 'Opening'
-        : step.set
-          ? MYSTERY_SETS[step.set].mysteries[(step.mystery ?? 1) - 1].title[lang]
-          : lang === 'fr'
-            ? `Dizaine ${decade}`
-            : `Decade ${decade}`;
-
-    if (!current || current.label !== label || current.decade !== decade) {
-      current = { label, from: step.id, to: step.id, decade };
-      out.push(current);
-    } else {
-      current.to = step.id;
-    }
-  }
-
-  return out;
 }

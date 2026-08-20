@@ -13,8 +13,8 @@ const BASE =
 
 const VARIANTS = {
   primary:
-    'bg-[var(--bloom-accent)] text-night-950 hover:brightness-110 active:brightness-95 shadow-lg shadow-black/30',
-  ghost: 'surface text-[var(--bloom-ink)] hover:bg-white/10',
+    'bg-[var(--bloom-accent)] text-[var(--bloom-on-accent)] hover:brightness-110 active:brightness-95 shadow-[0_6px_18px_-8px_rgb(90_68_40/0.55)]',
+  ghost: 'surface text-[var(--bloom-ink)] hover:bg-[var(--bloom-fill-2)]',
   quiet: 'text-muted hover:text-[var(--bloom-ink)]',
 } as const;
 
@@ -72,9 +72,9 @@ export function Field({ label, hint, error, className, id, ...rest }: FieldProps
       <input
         id={inputId}
         className={cx(
-          'w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-[16px]',
-          'text-[var(--bloom-ink)] placeholder:text-white/25 outline-none transition',
-          'focus:border-[var(--bloom-accent)]/60 focus:bg-white/8',
+          'w-full rounded-2xl border border-[var(--bloom-border)] bg-[var(--bloom-fill)] px-4 py-3.5 text-[16px]',
+          'text-[var(--bloom-ink)] placeholder:text-[var(--bloom-placeholder)] outline-none transition',
+          'focus:border-[var(--bloom-accent)]/60 focus:bg-[var(--bloom-fill-2)]',
           error && 'border-rose-400/60',
           className,
         )}
