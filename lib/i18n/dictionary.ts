@@ -220,10 +220,11 @@ export const DICT = {
     'trait.roseWindow.meaning':
       'La rosace des cathédrales, presque toutes bâties sous le nom de Notre-Dame : douze pétales de lumière autour d’un même centre.',
 
-    'trait.hand': 'La main bénissante',
-    'trait.hand.change': 'La main de Dieu s’est ouverte au-dessus du rosaire.',
-    'trait.hand.meaning':
-      'La main sortant de la nuée. Dans les mosaïques les plus anciennes, on ne représente pas le Père autrement : on ne montre que son geste.',
+    'trait.name': 'Le Nom',
+    'trait.name.change': 'Le Nom de Dieu brille au sommet du rosaire.',
+    'trait.name.meaning':
+      'Les quatre lettres du Nom que Dieu donne à Moïse au buisson : « Je suis qui je suis ». On l’écrit et on ne le prononce pas. Il se pose au sommet, dans un triangle rayonnant, comme au fronton des retables.',
+    'trait.name.where': 'Exode 3, 14',
 
     'trait.lilies': 'Les lys',
     'trait.lilies.change': 'Des lys ont poussé au pied de la croix.',
@@ -537,10 +538,11 @@ export const DICT = {
     'trait.roseWindow.meaning':
       'The rose window of the cathedrals, nearly all of them built under her name: twelve petals of light around one centre.',
 
-    'trait.hand': 'The blessing hand',
-    'trait.hand.change': 'The hand of God has opened above the rosary.',
-    'trait.hand.meaning':
-      'The hand coming out of the cloud. In the oldest mosaics the Father is shown no other way: only his gesture is shown.',
+    'trait.name': 'The Name',
+    'trait.name.change': 'The Name of God shines at the summit of the rosary.',
+    'trait.name.meaning':
+      'The four letters of the Name God gives Moses at the bush: “I am who I am.” It is written and never spoken. It is set at the summit in a radiant triangle, as on the pediment of an altarpiece.',
+    'trait.name.where': 'Exodus 3:14',
 
     'trait.lilies': 'The lilies',
     'trait.lilies.change': 'Lilies have grown at the foot of the cross.',

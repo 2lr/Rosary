@@ -79,7 +79,7 @@ ordre, et ne repartent jamais.
 | 850 | La couronne de douze étoiles | Marie | autour de la médaille |
 | 1200 | Le chrisme | Fils | au cœur de la couronne |
 | 1700 | La rosace | Marie | derrière la couronne |
-| 2400 | La main bénissante | Père | tout en haut, dans la nuée |
+| 2400 | Le Nom | Père | tout en haut, dans un triangle rayonnant |
 | 3600 | Les lys | Marie | au pied de la croix |
 
 Le monogramme est l'A et l'M entrelacés sous la croix, comme au revers de la
@@ -87,8 +87,9 @@ médaille miraculeuse. La colombe est la forme sous laquelle l'Esprit s'est rend
 visible au Jourdain, et les sept flammes sont les sept dons. L'alpha et l'oméga
 encadrent la croix. Le croissant et les douze étoiles viennent d'Apocalypse 12.
 Les trois cercles sont la façon la plus ancienne de dire la Trinité sans la
-représenter, et la main sortant de la nuée la seule façon dont les plus vieilles
-mosaïques montrent le Père : on ne montre que son geste.
+représenter. Et le Nom est celui que Dieu donne à Moïse au buisson, ses quatre
+lettres hébraïques dans un triangle rayonnant — écrit, jamais prononcé, posé au
+sommet comme au fronton d'un retable.
 
 Les propriétés continues portent le même vocabulaire : les roses sont les roses
 mystiques dont le rosaire tire son nom, le feuillage le jardin clos du Cantique,
@@ -266,7 +267,8 @@ gold along the chain, patina, engraving — and eleven signs that arrive one at 
 time and stay. They are grouped the way the tradition groups them: the monogram
 of Mary, the dove, the seven flames, Alpha and Omega, the crescent moon, the
 three interlaced circles, the crown of twelve stars, the Chi-Rho, the rose
-window, the blessing hand out of the cloud, and lilies at the foot of the cross.
+window, the Name of God in a radiant triangle, and lilies at the foot of the
+cross.
 Each carries its meaning and its reference, readable in the close-up view.
 
 A saturating curve cannot change on every single decade — that is what

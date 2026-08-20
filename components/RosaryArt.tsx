@@ -126,7 +126,7 @@ export default function RosaryArt({
 
   // The signs stack upwards from the loop: dove, then the three circles, then
   // the hand. The canvas has to leave room for whichever has arrived.
-  const signHeight = n.hand ? 160 : n.triquetra ? 100 : n.dove ? 62 : 24;
+  const signHeight = n.name ? 182 : n.triquetra ? 100 : n.dove ? 62 : 24;
   const contentTop = CY - loop.ry - Math.max(raysInner + 70, signHeight);
   const contentBottom = crossTop + crossHeight + (n.lilies ? 30 : 8);
   // Stars are sparse dots; letting the odd one sit at the very edge costs
@@ -481,13 +481,12 @@ export default function RosaryArt({
         {n.triquetra === 1 && (
           <Triquetra x={CX} y={CY - loop.ry - 82} r={12} color={palette.chain} highlight={hot.has('triquetra')} />
         )}
-        {n.hand === 1 && (
-          <BlessingHand
+        {n.name === 1 && (
+          <RadiantName
             x={CX}
-            y={CY - loop.ry - 138}
-            color={palette.flesh}
-            outline={palette.outline}
-            highlight={hot.has('hand')}
+            y={CY - loop.ry - 134}
+            color={palette.goldLeaf}
+            highlight={hot.has('name')}
           />
         )}
 
@@ -1002,56 +1001,67 @@ function ChiRho({ x, y, size, color }: { x: number; y: number; size: number; col
   );
 }
 
-/** The hand out of the cloud — the one way the oldest mosaics show the Father. */
-function BlessingHand({
+/**
+ * The Name at the summit, in a radiant triangle.
+ *
+ * Four Hebrew letters, read right to left — yod, he, waw, he — written and
+ * never spoken. Drawn as bars rather than set as text so it does not depend on
+ * a font having Hebrew, and so it holds its weight at any size.
+ */
+function RadiantName({
   x,
   y,
   color,
-  outline,
   highlight,
 }: {
   x: number;
   y: number;
   color: string;
-  outline: string;
   highlight: boolean;
 }) {
-  /** A finger, as a rounded bar so it can be filled and outlined like the rest. */
-  const finger = (fx: number, top: number, bottom: number, width: number) => {
-    const half = width / 2;
-    return `M ${fx - half} ${top} L ${fx - half} ${bottom - half} A ${half} ${half} 0 0 0 ${fx + half} ${bottom - half} L ${fx + half} ${top} Z`;
-  };
+  const he = (at: number) => (
+    <g key={`he-${at}`}>
+      <rect x={at} y={0} width={7.4} height={1.9} rx={0.5} />
+      <rect x={at + 5.5} y={0} width={1.9} height={9.2} rx={0.5} />
+      <rect x={at + 0.2} y={3.2} width={1.9} height={6} rx={0.5} />
+    </g>
+  );
 
   return (
     <g
       transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
       className={highlight ? 'animate-bead' : undefined}
     >
-      <g stroke={outline} strokeOpacity="0.55" strokeWidth="0.9" strokeLinejoin="round">
-        <path
-          fill="#e9e4d8"
-          d="M -27 3 C -27 -3, -21 -8, -15 -6 C -13 -13, -4 -16, 1 -11 C 6 -15.5, 15 -13, 17 -6 C 23 -8, 27 -3, 27 3 Z"
-        />
-        {/* Sleeve, palm, then the Latin blessing: two fingers out, two folded. */}
-        <path fill={color} d="M -7.6 0 L 7.6 0 L 8.6 12.5 L -8.6 12.5 Z" />
-        <path
-          fill={color}
-          d="M -9 11.5 L 9 11.5 L 9.4 23 C 9.4 29.5, 5.4 33.5, -0.4 33.5 C -6 33.5, -9.6 29.5, -9.6 23 Z"
-        />
-        <path fill={color} d={finger(-5.4, 26, 50, 5.4)} />
-        <path fill={color} d={finger(0.3, 26, 54, 5.6)} />
-        <path fill={color} d={finger(5.6, 27, 38, 5)} />
-        <path fill={color} d={finger(9.8, 26, 33, 4.2)} />
-        <path
-          fill={color}
-          d="M 9.2 13.5 C 13.4 17, 13.6 23.5, 10.4 27 C 9 28.5, 7.2 27.8, 7.4 25.8 C 7.8 21.5, 8 17, 7.6 14 Z"
-        />
+      <g stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeOpacity="0.5">
+        {Array.from({ length: 20 }, (_, i) => {
+          const angle = (i / 20) * Math.PI * 2 - Math.PI / 2;
+          const outer = i % 2 ? 29 : 40;
+          return (
+            <line
+              key={i}
+              x1={Math.cos(angle) * 26}
+              y1={Math.sin(angle) * 26}
+              x2={Math.cos(angle) * outer}
+              y2={Math.sin(angle) * outer}
+            />
+          );
+        })}
       </g>
-      <g stroke={outline} strokeOpacity="0.3" strokeWidth="0.7" fill="none" strokeLinecap="round">
-        <path d="M -7.4 12.5 L 7.4 12.5" />
-        <path d="M -2.5 28 L -2.5 46" />
-        <path d="M 3 28 L 3 36" />
-        <path d="M 7.9 28 L 7.9 33" />
+      <path
+        d="M 0 -25 L 25 20 L -25 20 Z"
+        fill="none"
+        stroke={color}
+        strokeWidth="2.1"
+        strokeLinejoin="round"
+      />
+      <g transform="translate(-14.4 -3.5)" fill={color}>
+        {he(0)}
+        {/* waw */}
+        <rect x={9.6} y={0} width={3.4} height={1.9} rx={0.5} />
+        <rect x={11.1} y={0} width={1.9} height={9.2} rx={0.5} />
+        {he(15)}
+        {/* yod */}
+        <path d="M 24.6 0.4 L 28 1.2 L 27 5.2 L 24.2 4.4 Z" />
       </g>
     </g>
   );
