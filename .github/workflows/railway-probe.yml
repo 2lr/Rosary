@@ -1,80 +1,67 @@
 name: Railway probe
 
-# Read-only. Reports what the token opens and what the CLI of the day accepts,
-# so the deploy workflow can be written from facts rather than from guesses.
-# Never prints the token itself.
+# Is the rosary actually up? Read-only, no token, no deploy — just a request to
+# the public address, reporting what came back. Useful whenever the app needs
+# checking from outside without touching the deployment.
 
 on:
   workflow_dispatch:
+    inputs:
+      url:
+        description: 'Address to check'
+        required: false
+        default: 'https://rosary-production-471b.up.railway.app'
 
 jobs:
   probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - run: npm install -g @railway/cli
-
-      - name: Version and commands
+      - name: Ask the address for the app
         run: |
-          railway --version
-          echo '--- top level ---'
-          railway --help || true
-          echo '--- up ---'
-          railway up --help || true
-          echo '--- link ---'
-          railway link --help || true
-          echo '--- add ---'
-          railway add --help || true
-          echo '--- variables ---'
-          railway variables --help || true
-          echo '--- domain ---'
-          railway domain --help || true
-
-      - name: Which secret names actually carry a value?
-        env:
-          # Only lengths are ever printed, never a value.
-          A: ${{ secrets.RAILWAY_TOKEN }}
-          B: ${{ secrets.RAILWAY_API_TOKEN }}
-          C: ${{ secrets.RAILWAY }}
-          D: ${{ secrets.RAILWAY_PROJECT_TOKEN }}
-          E: ${{ vars.RAILWAY_TOKEN }}
-          F: ${{ vars.RAILWAY_API_TOKEN }}
-        run: |
-          report() { printf '%-34s %s\n' "$1" "${#2} characters"; }
-          report 'secrets.RAILWAY_TOKEN'         "$A"
-          report 'secrets.RAILWAY_API_TOKEN'     "$B"
-          report 'secrets.RAILWAY'               "$C"
-          report 'secrets.RAILWAY_PROJECT_TOKEN' "$D"
-          report 'vars.RAILWAY_TOKEN'            "$E"
-          report 'vars.RAILWAY_API_TOKEN'        "$F"
+          set -euo pipefail
+          URL='${{ inputs.url }}'
+          echo "Checking $URL"
           echo
-          echo 'A Railway token is a UUID: 36 characters. Zero means the name is'
-          echo 'empty at repository level — wrong name, saved as a variable, or'
-          echo 'saved under a GitHub Environment rather than the repository.'
 
-      - name: What does the token open?
-        env:
-          SECRET: ${{ secrets.RAILWAY_TOKEN || secrets.RAILWAY_API_TOKEN || secrets.RAILWAY }}
+          CODE="$(curl -sS -L -o body.html -w '%{http_code}' \
+                  --max-time 30 "$URL" || echo 000)"
+          echo "HTTP $CODE, $(wc -c < body.html) bytes"
+          echo
+
+          echo '--- what the page calls itself ---'
+          grep -oiE '<title>[^<]*</title>' body.html | head -3 || echo '(no title)'
+          echo
+          echo '--- first 400 characters ---'
+          head -c 400 body.html
+          echo
+          echo
+
+          if [ "$CODE" != '200' ]; then
+            echo "::error::The address answered $CODE rather than 200."
+            exit 1
+          fi
+          if ! grep -qi 'rosaire\|rosary' body.html; then
+            echo '::error::200, but the page is not the rosary.'
+            exit 1
+          fi
+          echo "::notice title=Le rosaire répond::$URL"
+
+      - name: And the sign-in route?
         run: |
-          if [ -z "$SECRET" ]; then
-            echo 'No token reached the job — nothing to try.'
-            exit 0
-          fi
-          echo '--- as an account token (RAILWAY_API_TOKEN) ---'
-          if RAILWAY_API_TOKEN="$SECRET" railway whoami; then
-            echo 'account token: yes'
-            echo '--- projects visible ---'
-            RAILWAY_API_TOKEN="$SECRET" railway list || true
-          else
-            echo 'account token: no'
-          fi
-
-          echo '--- as a project token (RAILWAY_TOKEN) ---'
-          if RAILWAY_TOKEN="$SECRET" railway status; then
-            echo 'project token: yes'
-          else
-            echo 'project token: no'
-          fi
+          set -euo pipefail
+          URL='${{ inputs.url }}'
+          # A wrong password must be refused, not crash: that exercises the
+          # database end to end, which a static page would not.
+          CODE="$(curl -sS -o reply.json -w '%{http_code}' --max-time 30 \
+                  -X POST "$URL/api/auth/login" \
+                  -H 'Content-Type: application/json' \
+                  --data '{"email":"probe@example.invalid","password":"not-a-real-password"}' || echo 000)"
+          echo "POST /api/auth/login -> HTTP $CODE"
+          head -c 300 reply.json
+          echo
+          case "$CODE" in
+            400|401|403|404|422) echo 'Refused cleanly — the database answered.' ;;
+            500|502|503|000)     echo "::error::The login route is broken ($CODE)."; exit 1 ;;
+            *)                   echo "Unexpected $CODE — worth a look." ;;
+          esac
