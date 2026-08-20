@@ -27,4 +27,5 @@ COPY --from=build /app/lib/db/schema.ts ./lib/db/schema.ts
 COPY --from=build /app/scripts ./scripts
 
 EXPOSE 3000
-CMD ["npm", "start"]
+# The schema is created with IF NOT EXISTS, so this is safe on every boot.
+CMD ["sh", "-c", "npm run db:init && npm start"]

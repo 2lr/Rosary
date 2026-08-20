@@ -213,56 +213,73 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Railway occasionally answers with something that is not JSON — a
+          # gateway page, a rate-limit notice. Last time that killed the poll
+          # outright (jq parse error, exit 5) after nine good minutes, so treat
+          # it as a hiccup and try again rather than as an answer.
           gql() {
             jq -n --arg q "$1" --argjson v "$2" '{query:$q, variables:$v}' > payload.json
-            curl -sS -X POST https://backboard.railway.com/graphql/v2 \
-              -H "Project-Access-Token: $RAILWAY_TOKEN" \
-              -H 'Content-Type: application/json' \
-              --data @payload.json > reply.json
-            if jq -e '.errors' reply.json >/dev/null; then
-              echo '::error::Railway refused the call:'
-              jq -r '.errors[].message' reply.json
-              exit 1
-            fi
-            cat reply.json
+            for try in 1 2 3; do
+              curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+                -H "Project-Access-Token: $RAILWAY_TOKEN" \
+                -H 'Content-Type: application/json' \
+                --data @payload.json > reply.json || true
+              if jq -e . reply.json >/dev/null 2>&1; then
+                cat reply.json
+                return 0
+              fi
+              echo "  (non-JSON reply, retry $try)" >&2
+              sleep 5
+            done
+            echo '{}'
+            return 0
           }
 
-          LATEST='query($input: DeploymentListInput!) { deployments(input: $input, first: 1) { edges { node { id status createdAt } } } }'
           SCOPE="$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" \
             '{input:{projectId:$p, environmentId:$e, serviceId:$s}}')"
+          LATEST='query($input: DeploymentListInput!) { deployments(input: $input, first: 1) { edges { node { id status } } } }'
 
           DEPLOY_ID=''
           STATUS=''
-          for attempt in $(seq 1 90); do
+          for attempt in $(seq 1 100); do
             NODE="$(gql "$LATEST" "$SCOPE" | jq -r '.data.deployments.edges[0].node // empty')"
-            [ -n "$NODE" ] || { echo "attempt $attempt: no deployment yet"; sleep 10; continue; }
-            DEPLOY_ID="$(echo "$NODE" | jq -r '.id')"
-            if [ -n "${PREV_DEPLOY_ID:-}" ] && [ "$DEPLOY_ID" = "$PREV_DEPLOY_ID" ]; then
+            if [ -z "$NODE" ]; then
+              echo "attempt $attempt: no deployment reported"
+              sleep 10
+              continue
+            fi
+            ID="$(echo "$NODE" | jq -r '.id')"
+            if [ -n "${PREV_DEPLOY_ID:-}" ] && [ "$ID" = "$PREV_DEPLOY_ID" ]; then
               echo "attempt $attempt: still the previous deployment"
               sleep 10
               continue
             fi
+            DEPLOY_ID="$ID"
             STATUS="$(echo "$NODE" | jq -r '.status')"
             echo "attempt $attempt: $STATUS"
             case "$STATUS" in
-              SUCCESS) break ;;
-              FAILED|CRASHED|REMOVED|SKIPPED) break ;;
+              SUCCESS|FAILED|CRASHED|REMOVED|SKIPPED) break ;;
             esac
             sleep 10
           done
 
           echo "DEPLOY_ID=$DEPLOY_ID" >> "$GITHUB_ENV"
 
+          # Print what the container said either way: a healthy deploy is worth
+          # seeing too, and a stuck one is unreadable without it.
+          if [ -n "$DEPLOY_ID" ]; then
+            echo '--- build log (tail) ---'
+            gql 'query($deploymentId: String!) { buildLogs(deploymentId: $deploymentId, limit: 300) { message } }' \
+              "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
+              | jq -r '.data.buildLogs[]?.message' | tail -60 || true
+            echo '--- deploy log (tail) ---'
+            gql 'query($deploymentId: String!) { deploymentLogs(deploymentId: $deploymentId, limit: 300) { message } }' \
+              "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
+              | jq -r '.data.deploymentLogs[]?.message' | tail -60 || true
+          fi
+
           if [ "$STATUS" != 'SUCCESS' ]; then
-            echo "::error::The deployment ended as $STATUS."
-            echo '--- build log ---'
-            gql 'query($deploymentId: String!) { buildLogs(deploymentId: $deploymentId, limit: 400) { message } }' \
-              "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
-              | jq -r '.data.buildLogs[]?.message' | tail -200 || true
-            echo '--- deploy log ---'
-            gql 'query($deploymentId: String!) { deploymentLogs(deploymentId: $deploymentId, limit: 200) { message } }' \
-              "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
-              | jq -r '.data.deploymentLogs[]?.message' | tail -100 || true
+            echo "::error::The deployment ended as ${STATUS:-unknown}."
             exit 1
           fi
           echo 'Build succeeded.'
