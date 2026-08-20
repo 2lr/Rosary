@@ -190,14 +190,50 @@ export const TRAIT_BY_ID = Object.fromEntries(TRAITS.map((t) => [t.id, t])) as R
   Trait
 >;
 
-/** How many completed rosaries fit in one ring of the band of memory. */
-export const MEMORY_RING_CAPACITY = 240;
-export const MEMORY_MAX_RINGS = 6;
+/**
+ * The heart of the rose.
+ *
+ * Saturating curves can never change on every single decade — that is what
+ * saturating means. So one thing in the drawing is not a curve at all: a grain
+ * is laid at the centre for every decade ever prayed, placed at the golden
+ * angle from the one before it, exactly as seeds are laid in the heart of a
+ * flower. Nothing is ever moved or replaced, the pattern never repeats, and the
+ * spacing stays even however many there are — which is precisely why nature
+ * uses it to pack an unbounded number of things into a finite disc.
+ */
+export const GOLDEN_ANGLE = 137.50776405003785;
+
+/** Decades at which the field of grains reaches the edge of its disc. */
+export const HEART_FULL_AT = 500;
+
+export type HeartGrain = { angle: number; radius: number };
+
+/**
+ * Where grain `i` sits, as a fraction of the field's radius. Below
+ * `HEART_FULL_AT` this reduces to sqrt((i+1) / HEART_FULL_AT), so a grain never
+ * moves once it is laid: the field simply grows outwards, one grain per decade.
+ */
+export function heartGrain(i: number, grains: number): HeartGrain {
+  const spread = Math.min(1, Math.sqrt(grains / HEART_FULL_AT));
+  return {
+    angle: i * GOLDEN_ANGLE,
+    radius: grains === 0 ? 0 : spread * Math.sqrt((i + 1) / grains),
+  };
+}
+
+/** Grain radius, as a fraction of the field radius, so the field never clogs. */
+export function heartGrainSize(grains: number): number {
+  if (grains === 0) return 0;
+  const spread = Math.min(1, Math.sqrt(grains / HEART_FULL_AT));
+  // While the field is filling this is constant, so a grain keeps its size and
+  // the disc simply widens. Once it is full, grains only get finer.
+  return Math.min(0.075, Math.max(0.0022, (spread * 0.44) / Math.sqrt(grains)));
+}
 
 export type GrowthInput = {
   /** Decades prayed. The currency of the whole model. */
   decades: number;
-  /** Completed rosaries, which the band of memory counts one by one. */
+  /** Completed rosaries. */
   rosaries: number;
   /** Days in a row, which sets the stars. */
   streak: number;
@@ -212,8 +248,8 @@ export type Growth = {
   notch: Record<TraitId, number>;
   /** Decades still to pray before this trait next changes; null when finished. */
   remaining: Record<TraitId, number | null>;
-  /** One tick per completed rosary, wrapped into concentric rings. */
-  memory: { ticks: number; rings: number; lastRingTicks: number };
+  /** One grain per decade prayed, at the heart of the rose. */
+  heart: { grains: number };
   stars: number;
 };
 
@@ -279,21 +315,12 @@ export function growthOf(input: GrowthInput): Growth {
     remaining[trait.id] = remainingFor(decades, trait);
   }
 
-  const ticks = Math.max(0, Math.floor(input.rosaries));
-  const rings = Math.min(MEMORY_MAX_RINGS, Math.ceil(ticks / MEMORY_RING_CAPACITY));
-  const lastRingTicks =
-    rings === 0
-      ? 0
-      : rings >= MEMORY_MAX_RINGS
-        ? MEMORY_RING_CAPACITY
-        : ticks - (rings - 1) * MEMORY_RING_CAPACITY;
-
   return {
     input: { ...input, decades },
     value,
     notch,
     remaining,
-    memory: { ticks, rings, lastRingTicks },
+    heart: { grains: Math.floor(decades) },
     stars: Math.min(24, Math.max(0, input.streak)),
   };
 }

@@ -1,7 +1,7 @@
 import Crucifix from '@/components/Crucifix';
 import type { Bloom } from '@/lib/rosary/growth';
 import { beadFractions, buildLoop, loopPath, type Loop, type Point } from '@/lib/rosary/shapes';
-import { MEMORY_RING_CAPACITY, type TraitId } from '@/lib/rosary/traits';
+import { heartGrain, heartGrainSize, type TraitId } from '@/lib/rosary/traits';
 
 export type BeadState = 'todo' | 'done' | 'active';
 export type LoopBead = { kind: 'pater' | 'ave'; state: BeadState };
@@ -20,6 +20,8 @@ export type RosaryArtProps = {
   fill?: number;
   /** Traits to draw attention to — what has just changed. */
   highlight?: TraitId[];
+  /** Grains laid by the rosary just prayed, lit so they can be picked out. */
+  freshGrains?: number;
   className?: string;
   onBeadClick?: (index: number) => void;
   title?: string;
@@ -73,6 +75,7 @@ export default function RosaryArt({
   cross = 'todo',
   fill = 0,
   highlight,
+  freshGrains = 0,
   className,
   onBeadClick,
   title,
@@ -119,8 +122,7 @@ export default function RosaryArt({
   const crossTop = pendantY[3] + 16;
   const crossHeight = v.crossHeight;
 
-  const memoryOuter = growth.memory.rings > 0 ? 33 + (growth.memory.rings - 1) * 8 + 6 : 24;
-  const raysInner = memoryOuter + 10;
+  const raysInner = 30;
 
   // The signs stack upwards from the loop: dove, then the three circles, then
   // the hand. The canvas has to leave room for whichever has arrived.
@@ -202,6 +204,14 @@ export default function RosaryArt({
 
       <g transform={`translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale.toFixed(4)})`}>
         {n.roseWindow === 1 && <RoseWindow loop={loop} color={palette.chain} />}
+        <RoseHeart
+          loop={loop}
+          grains={growth.heart.grains}
+          fresh={freshGrains}
+          color={palette.goldLeaf}
+          freshColor={palette.accent}
+          gradientId={`ra-heart-${uid}`}
+        />
         {n.chiRho === 1 && (
           <ChiRho
             x={CX}
@@ -226,8 +236,6 @@ export default function RosaryArt({
             strokeLinecap="round"
           />
         ))}
-
-        <MemoryBand loop={loop} memory={growth.memory} color={palette.chain} hot={hot.has('roses')} />
 
         {stars.map((star, i) => (
           <path
@@ -691,47 +699,88 @@ function Stone({
   );
 }
 
-/** One fine stroke cut into the band for every rosary ever completed. */
-function MemoryBand({
+/**
+ * One grain for every decade ever prayed, laid at the golden angle from the one
+ * before it. The newest grains are lit, so the ones just added can be found.
+ *
+ * Past a few hundred, the packed middle is drawn as one disc rather than as
+ * thousands of nodes; the rim, where every new grain lands, is still drawn
+ * grain by grain, so a single decade is always visible.
+ */
+const MAX_DRAWN_GRAINS = 560;
+
+function RoseHeart({
   loop,
-  memory,
+  grains,
+  fresh,
   color,
-  hot,
+  freshColor,
+  gradientId,
 }: {
   loop: Loop;
-  memory: Bloom['growth']['memory'];
+  grains: number;
+  fresh: number;
   color: string;
-  hot: boolean;
+  freshColor: string;
+  gradientId: string;
 }) {
-  if (memory.rings === 0) return null;
+  if (grains === 0) return null;
+
+  const field = Math.min(loop.rx, loop.ry) * 0.78;
+  const grainR = Math.max(0.3, heartGrainSize(grains) * field);
+  const drawnFrom = Math.max(0, grains - MAX_DRAWN_GRAINS);
+  const freshFrom = Math.max(drawnFrom, grains - fresh);
+  const coreR = drawnFrom > 0 ? heartGrain(drawnFrom - 1, grains).radius * field + grainR : 0;
+  // The packed middle must read at the same density as the grains around it,
+  // or it shows up as a flat blob in the middle of a delicate texture.
+  // Scattered dots read stronger than a flat wash of the same average, so the
+  // core is nudged up a little to match what the eye sees.
+  const coreCoverage =
+    coreR > 0 ? Math.min(1, (1.35 * drawnFrom * grainR * grainR) / (coreR * coreR)) : 0;
+
+  const settled: string[] = [];
+  const lit: { x: number; y: number }[] = [];
+
+  for (let i = drawnFrom; i < grains; i++) {
+    const { angle, radius } = heartGrain(i, grains);
+    const rad = (angle * Math.PI) / 180;
+    const x = loop.cx + Math.cos(rad) * radius * field;
+    const y = loop.cy + Math.sin(rad) * radius * field;
+    if (i >= freshFrom) {
+      lit.push({ x, y });
+    } else {
+      const r = grainR;
+      settled.push(
+        `M ${x.toFixed(2)} ${y.toFixed(2)} m ${-r.toFixed(2)} 0 a ${r.toFixed(2)} ${r.toFixed(2)} 0 1 0 ${(r * 2).toFixed(2)} 0 a ${r.toFixed(2)} ${r.toFixed(2)} 0 1 0 ${(-r * 2).toFixed(2)} 0`,
+      );
+    }
+  }
 
   return (
-    <g stroke={color} strokeLinecap="round">
-      {Array.from({ length: memory.rings }, (_, ring) => {
-        const count = ring === memory.rings - 1 ? memory.lastRingTicks : MEMORY_RING_CAPACITY;
-        const distance = 33 + ring * 8;
-        return (
-          <g key={`ring-${ring}`} strokeOpacity={0.3 + ring * 0.05} strokeWidth="0.8">
-            {Array.from({ length: count }, (_, i) => {
-              const f = GAP / 2 + ((1 - GAP) * (i + 0.5)) / MEMORY_RING_CAPACITY;
-              const a = outward(loop, f, distance);
-              const b = outward(loop, f, distance + 5.4);
-              const last = ring === memory.rings - 1 && i === count - 1;
-              return (
-                <line
-                  key={i}
-                  x1={a.x}
-                  y1={a.y}
-                  x2={b.x}
-                  y2={b.y}
-                  strokeOpacity={hot && last ? 1 : undefined}
-                  strokeWidth={hot && last ? 1.6 : undefined}
-                />
-              );
-            })}
-          </g>
-        );
-      })}
+    <g>
+      {coreR > 0 && (
+        <>
+          <defs>
+            <radialGradient id={gradientId}>
+              <stop offset="0%" stopColor={color} stopOpacity={0.5 * coreCoverage} />
+              <stop offset="90%" stopColor={color} stopOpacity={0.5 * coreCoverage} />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx={loop.cx} cy={loop.cy} r={coreR} fill={`url(#${gradientId})`} />
+        </>
+      )}
+      <path d={settled.join(' ')} fill={color} fillOpacity="0.5" />
+      {lit.map((grain, i) => (
+        <circle
+          key={i}
+          cx={grain.x}
+          cy={grain.y}
+          r={grainR * 2.2}
+          fill={freshColor}
+          fillOpacity="0.95"
+        />
+      ))}
     </g>
   );
 }

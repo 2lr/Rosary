@@ -62,6 +62,7 @@ export default function CompletionScreen({
             bloom={bloom}
             fill={fill}
             highlight={fill > 0.99 ? shown.map((c) => c.trait.id) : undefined}
+            freshGrains={fill > 0.99 ? decades : 0}
             className="h-64 w-auto"
           />
         </button>
@@ -84,8 +85,15 @@ export default function CompletionScreen({
           <p className="text-[0.62rem] uppercase tracking-[0.18em] text-faint">
             {t('done.changed')}
           </p>
+          <ul className="mt-2.5 space-y-1.5">
+            {/* One grain per decade, so this line is true every single time. */}
+            <li className="flex items-start gap-2 text-sm">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--bloom-accent)]" />
+              <span>{t('done.heart', { n: decades })}</span>
+            </li>
+          </ul>
           {shown.length > 0 ? (
-            <ul className="mt-2.5 space-y-1.5">
+            <ul className="mt-1.5 space-y-1.5">
               {shown.map((change) => (
                 <li key={change.trait.id} className="flex items-start gap-2 text-sm">
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--bloom-accent)]" />
@@ -99,7 +107,7 @@ export default function CompletionScreen({
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-sm text-muted">{t('done.nothingVisible')}</p>
+            <p className="mt-2 text-xs text-faint">{t('done.nothingVisible')}</p>
           )}
 
           {next && (

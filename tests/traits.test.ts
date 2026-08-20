@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FAMILY_LABEL,
   FAMILY_ORDER,
-  MEMORY_RING_CAPACITY,
+  HEART_FULL_AT,
   TRAITS,
   TRAIT_BY_ID,
   activeTraits,
@@ -12,6 +12,9 @@ import {
   nextChange,
   notchOf,
   saturate,
+  GOLDEN_ANGLE,
+  heartGrain,
+  heartGrainSize,
   type GrowthInput,
 } from '@/lib/rosary/traits';
 
@@ -70,7 +73,7 @@ describe('a rosary that keeps growing', () => {
   it('shows nothing at all on the first day', () => {
     const start = at(0);
     expect(activeTraits(start)).toHaveLength(0);
-    expect(start.memory.rings).toBe(0);
+    expect(start.heart.grains).toBe(0);
   });
 
   it('changes something almost every chaplet for the first months', () => {
@@ -139,27 +142,60 @@ describe('what changed', () => {
   });
 });
 
-describe('the band of memory', () => {
-  it('cuts one stroke per completed rosary', () => {
-    expect(at(0, { rosaries: 0 }).memory).toMatchObject({ ticks: 0, rings: 0 });
-    expect(at(5, { rosaries: 1 }).memory).toMatchObject({ ticks: 1, rings: 1, lastRingTicks: 1 });
-    expect(at(500, { rosaries: 100 }).memory.lastRingTicks).toBe(100);
+describe('the heart of the rose', () => {
+  it('lays exactly one grain for every decade, with no exceptions', () => {
+    for (const d of [0, 1, 5, 137, 2000, 9999]) {
+      expect(at(d).heart.grains).toBe(d);
+    }
   });
 
-  it('wraps into a new ring once one is full', () => {
-    const full = at(0, { rosaries: MEMORY_RING_CAPACITY });
-    expect(full.memory.rings).toBe(1);
-    expect(full.memory.lastRingTicks).toBe(MEMORY_RING_CAPACITY);
-
-    const over = at(0, { rosaries: MEMORY_RING_CAPACITY + 3 });
-    expect(over.memory.rings).toBe(2);
-    expect(over.memory.lastRingTicks).toBe(3);
+  it('changes on every single decade, at every point of the climb', () => {
+    for (const d of [0, 4, 199, 1000, 5000, 50000]) {
+      expect(at(d + 1).heart.grains).toBe(at(d).heart.grains + 1);
+    }
   });
 
-  it('stops adding rings rather than growing without bound', () => {
-    const many = at(0, { rosaries: 100_000 });
-    expect(many.memory.rings).toBeLessThanOrEqual(6);
-    expect(many.memory.lastRingTicks).toBe(MEMORY_RING_CAPACITY);
+  it('never moves a grain once it is laid', () => {
+    // Below the point where the field is full, position depends only on index.
+    for (const grains of [10, 200, HEART_FULL_AT - 1, HEART_FULL_AT]) {
+      for (const i of [0, 3, 9]) {
+        expect(heartGrain(i, grains).radius).toBeCloseTo(
+          heartGrain(i, HEART_FULL_AT).radius,
+          9,
+        );
+      }
+    }
+  });
+
+  it('lays each grain at the golden angle from the last', () => {
+    const step = heartGrain(1, 100).angle - heartGrain(0, 100).angle;
+    expect(step).toBeCloseTo(GOLDEN_ANGLE, 9);
+    // No two grains ever share an angle, because the golden angle is irrational.
+    const seen = new Set(
+      Array.from({ length: 400 }, (_, i) => (heartGrain(i, 400).angle % 360).toFixed(4)),
+    );
+    expect(seen.size).toBe(400);
+  });
+
+  it('stays inside its disc however many grains there are', () => {
+    for (const grains of [1, 50, HEART_FULL_AT, 40000]) {
+      for (const i of [0, Math.floor(grains / 2), grains - 1]) {
+        const { radius } = heartGrain(i, grains);
+        expect(radius).toBeGreaterThanOrEqual(0);
+        expect(radius).toBeLessThanOrEqual(1.000001);
+      }
+    }
+  });
+
+  it('grows outwards first, then packs tighter, so it never clogs', () => {
+    // While it is filling, the outermost grain moves further out each time and
+    // a grain keeps the size it was laid at.
+    expect(heartGrain(499, 500).radius).toBeGreaterThan(heartGrain(99, 100).radius);
+    expect(heartGrainSize(20)).toBeCloseTo(heartGrainSize(HEART_FULL_AT), 9);
+    // Once full, grains only get finer, and never vanish altogether.
+    expect(heartGrainSize(40000)).toBeLessThan(heartGrainSize(HEART_FULL_AT));
+    expect(heartGrainSize(1e9)).toBeGreaterThan(0);
+    expect(heartGrainSize(0)).toBe(0);
   });
 });
 

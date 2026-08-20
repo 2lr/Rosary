@@ -34,9 +34,11 @@ sur un compte.
   facettes, l'intensité des couleurs, l'or sur la chaîne, la patine, la gravure,
   et onze signes qui apparaissent un à un. Voir « Les signes » et « Le modèle »
   plus bas.
-- **Vous voyez ce qui a changé.** À la fin de chaque rosaire, l'application dit
-  en toutes lettres ce qui est différent dans le dessin, et combien de dizaines
-  vous séparent de la prochaine transformation.
+- **Chaque dizaine se voit.** Un grain est déposé au cœur de la rose pour chaque
+  dizaine priée, à l'angle d'or du précédent. À la fin de chaque rosaire,
+  l'application dit en toutes lettres ce qui est différent dans le dessin — en
+  commençant par les grains qui viennent d'être posés, visibles, éclairés — et
+  combien de dizaines vous séparent de la prochaine transformation.
 - **Vous pouvez regarder de près.** Touchez le rosaire : il s'ouvre en plein
   écran, on zoome jusqu'au grain, et un panneau détaille ce qui est déjà là et
   ce qui vient.
@@ -115,10 +117,28 @@ s'approfondit dans le premier mois, la pierre grandit encore après mille
 rosaires. Chaque propriété est découpée en crans perceptibles ; c'est le
 franchissement d'un cran qui est annoncé.
 
-À cela s'ajoute la **couronne de mémoire** : un trait fin gravé pour chaque
-rosaire achevé, enroulé en anneaux concentriques. Elle change à chaque fois,
-sans exception, et devient avec les années une bande dense qu'on découvre en
-zoomant.
+### Le cœur de la rose
+
+Une courbe qui sature ne peut pas changer à chaque dizaine — c'est précisément
+ce que « saturer » veut dire. Alors une chose, au centre du dessin, n'est pas
+une courbe du tout : **un grain est déposé pour chaque dizaine priée**, posé à
+l'angle d'or du précédent, exactement comme les graines au cœur d'une fleur.
+
+```
+angle(i)  = i × 137,50776…°
+rayon(i)  = R × √((i + 1) / 500)      tant que le champ n'est pas plein
+```
+
+Aucun grain n'est jamais déplacé ni remplacé, le motif ne se répète jamais, et
+l'espacement reste égal quel qu'en soit le nombre — c'est exactement pour cela
+que la nature s'en sert pour ranger un nombre illimité de choses dans un disque
+fini. Le champ grandit vers l'extérieur pendant les cinq cents premières
+dizaines, puis se resserre indéfiniment.
+
+C'est la garantie : **chaque dizaine ajoute un grain, sans exception**, quel que
+soit le nombre déjà prié. Les courbes, elles, font le reste : elles bougent à
+chaque dizaine aussi, mais ne franchissent un cran perceptible que de temps en
+temps — souvent au début, rarement après des années.
 
 Le tout est dans `lib/rosary/traits.ts`, sans dépendance ni aléatoire, donc
 entièrement testable : les tests vérifient que rien ne recule jamais, que la
@@ -249,9 +269,17 @@ three interlaced circles, the crown of twelve stars, the Chi-Rho, the rose
 window, the blessing hand out of the cloud, and lilies at the foot of the cross.
 Each carries its meaning and its reference, readable in the close-up view.
 
+A saturating curve cannot change on every single decade — that is what
+saturating means. So one thing is not a curve at all: a grain is laid at the
+heart of the rose for every decade ever prayed, at the golden angle from the one
+before it, exactly as seeds are laid in a flower. No grain is ever moved, the
+pattern never repeats, and the spacing stays even however many there are. Every
+decade adds one, without exception.
+
 At the end of every rosary the app says in plain words what is different in the
-picture, and how many decades remain before the next change. Tap the rosary to
-open it full screen and zoom in on any bead.
+picture — starting with the grains just laid, lit so they can be picked out —
+and how many decades remain before the next change. Tap the rosary to open it
+full screen and zoom in on any bead.
 
 Choose the shape of the loop — round, oval or square — and your own three
 colours, or let the palette come from the mysteries you pray most. Statistics

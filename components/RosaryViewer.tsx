@@ -228,10 +228,13 @@ export default function RosaryViewer({
 
         <section className="mt-5">
           <h3 className="text-[0.62rem] uppercase tracking-[0.18em] text-faint">
-            {t('viewer.memory')}
+            {t('viewer.heart')}
           </h3>
           <p className="mt-1.5 text-sm text-muted">
-            {t('viewer.memoryHint', { n: bloom.growth.memory.ticks })}
+            {t('viewer.heartHint', { n: bloom.growth.heart.grains })}
+          </p>
+          <p className="mt-1.5 text-[0.8rem] leading-relaxed text-faint">
+            {t('viewer.heartMeaning')}
           </p>
         </section>
 

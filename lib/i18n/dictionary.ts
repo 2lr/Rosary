@@ -302,7 +302,8 @@ export const DICT = {
     'trait.patina.meaning': 'Le bois fonce comme fonce un objet qu’on tient tous les jours.',
 
     'done.changed': 'Ce qui a changé',
-    'done.nothingVisible': 'Un trait de plus a été gravé dans la couronne de mémoire.',
+    'done.heart': '{n} grains de plus au cœur de la rose.',
+    'done.nothingVisible': 'Rien d’autre n’a bougé cette fois.',
     'done.next': 'Encore {n} dizaines : {what}',
     'done.look': 'Regarder de près',
 
@@ -310,8 +311,10 @@ export const DICT = {
     'viewer.hint': 'Pincez ou faites défiler pour zoomer.',
     'viewer.traits': 'Ce que la prière a déposé',
     'viewer.toCome': 'À venir',
-    'viewer.memory': 'Couronne de mémoire',
-    'viewer.memoryHint': 'Un trait gravé par rosaire achevé : {n}.',
+    'viewer.heart': 'Le cœur de la rose',
+    'viewer.heartHint': 'Un grain déposé par dizaine priée : {n}.',
+    'viewer.heartMeaning':
+      'Chaque grain se pose à l’angle d’or du précédent, comme les graines au cœur d’une fleur. Aucun n’est jamais déplacé, le motif ne se répète jamais, et l’espacement reste égal quel qu’en soit le nombre.',
     'viewer.remaining': 'encore {n}',
     'viewer.reset': 'Recentrer',
 
@@ -616,7 +619,8 @@ export const DICT = {
     'trait.patina.meaning': 'The wood darkens the way anything darkens that is held every day.',
 
     'done.changed': 'What changed',
-    'done.nothingVisible': 'One more stroke has been cut into the band of memory.',
+    'done.heart': '{n} more grains at the heart of the rose.',
+    'done.nothingVisible': 'Nothing else moved this time.',
     'done.next': '{n} more decades: {what}',
     'done.look': 'Look closely',
 
@@ -624,8 +628,10 @@ export const DICT = {
     'viewer.hint': 'Pinch or scroll to zoom.',
     'viewer.traits': 'What prayer has laid down',
     'viewer.toCome': 'Still to come',
-    'viewer.memory': 'Band of memory',
-    'viewer.memoryHint': 'One stroke cut for every rosary completed: {n}.',
+    'viewer.heart': 'The heart of the rose',
+    'viewer.heartHint': 'One grain laid for every decade prayed: {n}.',
+    'viewer.heartMeaning':
+      'Each grain is laid at the golden angle from the one before it, the way seeds are laid in the heart of a flower. None is ever moved, the pattern never repeats, and the spacing stays even however many there are.',
     'viewer.remaining': '{n} to go',
     'viewer.reset': 'Recentre',
 
