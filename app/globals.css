@@ -1,0 +1,158 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: var(--font-cormorant), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-night-950: #07070d;
+  --color-night-900: #0c0c16;
+  --color-night-800: #14141f;
+  --color-night-700: #1d1d2b;
+  --color-night-600: #2a2a3c;
+  --color-vellum: #f4ece0;
+  --color-gold-300: #e8cf9a;
+  --color-gold-400: #d4b471;
+  --color-gold-500: #b8934c;
+}
+
+:root {
+  /* Overridden per user by the bloom palette; these are the day-one values. */
+  --bloom-bg-0: #07070d;
+  --bloom-bg-1: #0f0e1a;
+  --bloom-bg-2: #16131f;
+  --bloom-chain: #8f8a7d;
+  --bloom-bead: #6a6355;
+  --bloom-pater: #8b7f66;
+  --bloom-accent: #e8cf9a;
+  --bloom-glow: rgb(200 170 110 / 0.12);
+  --bloom-ink: #efe7da;
+
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bloom-bg-0);
+  color: var(--bloom-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* The living background: three soft lights that shift as the rosary grows. */
+.bloom-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 80% at 50% -10%, var(--bloom-glow), transparent 60%),
+    radial-gradient(90% 60% at 12% 105%, var(--bloom-bg-2), transparent 62%),
+    radial-gradient(80% 70% at 95% 88%, var(--bloom-bg-1), transparent 58%),
+    linear-gradient(180deg, var(--bloom-bg-0), var(--bloom-bg-1) 55%, var(--bloom-bg-0));
+  transition: background 1.2s ease;
+}
+
+.bloom-canvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image: radial-gradient(rgb(255 255 255 / 0.055) 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+  mix-blend-mode: soft-light;
+}
+
+/* Safe areas so the standalone app never hides behind the notch or home bar. */
+.pad-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.pad-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.surface {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.055), rgb(255 255 255 / 0.022));
+  border: 1px solid rgb(255 255 255 / 0.09);
+  backdrop-filter: blur(14px);
+}
+
+.hairline {
+  border-color: rgb(255 255 255 / 0.09);
+}
+
+.text-muted {
+  color: color-mix(in srgb, var(--bloom-ink) 62%, transparent);
+}
+.text-faint {
+  color: color-mix(in srgb, var(--bloom-ink) 40%, transparent);
+}
+
+.lining {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.tap {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@keyframes bead-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+.animate-bead {
+  animation: bead-pulse 2.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes shimmer {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Scrollable rails without a visible bar on mobile. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
