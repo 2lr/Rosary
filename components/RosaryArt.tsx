@@ -126,7 +126,7 @@ export default function RosaryArt({
 
   // The signs stack upwards from the loop: dove, then the three circles, then
   // the hand. The canvas has to leave room for whichever has arrived.
-  const signHeight = n.name ? 182 : n.triquetra ? 100 : n.dove ? 62 : 24;
+  const signHeight = n.glory ? 184 : n.triquetra ? 100 : n.dove ? 62 : 24;
   const contentTop = CY - loop.ry - Math.max(raysInner + 70, signHeight);
   const contentBottom = crossTop + crossHeight + (n.lilies ? 30 : 8);
   // Stars are sparse dots; letting the odd one sit at the very edge costs
@@ -481,12 +481,13 @@ export default function RosaryArt({
         {n.triquetra === 1 && (
           <Triquetra x={CX} y={CY - loop.ry - 82} r={12} color={palette.chain} highlight={hot.has('triquetra')} />
         )}
-        {n.name === 1 && (
-          <RadiantName
+        {n.glory === 1 && (
+          <RadiantTriangle
             x={CX}
-            y={CY - loop.ry - 134}
+            y={CY - loop.ry - 136}
             color={palette.goldLeaf}
-            highlight={hot.has('name')}
+            gradientId={`ra-glory-${uid}`}
+            highlight={hot.has('glory')}
           />
         )}
 
@@ -1002,67 +1003,68 @@ function ChiRho({ x, y, size, color }: { x: number; y: number; size: number; col
 }
 
 /**
- * The Name at the summit, in a radiant triangle.
+ * The triangle in glory, at the summit.
  *
- * Four Hebrew letters, read right to left — yod, he, waw, he — written and
- * never spoken. Drawn as bars rather than set as text so it does not depend on
- * a font having Hebrew, and so it holds its weight at any size.
+ * Three equal sides and a light all around: the way God is shown on the
+ * pediment of an altarpiece. Nothing inside it — a shape and a light read at
+ * forty pixels, where any figure or lettering would not.
  */
-function RadiantName({
+function RadiantTriangle({
   x,
   y,
   color,
+  gradientId,
   highlight,
 }: {
   x: number;
   y: number;
   color: string;
+  gradientId: string;
   highlight: boolean;
 }) {
-  const he = (at: number) => (
-    <g key={`he-${at}`}>
-      <rect x={at} y={0} width={7.4} height={1.9} rx={0.5} />
-      <rect x={at + 5.5} y={0} width={1.9} height={9.2} rx={0.5} />
-      <rect x={at + 0.2} y={3.2} width={1.9} height={6} rx={0.5} />
-    </g>
-  );
-
   return (
     <g
       transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
       className={highlight ? 'animate-bead' : undefined}
     >
-      <g stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeOpacity="0.5">
-        {Array.from({ length: 20 }, (_, i) => {
-          const angle = (i / 20) * Math.PI * 2 - Math.PI / 2;
-          const outer = i % 2 ? 29 : 40;
+      <defs>
+        <radialGradient id={gradientId}>
+          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle r="30" fill={`url(#${gradientId})`} />
+      <g stroke={color} strokeWidth="1.15" strokeLinecap="round">
+        {Array.from({ length: 24 }, (_, i) => {
+          const angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+          const outer = i % 2 ? 30 : 42;
           return (
             <line
               key={i}
-              x1={Math.cos(angle) * 26}
-              y1={Math.sin(angle) * 26}
+              x1={Math.cos(angle) * 28}
+              y1={Math.sin(angle) * 28}
               x2={Math.cos(angle) * outer}
               y2={Math.sin(angle) * outer}
+              strokeOpacity={i % 2 ? 0.35 : 0.55}
             />
           );
         })}
       </g>
       <path
-        d="M 0 -25 L 25 20 L -25 20 Z"
+        d="M 0 -26 L 26 19 L -26 19 Z"
         fill="none"
         stroke={color}
-        strokeWidth="2.1"
+        strokeWidth="2.5"
         strokeLinejoin="round"
       />
-      <g transform="translate(-14.4 -3.5)" fill={color}>
-        {he(0)}
-        {/* waw */}
-        <rect x={9.6} y={0} width={3.4} height={1.9} rx={0.5} />
-        <rect x={11.1} y={0} width={1.9} height={9.2} rx={0.5} />
-        {he(15)}
-        {/* yod */}
-        <path d="M 24.6 0.4 L 28 1.2 L 27 5.2 L 24.2 4.4 Z" />
-      </g>
+      <path
+        d="M 0 -18.5 L 18.5 13.5 L -18.5 13.5 Z"
+        fill="none"
+        stroke={color}
+        strokeWidth="1"
+        strokeOpacity="0.45"
+        strokeLinejoin="round"
+      />
     </g>
   );
 }

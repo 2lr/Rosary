@@ -220,11 +220,10 @@ export const DICT = {
     'trait.roseWindow.meaning':
       'La rosace des cathédrales, presque toutes bâties sous le nom de Notre-Dame : douze pétales de lumière autour d’un même centre.',
 
-    'trait.name': 'Le Nom',
-    'trait.name.change': 'Le Nom de Dieu brille au sommet du rosaire.',
-    'trait.name.meaning':
-      'Les quatre lettres du Nom que Dieu donne à Moïse au buisson : « Je suis qui je suis ». On l’écrit et on ne le prononce pas. Il se pose au sommet, dans un triangle rayonnant, comme au fronton des retables.',
-    'trait.name.where': 'Exode 3, 14',
+    'trait.glory': 'Le triangle dans la gloire',
+    'trait.glory.change': 'Un triangle rayonnant s’est ouvert au sommet du rosaire.',
+    'trait.glory.meaning':
+      'Trois côtés égaux, un seul contour, la lumière tout autour. C’est ainsi qu’on figure Dieu au fronton des retables : par une forme et par une lumière, jamais par un visage.',
 
     'trait.lilies': 'Les lys',
     'trait.lilies.change': 'Des lys ont poussé au pied de la croix.',
@@ -538,11 +537,10 @@ export const DICT = {
     'trait.roseWindow.meaning':
       'The rose window of the cathedrals, nearly all of them built under her name: twelve petals of light around one centre.',
 
-    'trait.name': 'The Name',
-    'trait.name.change': 'The Name of God shines at the summit of the rosary.',
-    'trait.name.meaning':
-      'The four letters of the Name God gives Moses at the bush: “I am who I am.” It is written and never spoken. It is set at the summit in a radiant triangle, as on the pediment of an altarpiece.',
-    'trait.name.where': 'Exodus 3:14',
+    'trait.glory': 'The triangle in glory',
+    'trait.glory.change': 'A radiant triangle has opened at the summit of the rosary.',
+    'trait.glory.meaning':
+      'Three equal sides, one single outline, light all around. This is how God is shown on the pediment of an altarpiece: by a shape and by a light, never by a face.',
 
     'trait.lilies': 'The lilies',
     'trait.lilies.change': 'Lilies have grown at the foot of the cross.',

@@ -51,7 +51,7 @@ export type TraitId =
   | 'crown'
   | 'chiRho'
   | 'roseWindow'
-  | 'name'
+  | 'glory'
   | 'lilies';
 
 export type TraitKind =
@@ -128,7 +128,7 @@ export const TRAITS: Trait[] = [
   M('crown', 850, 'mary', 100, 'trait.crown.where'),
   M('chiRho', 1200, 'son', 100),
   M('roseWindow', 1700, 'mary', 100),
-  M('name', 2400, 'father', 100, 'trait.name.where'),
+  M('glory', 2400, 'father', 100),
   M('lilies', 3600, 'mary', 100, 'trait.lilies.where'),
 
   // --- Things you can count -------------------------------------------------
