@@ -25,7 +25,7 @@ on:
 jobs:
   provision:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
     env:
       SERVICE: ${{ inputs.service }}
     steps:
@@ -187,7 +187,27 @@ jobs:
           # nothing visible. The upload returns at once and the deployment is
           # then followed through the API, which also yields the build log if it
           # goes wrong.
-          railway up --service "$SERVICE" --environment "$ENV_ID" --detach
+          #
+          # Railway pauses deploys platform-wide during an incident and refuses
+          # the upload with a one-line message. That is worth waiting out rather
+          # than failing on, so keep offering the code until it is accepted.
+          for attempt in $(seq 1 20); do
+            if railway up --service "$SERVICE" --environment "$ENV_ID" --detach 2>&1 | tee up.log; then
+              echo "Uploaded on attempt $attempt."
+              exit 0
+            fi
+            if grep -qi 'paused' up.log; then
+              echo "attempt $attempt: Railway has deploys paused — waiting."
+              sleep 60
+              continue
+            fi
+            echo '::error::The upload failed for a reason other than the pause.'
+            cat up.log
+            exit 1
+          done
+
+          echo '::error::Railway still had deploys paused after 20 minutes.'
+          exit 1
 
       - name: Follow the build
         run: |
