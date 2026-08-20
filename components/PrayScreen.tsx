@@ -58,6 +58,17 @@ export default function PrayScreen({
 
   const step = steps[Math.min(index, steps.length - 1)];
   const view = useMemo(() => loopView(steps, done, step.id), [steps, done, step.id]);
+
+  // What the art should frame: the decade being prayed, or the pendant during
+  // the opening prayers, which is where those beads and the crucifix are. The
+  // closing is left unframed so the whole rosary is seen once more at the end.
+  const focus = useMemo(() => {
+    if (step.decade !== undefined) {
+      const base = ((step.decade - 1) % 5) * 11;
+      return { beads: Array.from({ length: 11 }, (_, i) => base + i) };
+    }
+    return step.kind === 'closing' ? null : { pendant: true };
+  }, [step.decade, step.kind]);
   const decadeTotal = totalDecades(rosary.kind);
 
   const goTo = useCallback(
@@ -171,7 +182,8 @@ export default function PrayScreen({
           pendant={view.pendant}
           medal={view.medal}
           cross={view.cross}
-          className="h-44 w-auto sm:h-52"
+          focus={focus}
+          className="h-48 w-full sm:h-56"
           onBeadClick={(beadIndex) => jumpToBead(beadIndex, steps, view.chaplet, goTo)}
         />
         {view.chaplets > 1 && (

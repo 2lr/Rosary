@@ -22,6 +22,12 @@ export type RosaryArtProps = {
   highlight?: TraitId[];
   /** Grains laid by the rosary just prayed, lit so they can be picked out. */
   freshGrains?: number;
+  /**
+   * Frame part of the piece rather than the whole. Give the loop beads that
+   * should fill the frame, and whether the pendant belongs in it; everything is
+   * still drawn, the window just tightens around what is being prayed.
+   */
+  focus?: { beads?: number[]; pendant?: boolean } | null;
   className?: string;
   onBeadClick?: (index: number) => void;
   title?: string;
@@ -76,6 +82,7 @@ export default function RosaryArt({
   fill = 0,
   highlight,
   freshGrains = 0,
+  focus = null,
   className,
   onBeadClick,
   title,
@@ -146,6 +153,70 @@ export default function RosaryArt({
 
   const fractions = beadFractions(LOOP_BEADS, GAP);
 
+  // The whole piece drawn at the width of a phone leaves each bead two or three
+  // pixels across — too small to follow with a thumb. Framing only the decade in
+  // hand makes the beads legible, and the frame is landscape so it can use the
+  // full width of the screen instead of a narrow column.
+  const focusBeads = (focus?.beads ?? []).filter((i) => i >= 0 && i < LOOP_BEADS);
+
+  // A decade sitting on the side of the loop occupies a nearly square patch,
+  // most of it the empty inside of the curve. Turning the piece so the decade
+  // in hand rests at the top makes it a wide shallow band instead — which is
+  // the shape a phone has room for, and which lets the beads be far larger.
+  // The pendant is never turned: a crucifix hangs downwards or not at all.
+  const spin = (() => {
+    if (!focus || focus.pendant || focusBeads.length === 0) return 0;
+    const middle = loop.at(fractions[focusBeads[Math.floor(focusBeads.length / 2)]]);
+    return -90 - (Math.atan2(middle.y - CY, middle.x - CX) * 180) / Math.PI;
+  })();
+
+  const turned = (p: Point): Point => {
+    if (!spin) return p;
+    const radians = (spin * Math.PI) / 180;
+    const dx = p.x - CX;
+    const dy = p.y - CY;
+    return {
+      x: CX + dx * Math.cos(radians) - dy * Math.sin(radians),
+      y: CY + dx * Math.sin(radians) + dy * Math.cos(radians),
+    };
+  };
+
+  const focusBox = (() => {
+    if (!focus || (focusBeads.length === 0 && !focus.pendant)) return null;
+
+    const points: Point[] = focusBeads.map((i) => turned(loop.at(fractions[i])));
+    if (focus.pendant) {
+      points.push({ x: CX, y: bottom.y }, { x: CX, y: crossTop + crossHeight });
+    }
+
+    const pad = Math.max(v.paterRadius, v.aveRadius) + 20;
+    const edge = (values: number[], sign: number) =>
+      (sign < 0 ? Math.min(...values) - pad : Math.max(...values) + pad);
+    const left = edge(points.map((p) => p.x), -1) * scale + offsetX;
+    const right = edge(points.map((p) => p.x), 1) * scale + offsetX;
+    const top = edge(points.map((p) => p.y), -1) * scale + offsetY;
+    const foot = edge(points.map((p) => p.y), 1) * scale + offsetY;
+
+    // The window hugs the beads rather than holding a fixed shape: a decade
+    // across the top of the loop is wide and shallow, one down its side is
+    // tall and narrow, and forcing either into the other's proportions only
+    // buys empty space inside the curve. The element letterboxes what it gets,
+    // so the tighter the window the larger the beads. The floors keep a single
+    // bead from filling the frame on its own.
+    const width = Math.max(right - left, 150);
+    const height = Math.max(foot - top, 105);
+    return {
+      x: (left + right) / 2 - width / 2,
+      y: (top + foot) / 2 - height / 2,
+      width,
+      height,
+    };
+  })();
+
+  const viewBox = focusBox
+    ? `${focusBox.x.toFixed(1)} ${focusBox.y.toFixed(1)} ${focusBox.width.toFixed(1)} ${focusBox.height.toFixed(1)}`
+    : `0 0 ${W} ${H}`;
+
   const stars = Array.from({ length: growth.stars }, () => {
     const f = random();
     const distance = raysInner + 18 + random() * 44;
@@ -181,7 +252,7 @@ export default function RosaryArt({
 
   return (
     <svg
-      viewBox={`0 0 ${W} ${H}`}
+      viewBox={viewBox}
       className={className}
       role={title ? 'img' : 'presentation'}
       aria-label={title}
@@ -202,7 +273,12 @@ export default function RosaryArt({
         </linearGradient>
       </defs>
 
-      <g transform={`translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale.toFixed(4)})`}>
+      <g
+        transform={
+          `translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale.toFixed(4)})` +
+          (spin ? ` rotate(${spin.toFixed(2)} ${CX} ${CY})` : '')
+        }
+      >
         {n.roseWindow === 1 && <RoseWindow loop={loop} color={palette.chain} />}
         <RoseHeart
           loop={loop}
@@ -221,7 +297,12 @@ export default function RosaryArt({
           />
         )}
 
-        <ellipse cx={CX} cy={CY} rx={loop.rx + 52} ry={loop.ry + 52} fill={`url(#${glowId})`} />
+        {/* The halo is sized to sit behind the whole piece. Framed on a single
+            decade it covers the window edge to edge, which reads as a tinted
+            rectangle rather than a glow, so it steps aside. */}
+        {!focusBox && (
+          <ellipse cx={CX} cy={CY} rx={loop.rx + 52} ry={loop.ry + 52} fill={`url(#${glowId})`} />
+        )}
 
         {rays.map((ray, i) => (
           <line
