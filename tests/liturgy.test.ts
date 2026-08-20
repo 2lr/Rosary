@@ -4,7 +4,13 @@ import {
   MYSTERY_SET_ORDER,
   mysterySetForDate,
 } from '@/lib/rosary/mysteries';
-import { PRAYERS } from '@/lib/rosary/prayers';
+import {
+  HAIL_MARY,
+  HAIL_MARY_VARIANTS,
+  isHailMaryVariant,
+  prayerWith,
+  PRAYERS,
+} from '@/lib/rosary/prayers';
 import { LANGS } from '@/lib/i18n/config';
 
 describe('the cycle of mysteries', () => {
@@ -71,5 +77,58 @@ describe('prayers', () => {
     expect(PRAYERS.ourFather.text.fr.join(' ')).toContain(
       'ne nous laisse pas entrer en tentation',
     );
+  });
+});
+
+describe('the wordings of the Hail Mary', () => {
+  it('offers every variant in both languages, in two parts', () => {
+    for (const variant of HAIL_MARY_VARIANTS) {
+      const wording = HAIL_MARY[variant];
+      for (const lang of ['fr', 'en'] as const) {
+        expect(wording.text[lang]).toHaveLength(2);
+        expect(wording.title[lang].length).toBeGreaterThan(0);
+        expect(wording.name[lang].length).toBeGreaterThan(0);
+        for (const paragraph of wording.text[lang]) {
+          expect(paragraph.trim()).toBe(paragraph);
+          expect(paragraph.length).toBeGreaterThan(20);
+        }
+      }
+    }
+  });
+
+  it('keeps the salutation and the petition in every wording', () => {
+    // Whatever the words, both halves of the prayer have to be there: the
+    // greeting of Luke 1, and the asking of the Church.
+    for (const variant of HAIL_MARY_VARIANTS) {
+      const fr = HAIL_MARY[variant].text.fr;
+      expect(fr[0]).toMatch(/Marie|Maria/);
+      expect(fr[1]).toMatch(/mort|mortis/);
+    }
+  });
+
+  it('says vous in the traditional French and tu in the contemporary', () => {
+    expect(HAIL_MARY.traditional.text.fr[0]).toContain('Je vous salue');
+    expect(HAIL_MARY.traditional.text.fr[1]).toContain('priez pour nous');
+    expect(HAIL_MARY.contemporary.text.fr[0]).toContain('Je te salue');
+    expect(HAIL_MARY.contemporary.text.fr[1]).toContain('prie pour nous');
+  });
+
+  it('gives the same Latin whichever language is set', () => {
+    expect(HAIL_MARY.latin.text.fr).toEqual(HAIL_MARY.latin.text.en);
+    expect(HAIL_MARY.latin.text.fr[0]).toContain('Ave Maria, gratia plena');
+  });
+
+  it('applies the choice to the Hail Mary and to nothing else', () => {
+    expect(prayerWith('hailMary', 'latin').text.fr[0]).toContain('Ave Maria');
+    expect(prayerWith('hailMary', 'contemporary').text.fr[0]).toContain('Je te salue');
+    expect(prayerWith('ourFather', 'latin')).toBe(PRAYERS.ourFather);
+    expect(prayerWith('creed', 'contemporary')).toBe(PRAYERS.creed);
+  });
+
+  it('falls back to the traditional wording when asked for nonsense', () => {
+    const rogue = 'gibberish' as unknown as Parameters<typeof prayerWith>[1];
+    expect(prayerWith('hailMary', rogue).text.fr).toEqual(HAIL_MARY.traditional.text.fr);
+    expect(isHailMaryVariant('gibberish')).toBe(false);
+    expect(isHailMaryVariant('latin')).toBe(true);
   });
 });

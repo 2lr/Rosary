@@ -13,6 +13,7 @@ import type { Stats } from '@/lib/rosary/stats';
 import type { Bloom } from '@/lib/rosary/growth';
 import { MYSTERY_SETS, type MysterySetId } from '@/lib/rosary/mysteries';
 import { buildSequence } from '@/lib/rosary/sequence';
+import { nextMilestone } from '@/lib/rosary/traits';
 import type { Rosary, RosaryKind } from '@/lib/rosary/types';
 
 type Props = {
@@ -27,6 +28,7 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
   const router = useRouter();
   const lang = user.lang;
   const t = useMemo(() => translatorFor(lang), [lang]);
+  const sign = useMemo(() => nextMilestone(bloom.growth), [bloom.growth]);
 
   const [sheet, setSheet] = useState<RosaryKind | null>(null);
   const [viewing, setViewing] = useState(false);
@@ -121,6 +123,20 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
               })}
             </p>
           </div>
+        )}
+
+        {/* Barely there on purpose: a hint of what is coming, for whoever
+            looks for it, without turning prayer into a progress bar. A chaplet
+            is five decades, so anything within five arrives next time. */}
+        {sign && (
+          <p className="mt-4 text-[0.6rem] italic tracking-wide text-whisper">
+            {sign.remaining <= 5
+              ? t('home.nextSignSoon', { sign: t(sign.trait.label).toLowerCase() })
+              : t('home.nextSignAt', {
+                  sign: t(sign.trait.label).toLowerCase(),
+                  n: sign.remaining,
+                })}
+          </p>
         )}
       </section>
 

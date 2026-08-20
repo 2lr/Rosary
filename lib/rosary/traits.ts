@@ -363,6 +363,22 @@ export function nextChange(growth: Growth): { trait: Trait; remaining: number } 
   return best;
 }
 
+/**
+ * The next sign to appear — a milestone, not one of the continuous traits.
+ * Those shift a little on every decade, so the nearest change is almost always
+ * one of them; what someone waits for is the dove, the flames, the crown.
+ */
+export function nextMilestone(growth: Growth): { trait: Trait; remaining: number } | null {
+  let best: { trait: Trait; remaining: number } | null = null;
+  for (const trait of TRAITS) {
+    if (trait.kind !== 'milestone') continue;
+    const left = growth.remaining[trait.id];
+    if (left === null) continue;
+    if (!best || left < best.remaining) best = { trait, remaining: left };
+  }
+  return best;
+}
+
 /** Traits already showing, for the panel behind the artwork. */
 export function activeTraits(growth: Growth): Trait[] {
   return TRAITS.filter((trait) => growth.notch[trait.id] > 0);

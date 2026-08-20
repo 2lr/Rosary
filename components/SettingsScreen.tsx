@@ -9,6 +9,12 @@ import { Button, Card, Field } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
 import type { Stats } from '@/lib/rosary/stats';
+import {
+  HAIL_MARY,
+  HAIL_MARY_VARIANTS,
+  type HailMaryVariant,
+} from '@/lib/rosary/prayers';
+import { cx } from '@/components/ui';
 
 type InstallPrompt = Event & { prompt: () => Promise<void> };
 
@@ -21,6 +27,7 @@ export default function SettingsScreen({
     email: string;
     displayName: string | null;
     lang: Lang;
+    hailMary: HailMaryVariant;
   };
   stats: Stats;
 }) {
@@ -31,6 +38,7 @@ export default function SettingsScreen({
     colors: user.colors,
     shape: user.shape,
   });
+  const [hailMary, setHailMary] = useState<HailMaryVariant>(user.hailMary);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<InstallPrompt | null>(null);
@@ -59,6 +67,7 @@ export default function SettingsScreen({
         displayName: name.trim() || null,
         colors: appearance.colors,
         shape: appearance.shape,
+        hailMary,
       }),
     });
     setBusy(false);
@@ -117,6 +126,50 @@ export default function SettingsScreen({
           setSaved(false);
         }}
       />
+
+      {/* The Hail Mary is said fifty-three times in a rosary, so its wording is
+          the one worth choosing. The others are left as they are. */}
+      <Card className="mt-3 px-4 py-5">
+        <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
+          {t('settings.hailMary')}
+        </p>
+        <p className="mt-1.5 text-xs text-muted">{t('settings.hailMaryHint')}</p>
+
+        <div className="mt-3 flex gap-1.5">
+          {HAIL_MARY_VARIANTS.map((variant) => (
+            <button
+              key={variant}
+              type="button"
+              onClick={() => {
+                setHailMary(variant);
+                setSaved(false);
+              }}
+              aria-pressed={hailMary === variant}
+              className={cx(
+                'tap flex-1 rounded-full px-3 py-2 text-xs transition',
+                hailMary === variant
+                  ? 'bg-[var(--bloom-accent)] text-[var(--bloom-on-accent)]'
+                  : 'surface text-muted',
+              )}
+            >
+              {HAIL_MARY[variant].name[lang]}
+            </button>
+          ))}
+        </div>
+
+        <p className="mt-3 text-xs text-faint">{HAIL_MARY[hailMary].note[lang]}</p>
+
+        {/* Seeing the words themselves is the only way to choose between them. */}
+        <blockquote className="mt-3 border-l border-[var(--bloom-fill-3)] pl-3">
+          <p className="font-display text-sm leading-relaxed text-muted text-pretty">
+            {HAIL_MARY[hailMary].text[lang][0]}
+          </p>
+        </blockquote>
+
+        <Button className="mt-4 w-full" onClick={() => void save()} disabled={busy}>
+          {saved ? t('settings.saved') : t('settings.save')}
+        </Button>
+      </Card>
 
       <Card className="mt-3 space-y-3 px-4 py-5">
         <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">

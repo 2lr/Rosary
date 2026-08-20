@@ -89,6 +89,12 @@ body {
 .text-faint {
   color: color-mix(in srgb, var(--bloom-ink) 46%, transparent);
 }
+/* Barely there: for what should be found rather than read. The slash-opacity
+   shorthand does nothing on these, since they are plain classes rather than
+   Tailwind colour utilities. */
+.text-whisper {
+  color: color-mix(in srgb, var(--bloom-ink) 25%, transparent);
+}
 
 .lining {
   font-variant-numeric: lining-nums tabular-nums;

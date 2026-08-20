@@ -9,7 +9,7 @@ import { Button, cx } from '@/components/ui';
 import { useRosarySync } from '@/lib/client/useRosarySync';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import { MYSTERY_SETS } from '@/lib/rosary/mysteries';
-import { PRAYERS } from '@/lib/rosary/prayers';
+import { prayerWith, type HailMaryVariant } from '@/lib/rosary/prayers';
 import { buildSequence, firstUndoneStep, totalDecades } from '@/lib/rosary/sequence';
 import { loopView } from '@/lib/rosary/loop';
 import { bloomFrom, stageFor } from '@/lib/rosary/growth';
@@ -24,11 +24,13 @@ export default function PrayScreen({
   bloom,
   stats,
   preferences,
+  hailMary,
 }: {
   rosary: Rosary;
   bloom: Bloom;
   stats: Stats;
   preferences: BloomPreferences;
+  hailMary: HailMaryVariant;
 }) {
   const router = useRouter();
   const lang = rosary.lang;
@@ -205,6 +207,7 @@ export default function PrayScreen({
           step={step}
           rosary={rosary}
           writings={progress.writings}
+          hailMary={hailMary}
           onWrite={(text) =>
             update({ writings: { ...progress.writings, [String(step.id)]: text } })
           }
@@ -321,12 +324,14 @@ function StepBody({
   step,
   rosary,
   writings,
+  hailMary,
   onWrite,
   t,
 }: {
   step: Step;
   rosary: Rosary;
   writings: Record<string, string>;
+  hailMary: HailMaryVariant;
   onWrite: (text: string) => void;
   t: ReturnType<typeof translatorFor>;
 }) {
@@ -386,7 +391,7 @@ function StepBody({
     );
   }
 
-  const prayer = step.prayer ? PRAYERS[step.prayer] : null;
+  const prayer = step.prayer ? prayerWith(step.prayer, hailMary) : null;
   if (!prayer) return null;
 
   return (

@@ -11,6 +11,7 @@ export const SCHEMA_STATEMENTS = [
      lang          TEXT NOT NULL DEFAULT 'fr',
      colors        TEXT,
      loop_shape    TEXT,
+     hail_mary     TEXT,
      created_at    TEXT NOT NULL
    )`,
   `CREATE TABLE IF NOT EXISTS rosaries (
@@ -43,4 +44,5 @@ export const SCHEMA_STATEMENTS = [
 export const MIGRATION_STATEMENTS = [
   `ALTER TABLE users ADD COLUMN colors TEXT`,
   `ALTER TABLE users ADD COLUMN loop_shape TEXT`,
+  `ALTER TABLE users ADD COLUMN hail_mary TEXT`,
 ];

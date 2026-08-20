@@ -5,6 +5,11 @@ import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { normalizeLang, type Lang } from '@/lib/i18n/config';
 import { isHexColor, normalizeHex } from '@/lib/rosary/color';
 import { isLoopShape, type LoopShape } from '@/lib/rosary/shapes';
+import {
+  DEFAULT_HAIL_MARY_VARIANT,
+  isHailMaryVariant,
+  type HailMaryVariant,
+} from '@/lib/rosary/prayers';
 
 export type User = {
   id: string;
@@ -14,6 +19,8 @@ export type User = {
   /** Accent, beads and chain. Null until the user picks their own. */
   colors: [string, string, string] | null;
   shape: LoopShape;
+  /** Which wording of the Hail Mary to pray. */
+  hailMary: HailMaryVariant;
   createdAt: string;
 };
 
@@ -25,6 +32,7 @@ type UserRow = {
   lang: string;
   colors: string | null;
   loop_shape: string | null;
+  hail_mary: string | null;
   created_at: string;
 };
 
@@ -49,6 +57,7 @@ function toUser(row: UserRow): User {
     lang: normalizeLang(row.lang),
     colors: parseColors(row.colors),
     shape: isLoopShape(row.loop_shape) ? row.loop_shape : 'round',
+    hailMary: isHailMaryVariant(row.hail_mary) ? row.hail_mary : DEFAULT_HAIL_MARY_VARIANT,
     createdAt: row.created_at,
   };
 }
@@ -95,6 +104,7 @@ export async function createUser(input: {
     lang: input.lang,
     colors: null,
     shape: 'round',
+    hailMary: DEFAULT_HAIL_MARY_VARIANT,
     createdAt,
   };
 }
@@ -119,6 +129,7 @@ export async function updateUserPreferences(
     displayName?: string | null;
     colors?: [string, string, string] | null;
     shape?: LoopShape;
+    hailMary?: HailMaryVariant;
   },
 ): Promise<void> {
   if (patch.lang !== undefined) {
@@ -138,5 +149,8 @@ export async function updateUserPreferences(
   }
   if (patch.shape !== undefined) {
     await run('UPDATE users SET loop_shape = ? WHERE id = ?', [patch.shape, id]);
+  }
+  if (patch.hailMary !== undefined) {
+    await run('UPDATE users SET hail_mary = ? WHERE id = ?', [patch.hailMary, id]);
   }
 }

@@ -30,6 +30,7 @@ export default async function PrayPage({ params }: { params: Promise<{ id: strin
         bloom={bloom}
         stats={stats}
         preferences={preferencesOf(user)}
+        hailMary={user.hailMary}
       />
     </>
   );

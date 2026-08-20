@@ -28,6 +28,7 @@ export default async function SettingsPage() {
           lang: user.lang,
           colors: user.colors,
           shape: user.shape,
+          hailMary: user.hailMary,
         }}
         stats={stats}
       />

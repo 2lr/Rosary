@@ -146,3 +146,107 @@ export const OPENING_VIRTUES: { fr: string; en: string }[] = [
   { fr: 'pour l’espérance', en: 'for hope' },
   { fr: 'pour la charité', en: 'for charity' },
 ];
+
+/**
+ * Wordings of the Hail Mary a user can choose between.
+ *
+ * `traditional` is the form most people learned by heart: French keeps the
+ * vouvoiement and "pleine de grâce", English keeps thee and thou.
+ * `contemporary` is the modern translation — the tutoiement in French,
+ * plain "you" in English.
+ * `latin` is the Ave Maria, the same prayer everywhere and the one that is
+ * sung; it is offered in both languages because it belongs to neither.
+ *
+ * Only the Hail Mary is offered this way: it is the prayer said fifty-three
+ * times in a rosary, so the wording is the one that matters.
+ */
+export type HailMaryVariant = 'traditional' | 'contemporary' | 'latin';
+
+export const HAIL_MARY_VARIANTS: HailMaryVariant[] = ['traditional', 'contemporary', 'latin'];
+
+export const DEFAULT_HAIL_MARY_VARIANT: HailMaryVariant = 'traditional';
+
+export function isHailMaryVariant(value: unknown): value is HailMaryVariant {
+  return typeof value === 'string' && (HAIL_MARY_VARIANTS as string[]).includes(value);
+}
+
+type HailMaryWording = {
+  /** How the choice is named in the settings. */
+  name: Record<Lang, string>;
+  /** A word on where it comes from, so the choice is an informed one. */
+  note: Record<Lang, string>;
+  title: Record<Lang, string>;
+  text: Record<Lang, string[]>;
+};
+
+export const HAIL_MARY: Record<HailMaryVariant, HailMaryWording> = {
+  traditional: {
+    name: { fr: 'Traditionnel', en: 'Traditional' },
+    note: {
+      fr: 'Celui que l’on récite depuis toujours, au vouvoiement.',
+      en: 'The form most people learned by heart, with thee and thou.',
+    },
+    title: { fr: 'Je vous salue, Marie', en: 'Hail Mary' },
+    text: {
+      fr: [
+        'Je vous salue, Marie, pleine de grâce ; le Seigneur est avec vous. Vous êtes bénie entre toutes les femmes et Jésus, le fruit de vos entrailles, est béni.',
+        'Sainte Marie, Mère de Dieu, priez pour nous, pauvres pécheurs, maintenant et à l’heure de notre mort. Amen.',
+      ],
+      en: [
+        'Hail Mary, full of grace, the Lord is with thee. Blessed art thou amongst women, and blessed is the fruit of thy womb, Jesus.',
+        'Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.',
+      ],
+    },
+  },
+
+  contemporary: {
+    name: { fr: 'Contemporain', en: 'Contemporary' },
+    note: {
+      fr: 'La traduction moderne, au tutoiement : « comblée de grâce ».',
+      en: 'The modern translation, in plain speech.',
+    },
+    title: { fr: 'Je te salue, Marie', en: 'Hail Mary' },
+    text: {
+      fr: [
+        'Je te salue, Marie, comblée de grâce ; le Seigneur est avec toi. Tu es bénie entre toutes les femmes et Jésus, le fruit de tes entrailles, est béni.',
+        'Sainte Marie, Mère de Dieu, prie pour nous, pauvres pécheurs, maintenant et à l’heure de notre mort. Amen.',
+      ],
+      en: [
+        'Hail Mary, full of grace, the Lord is with you. Blessed are you among women, and blessed is the fruit of your womb, Jesus.',
+        'Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.',
+      ],
+    },
+  },
+
+  latin: {
+    name: { fr: 'Latin', en: 'Latin' },
+    note: {
+      fr: 'L’Ave Maria, le même partout, et celui que l’on chante.',
+      en: 'The Ave Maria — the same everywhere, and the one that is sung.',
+    },
+    title: { fr: 'Ave Maria', en: 'Ave Maria' },
+    text: {
+      fr: [
+        'Ave Maria, gratia plena, Dominus tecum. Benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus.',
+        'Sancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen.',
+      ],
+      en: [
+        'Ave Maria, gratia plena, Dominus tecum. Benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus.',
+        'Sancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen.',
+      ],
+    },
+  },
+};
+
+/**
+ * The prayer to show, with the user's chosen wording already applied. Every
+ * prayer but the Hail Mary is returned unchanged.
+ */
+export function prayerWith(
+  id: PrayerId,
+  variant: HailMaryVariant = DEFAULT_HAIL_MARY_VARIANT,
+): Prayer {
+  if (id !== 'hailMary') return PRAYERS[id];
+  const wording = HAIL_MARY[variant] ?? HAIL_MARY[DEFAULT_HAIL_MARY_VARIANT];
+  return { id, title: wording.title, text: wording.text };
+}

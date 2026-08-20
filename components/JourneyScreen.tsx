@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import AppNav from '@/components/AppNav';
 import RosaryArt from '@/components/RosaryArt';
 import RosaryViewer from '@/components/RosaryViewer';
+import PrayerCalendar from '@/components/PrayerCalendar';
 import { Card, Stat, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
@@ -81,8 +82,15 @@ export default function JourneyScreen({
         <Stat value={stats.daysPrayed} label={t('journey.daysPrayed')} />
       </section>
 
-      {/* Ninety days at a glance: the shape of a habit. */}
+      {/* A month at a time, with the dates on show: an unlabelled grid of
+          squares tells you the shape of a habit but never which day was which. */}
       <Card className="mt-4 px-4 py-4">
+        <PrayerCalendar lang={lang} stats={stats} t={t} />
+      </Card>
+
+      {/* And the longer view underneath, where the run matters more than the
+          date: three months of squares, one per day. */}
+      <Card className="mt-3 px-4 py-4">
         <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
           {t('journey.lastNinety')}
         </p>
