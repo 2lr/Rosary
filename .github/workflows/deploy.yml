@@ -3,6 +3,10 @@ name: Deploy
 # Creates everything the rosary needs inside an existing Railway project, then
 # deploys and checks that the public address really serves the app.
 #
+# Provisioning goes through Railway's GraphQL API rather than the CLI: a project
+# token authenticates it directly, whereas the CLI's subcommands each want a
+# linked project on disk and fail with "Project not found" without one.
+#
 # The token is taken as an input rather than a secret. That value is recorded in
 # this run's metadata, so treat it as spent: rotate it in Railway once the
 # project is up, and move to a repository secret for anything routine.
@@ -21,7 +25,7 @@ on:
 jobs:
   provision:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     env:
       SERVICE: ${{ inputs.service }}
     steps:
@@ -43,51 +47,85 @@ jobs:
       - name: Read the project the token opens
         run: |
           set -euo pipefail
+          railway --version
 
-          railway status --json > status.json 2>&1
+          railway status --json > status.json
           echo '--- project ---'
-          jq '{id, name, workspace: .workspace.name}' status.json
+          jq '{id, name}' status.json
           echo '--- services ---'
-          jq -r '.services.edges[]?.node | "\(.name)\t\(.id)"' status.json || true
+          jq -r '.services.edges[]?.node | "\(.name)\t\(.id)"' status.json
           echo '--- environments ---'
-          jq -r '.environments.edges[]?.node | "\(.name)\t\(.id)"' status.json || true
+          jq -r '.environments.edges[]?.node | "\(.name)\t\(.id)"' status.json
 
           PROJECT_ID="$(jq -r '.id // empty' status.json)"
-          if [ -z "$PROJECT_ID" ]; then
-            echo '::error::The token does not resolve to a project.'
+          PROJECT_NAME="$(jq -r '.name // empty' status.json)"
+          ENV_ID="$(jq -r '[.environments.edges[]?.node | select(.name=="production")][0].id // empty' status.json)"
+          [ -n "$ENV_ID" ] || ENV_ID="$(jq -r '.environments.edges[0].node.id // empty' status.json)"
+
+          if [ -z "$PROJECT_ID" ] || [ -z "$ENV_ID" ]; then
+            echo '::error::The token does not resolve to a project and an environment.'
             exit 1
           fi
-          echo "PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
 
-          # A project token already carries its project, so linking is a
-          # convenience rather than a requirement: never fail on it.
-          railway link --project "$PROJECT_ID" --environment production >/dev/null 2>&1 \
-            || railway link --project "$PROJECT_ID" >/dev/null 2>&1 \
-            || echo 'link skipped — the token carries the project already'
-
-      - name: The database
-        run: |
-          set -euo pipefail
-          if jq -e '[.services.edges[]?.node.name] | index("Postgres")' status.json >/dev/null; then
-            echo 'Postgres is already there.'
-          else
-            echo 'Adding Postgres.'
-            railway add --database postgres --json
-          fi
+          {
+            echo "PROJECT_ID=$PROJECT_ID"
+            echo "PROJECT_NAME=$PROJECT_NAME"
+            echo "ENV_ID=$ENV_ID"
+          } >> "$GITHUB_ENV"
 
       - name: The application service
         run: |
           set -euo pipefail
-          if jq -e --arg s "$SERVICE" '[.services.edges[]?.node.name] | index($s)' status.json >/dev/null; then
-            echo "$SERVICE is already there."
+
+          # One place to talk to Railway. Anything the API reports as an error
+          # stops the run rather than being swallowed.
+          gql() {
+            jq -n --arg q "$1" --argjson v "$2" '{query:$q, variables:$v}' > payload.json
+            curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+              -H "Project-Access-Token: $RAILWAY_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data @payload.json > reply.json
+            if jq -e '.errors' reply.json >/dev/null; then
+              echo '::error::Railway refused the call:'
+              jq -r '.errors[].message' reply.json
+              exit 1
+            fi
+            cat reply.json
+          }
+
+          SERVICE_ID="$(jq -r --arg s "$SERVICE" \
+            '[.services.edges[]?.node | select(.name==$s)][0].id // empty' status.json)"
+
+          if [ -n "$SERVICE_ID" ]; then
+            echo "$SERVICE is already there: $SERVICE_ID"
           else
-            echo "Adding $SERVICE."
-            railway add --service "$SERVICE" --json
+            echo "Creating $SERVICE."
+            SERVICE_ID="$(gql 'mutation($input: ServiceCreateInput!) { serviceCreate(input: $input) { id name } }' \
+              "$(jq -n --arg p "$PROJECT_ID" --arg n "$SERVICE" '{input:{projectId:$p, name:$n}}')" \
+              | jq -r '.data.serviceCreate.id')"
+            echo "Created: $SERVICE_ID"
           fi
 
-      - name: Wire the two together
+          [ -n "$SERVICE_ID" ] && [ "$SERVICE_ID" != 'null' ] || { echo '::error::No service id.'; exit 1; }
+          echo "SERVICE_ID=$SERVICE_ID" >> "$GITHUB_ENV"
+
+      - name: Wire the service to the database
         run: |
           set -euo pipefail
+
+          gql() {
+            jq -n --arg q "$1" --argjson v "$2" '{query:$q, variables:$v}' > payload.json
+            curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+              -H "Project-Access-Token: $RAILWAY_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data @payload.json > reply.json
+            if jq -e '.errors' reply.json >/dev/null; then
+              echo '::error::Railway refused the call:'
+              jq -r '.errors[].message' reply.json
+              exit 1
+            fi
+            cat reply.json
+          }
 
           # The literal Railway reference is assembled here rather than written
           # out, because the sequence that opens it is also how GitHub Actions
@@ -95,31 +133,94 @@ jobs:
           OPEN='${'
           DB_REF="${OPEN}{Postgres.DATABASE_URL}}"
 
-          railway variable set "DATABASE_URL=$DB_REF" --service "$SERVICE" --skip-deploys
-          railway variable set "PORT=3000" --service "$SERVICE" --skip-deploys
+          EXISTING="$(gql 'query($projectId: String!, $environmentId: String!, $serviceId: String!) { variables(projectId: $projectId, environmentId: $environmentId, serviceId: $serviceId) }' \
+            "$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" \
+               '{projectId:$p, environmentId:$e, serviceId:$s}')" \
+            | jq -r '[.data.variables // {} | keys[]] | join(",")')"
+          echo "Already set: ${EXISTING:-none}"
 
-          # Generated here so it is never typed anywhere, and only once so that
-          # sessions survive later deploys.
-          if railway variable list --service "$SERVICE" --kv 2>/dev/null | grep -q '^SESSION_SECRET='; then
-            echo 'SESSION_SECRET already set — left alone.'
+          # Only minted once, so that live sessions survive later deploys.
+          if echo ",$EXISTING," | grep -q ',SESSION_SECRET,'; then
+            echo 'SESSION_SECRET left alone.'
+            VARS="$(jq -n --arg db "$DB_REF" '{DATABASE_URL:$db, PORT:"3000", NODE_ENV:"production"}')"
           else
             SECRET="$(openssl rand -hex 32)"
             echo "::add-mask::$SECRET"
-            railway variable set "SESSION_SECRET=$SECRET" --service "$SERVICE" --skip-deploys
-            echo 'SESSION_SECRET generated and set.'
+            VARS="$(jq -n --arg db "$DB_REF" --arg s "$SECRET" \
+              '{DATABASE_URL:$db, PORT:"3000", NODE_ENV:"production", SESSION_SECRET:$s}')"
+            echo 'SESSION_SECRET generated.'
           fi
 
+          gql 'mutation($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }' \
+            "$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" --argjson v "$VARS" \
+               '{input:{projectId:$p, environmentId:$e, serviceId:$s, variables:$v}}')" >/dev/null
+          echo 'Variables set.'
+
+      - name: Link the checkout to the project
+        run: |
+          set -euo pipefail
+
+          # `railway up` reads the linkage from the CLI's own config rather than
+          # from the token, so write it directly: `railway link` needs an account
+          # token to enumerate workspaces, which a project token cannot do.
+          mkdir -p "$HOME/.railway"
+          jq -n \
+            --arg path "$PWD" \
+            --arg project "$PROJECT_ID" \
+            --arg name "$PROJECT_NAME" \
+            --arg env "$ENV_ID" \
+            --arg service "$SERVICE_ID" \
+            --arg serviceName "$SERVICE" \
+            '{projects: {($path): {
+                projectPath: $path,
+                name: $name,
+                project: $project,
+                environment: $env,
+                environmentName: "production",
+                service: $service,
+                serviceName: $serviceName
+              }}}' > "$HOME/.railway/config.json"
+          cat "$HOME/.railway/config.json"
+
+          railway status || echo 'status still unhappy — the upload will tell us for certain'
+
       - name: Deploy
-        run: railway up --service "$SERVICE" --ci
+        run: railway up --service "$SERVICE" --environment "$ENV_ID" --ci
 
       - name: The public address
         id: domain
         run: |
           set -euo pipefail
-          railway domain --service "$SERVICE" --port 3000 --json > domain.json 2>&1 || \
-            railway domain list --service "$SERVICE" --json > domain.json
-          cat domain.json
-          URL="$(grep -oE '[a-zA-Z0-9.-]+\.up\.railway\.app' domain.json | head -1)"
+
+          gql() {
+            jq -n --arg q "$1" --argjson v "$2" '{query:$q, variables:$v}' > payload.json
+            curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+              -H "Project-Access-Token: $RAILWAY_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data @payload.json > reply.json
+            if jq -e '.errors' reply.json >/dev/null; then
+              echo '::error::Railway refused the call:'
+              jq -r '.errors[].message' reply.json
+              exit 1
+            fi
+            cat reply.json
+          }
+
+          SCOPE="$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" \
+            '{projectId:$p, environmentId:$e, serviceId:$s}')"
+
+          URL="$(gql 'query($projectId: String!, $environmentId: String!, $serviceId: String!) { domains(projectId: $projectId, environmentId: $environmentId, serviceId: $serviceId) { serviceDomains { domain } customDomains { domain } } }' \
+            "$SCOPE" | jq -r '[.data.domains.customDomains[]?.domain, .data.domains.serviceDomains[]?.domain][0] // empty')"
+
+          if [ -z "$URL" ]; then
+            echo 'No address yet — asking for one.'
+            URL="$(gql 'mutation($input: ServiceDomainCreateInput!) { serviceDomainCreate(input: $input) { domain } }' \
+              "$(jq -n --arg e "$ENV_ID" --arg s "$SERVICE_ID" \
+                 '{input:{environmentId:$e, serviceId:$s, targetPort:3000}}')" \
+              | jq -r '.data.serviceDomainCreate.domain')"
+          fi
+
+          [ -n "$URL" ] && [ "$URL" != 'null' ] || { echo '::error::No public address.'; exit 1; }
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Address: https://$URL"
 
@@ -127,7 +228,6 @@ jobs:
         run: |
           set -euo pipefail
           URL='${{ steps.domain.outputs.url }}'
-          if [ -z "$URL" ]; then echo 'No address to check.'; exit 1; fi
 
           for attempt in $(seq 1 40); do
             CODE="$(curl -s -o body.html -w '%{http_code}' "https://$URL" || echo 000)"
