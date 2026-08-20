@@ -29,12 +29,11 @@ sur un compte.
   salue Marie, la médaille où l'on dit le Gloire au Père, puis la boucle de cinq
   fois un Notre Père et dix Je vous salue Marie. Cinquante-neuf grains, comme
   dans la main.
-- **Un rosaire qui pousse.** Vingt et une propriétés du dessin — la taille des
-  grains, celle de la pierre centrale et sa taille en facettes, l'intensité des
-  couleurs, l'or sur la chaîne, les roses, le feuillage, le filigrane, les
-  rayons, les auréoles, la patine, la gravure, la colombe, la couronne de douze
-  étoiles, la rosace, les lys — sont chacune une fonction de ce qui a été prié.
-  Voir « Le modèle » plus bas.
+- **Un rosaire qui pousse.** Chaque propriété du dessin est une fonction de ce
+  qui a été prié : la taille des grains, celle de la pierre et sa taille en
+  facettes, l'intensité des couleurs, l'or sur la chaîne, la patine, la gravure,
+  et onze signes qui apparaissent un à un. Voir « Les signes » et « Le modèle »
+  plus bas.
 - **Vous voyez ce qui a changé.** À la fin de chaque rosaire, l'application dit
   en toutes lettres ce qui est différent dans le dessin, et combien de dizaines
   vous séparent de la prochaine transformation.
@@ -60,6 +59,40 @@ bien qu'un changement de couleur ou d'étape traverse toute l'application.
 Les trois formes de boucle sont la même courbe : une superellipse dont on change
 les rayons et l'exposant. Les grains sont placés par longueur d'arc, sinon
 l'ovale les tasserait à ses extrémités.
+
+## Les signes
+
+Le rosaire est un résumé de tout le mystère, alors ce qui pousse dessus est
+groupé comme la tradition le groupe. Onze signes apparaissent un à un, dans cet
+ordre, et ne repartent jamais.
+
+| Dizaines | Signe | | Où |
+| --- | --- | --- | --- |
+| 40 | Le monogramme de Marie | Marie | sur la médaille |
+| 90 | La colombe | Esprit | au-dessus de la couronne |
+| 180 | Les sept flammes | Esprit | autour de la colombe |
+| 300 | Alpha et Oméga | Fils | de part et d'autre de la croix |
+| 450 | Le croissant de lune | Marie | sous la médaille |
+| 650 | Les trois cercles | Père | au sommet |
+| 850 | La couronne de douze étoiles | Marie | autour de la médaille |
+| 1200 | Le chrisme | Fils | au cœur de la couronne |
+| 1700 | La rosace | Marie | derrière la couronne |
+| 2400 | La main bénissante | Père | tout en haut, dans la nuée |
+| 3600 | Les lys | Marie | au pied de la croix |
+
+Le monogramme est l'A et l'M entrelacés sous la croix, comme au revers de la
+médaille miraculeuse. La colombe est la forme sous laquelle l'Esprit s'est rendu
+visible au Jourdain, et les sept flammes sont les sept dons. L'alpha et l'oméga
+encadrent la croix. Le croissant et les douze étoiles viennent d'Apocalypse 12.
+Les trois cercles sont la façon la plus ancienne de dire la Trinité sans la
+représenter, et la main sortant de la nuée la seule façon dont les plus vieilles
+mosaïques montrent le Père : on ne montre que son geste.
+
+Les propriétés continues portent le même vocabulaire : les roses sont les roses
+mystiques dont le rosaire tire son nom, le feuillage le jardin clos du Cantique,
+l'or la maison d'or des litanies, les rayons la lumière incréée, les auréoles
+l'ombre du Très-Haut. Chaque signe porte son sens et sa référence, lisibles dans
+la vue rapprochée.
 
 ## Le modèle
 
@@ -206,12 +239,17 @@ The rosary is drawn as it is held: a crucifix with the body of Christ on it,
 then the Our Father bead, three Hail Mary beads, the centre medal, and a loop of
 five decades — fifty-nine beads in all.
 
-Twenty-one properties of the drawing — the size of the beads, the size and cut
-of the centre stone, the depth of colour, gold along the chain, roses, foliage,
-filigree, rays, haloes, patina, engraving, a dove, a crown of twelve stars, a
-rose window, lilies — are each a function of what has actually been prayed, on
-one saturating curve that rises fastest at the start and never finishes. At the
-end of every rosary the app says in plain words what is different in the
+Every property of the drawing is a function of what has actually been prayed, on
+one saturating curve that rises fastest at the start and never finishes: the
+size of the beads, the size and cut of the centre stone, the depth of colour,
+gold along the chain, patina, engraving — and eleven signs that arrive one at a
+time and stay. They are grouped the way the tradition groups them: the monogram
+of Mary, the dove, the seven flames, Alpha and Omega, the crescent moon, the
+three interlaced circles, the crown of twelve stars, the Chi-Rho, the rose
+window, the blessing hand out of the cloud, and lilies at the foot of the cross.
+Each carries its meaning and its reference, readable in the close-up view.
+
+At the end of every rosary the app says in plain words what is different in the
 picture, and how many decades remain before the next change. Tap the rosary to
 open it full screen and zoom in on any bead.
 

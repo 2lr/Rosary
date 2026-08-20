@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FAMILY_LABEL,
+  FAMILY_ORDER,
   MEMORY_RING_CAPACITY,
   TRAITS,
   TRAIT_BY_ID,
@@ -116,8 +118,11 @@ describe('a rosary that keeps growing', () => {
 
 describe('what changed', () => {
   it('reports the biggest news first', () => {
-    // Crossing 150 decades brings the dove, along with smaller advances.
-    const changes = describeChanges(at(140), at(160));
+    // Crossing the dove's threshold brings it along with smaller advances; the
+    // sign is what gets said first.
+    const threshold = TRAIT_BY_ID.dove.at!;
+    const changes = describeChanges(at(threshold - 12), at(threshold + 12));
+    expect(changes.length).toBeGreaterThan(1);
     expect(changes[0].trait.id).toBe('dove');
   });
 
@@ -155,5 +160,49 @@ describe('the band of memory', () => {
     const many = at(0, { rosaries: 100_000 });
     expect(many.memory.rings).toBeLessThanOrEqual(6);
     expect(many.memory.lastRingTicks).toBe(MEMORY_RING_CAPACITY);
+  });
+});
+
+describe('the signs', () => {
+  it('are drawn from all four figures', () => {
+    const families = new Set(TRAITS.map((t) => t.family));
+    expect(families).toContain('father');
+    expect(families).toContain('son');
+    expect(families).toContain('spirit');
+    expect(families).toContain('mary');
+    expect(FAMILY_ORDER.every((f) => FAMILY_LABEL[f])).toBe(true);
+  });
+
+  it('each carry a name, a change and a meaning', () => {
+    for (const trait of TRAITS) {
+      expect(trait.label).toBeTruthy();
+      expect(trait.change).toBeTruthy();
+      expect(trait.meaning).toBeTruthy();
+      expect(FAMILY_ORDER).toContain(trait.family);
+    }
+  });
+
+  it('arrive one at a time, never two at the same threshold', () => {
+    const milestones = TRAITS.filter((t) => t.kind === 'milestone').map((t) => t.at!);
+    expect(new Set(milestones).size).toBe(milestones.length);
+    expect([...milestones].sort((a, b) => a - b)).toEqual(milestones);
+  });
+
+  it('give the first sign early and keep some for much later', () => {
+    const milestones = TRAITS.filter((t) => t.kind === 'milestone').map((t) => t.at!);
+    expect(Math.min(...milestones)).toBeLessThanOrEqual(50);
+    expect(Math.max(...milestones)).toBeGreaterThan(3000);
+  });
+
+  it('spread the four figures across the whole climb, not all at the end', () => {
+    for (const family of ['father', 'son', 'spirit', 'mary'] as const) {
+      const first = Math.min(
+        ...TRAITS.filter((t) => t.family === family).map((t) =>
+          t.kind === 'milestone' ? t.at! : 0,
+        ),
+      );
+      // Every figure is present within the first thousand decades.
+      expect(first).toBeLessThan(1000);
+    }
   });
 });

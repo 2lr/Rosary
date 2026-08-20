@@ -6,7 +6,14 @@ import { cx } from '@/components/ui';
 import type { Bloom } from '@/lib/rosary/growth';
 import type { Lang } from '@/lib/i18n/config';
 import { translatorFor } from '@/lib/i18n/dictionary';
-import { TRAITS, activeTraits, type Trait } from '@/lib/rosary/traits';
+import {
+  FAMILY_LABEL,
+  FAMILY_ORDER,
+  TRAITS,
+  activeTraits,
+  type Family,
+  type Trait,
+} from '@/lib/rosary/traits';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 6;
@@ -32,11 +39,16 @@ export default function RosaryViewer({
 }) {
   const t = useMemo(() => translatorFor(lang), [lang]);
   const [view, setView] = useState<Transform>(IDENTITY);
+  const [open, setOpen] = useState<string | null>(null);
   const stage = useRef<HTMLDivElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ distance: number; scale: number } | null>(null);
 
   const shown = activeTraits(bloom.growth);
+  const byFamily = FAMILY_ORDER.map((family) => ({
+    family,
+    traits: shown.filter((trait) => trait.family === family),
+  })).filter((group) => group.traits.length > 0);
   const coming = TRAITS.filter((trait) => bloom.growth.notch[trait.id] === 0)
     .map((trait) => ({ trait, remaining: bloom.growth.remaining[trait.id] }))
     .filter((entry): entry is { trait: Trait; remaining: number } => entry.remaining !== null)
@@ -192,11 +204,25 @@ export default function RosaryViewer({
           {shown.length === 0 ? (
             <p className="mt-2 text-sm text-muted">{t('journey.sinceNever')}</p>
           ) : (
-            <ul className="mt-2.5 space-y-1.5">
-              {shown.map((trait) => (
-                <TraitRow key={trait.id} trait={trait} bloom={bloom} t={t} />
-              ))}
-            </ul>
+            byFamily.map((group) => (
+              <div key={group.family} className="mt-3">
+                <p className="mb-1.5 font-display text-lg text-[var(--bloom-accent)]">
+                  {t(FAMILY_LABEL[group.family as Family])}
+                </p>
+                <ul className="space-y-1.5">
+                  {group.traits.map((trait) => (
+                    <TraitRow
+                      key={trait.id}
+                      trait={trait}
+                      bloom={bloom}
+                      t={t}
+                      open={open === trait.id}
+                      onToggle={() => setOpen(open === trait.id ? null : trait.id)}
+                    />
+                  ))}
+                </ul>
+              </div>
+            ))
           )}
         </section>
 
@@ -236,27 +262,46 @@ function TraitRow({
   trait,
   bloom,
   t,
+  open,
+  onToggle,
 }: {
   trait: Trait;
   bloom: Bloom;
   t: ReturnType<typeof translatorFor>;
+  open: boolean;
+  onToggle: () => void;
 }) {
   const notch = bloom.growth.notch[trait.id];
   const remaining = bloom.growth.remaining[trait.id];
   const progress = Math.min(1, notch / trait.notches);
 
   return (
-    <li className="surface flex items-center gap-3 rounded-xl px-3 py-2">
-      <span className="min-w-0 flex-1 truncate text-sm">{t(trait.label)}</span>
-      <span className="h-1 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--bloom-fill-2)]">
-        <span
-          className={cx('block h-full rounded-full bg-[var(--bloom-accent)]')}
-          style={{ width: `${Math.round(progress * 100)}%` }}
-        />
-      </span>
-      <span className="lining w-[4.6rem] shrink-0 text-right text-[0.68rem] whitespace-nowrap text-faint">
-        {remaining === null ? '—' : t('viewer.remaining', { n: remaining })}
-      </span>
+    <li className="surface overflow-hidden rounded-xl">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="tap flex w-full items-center gap-3 px-3 py-2 text-left"
+      >
+        <span className="min-w-0 flex-1 truncate text-sm">{t(trait.label)}</span>
+        <span className="h-1 w-14 shrink-0 overflow-hidden rounded-full bg-[var(--bloom-fill-2)]">
+          <span
+            className={cx('block h-full rounded-full bg-[var(--bloom-accent)]')}
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </span>
+        <span className="lining w-[4.4rem] shrink-0 whitespace-nowrap text-right text-[0.68rem] text-faint">
+          {remaining === null ? '—' : t('viewer.remaining', { n: remaining })}
+        </span>
+      </button>
+      {open && (
+        <div className="border-t border-[var(--bloom-border)] px-3 py-2.5">
+          <p className="text-[0.8rem] leading-relaxed text-muted">{t(trait.meaning)}</p>
+          {trait.scripture && (
+            <p className="mt-1 text-[0.68rem] italic text-faint">{t(trait.scripture)}</p>
+          )}
+        </div>
+      )}
     </li>
   );
 }

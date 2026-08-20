@@ -18,6 +18,12 @@ import type { MessageKey } from '@/lib/i18n/dictionary';
  * month, the stone is still growing after a thousand rosaries.
  */
 
+/**
+ * Whose sign it is. The rosary is a summary of the whole mystery, so what grows
+ * on it is grouped the way the tradition groups it.
+ */
+export type Family = 'father' | 'son' | 'spirit' | 'mary' | 'craft';
+
 export type TraitId =
   | 'aveRadius'
   | 'paterRadius'
@@ -36,9 +42,16 @@ export type TraitId =
   | 'filigree'
   | 'rays'
   | 'haloRings'
+  | 'monogram'
   | 'dove'
+  | 'flames'
+  | 'alphaOmega'
+  | 'moon'
+  | 'triquetra'
   | 'crown'
+  | 'chiRho'
   | 'roseWindow'
+  | 'hand'
   | 'lilies';
 
 export type TraitKind =
@@ -60,61 +73,116 @@ export type Trait = {
   notches: number;
   /** Decades needed. Milestones only. */
   at?: number;
+  family: Family;
   label: MessageKey;
   /** Announced when the trait advances. */
   change: MessageKey;
+  /** What the sign means, for the close-up view. */
+  meaning: MessageKey;
+  /** Where it is written, when it is written somewhere. */
+  scripture?: MessageKey;
   /** Ordering when several things change at once: bigger news first. */
   weight: number;
 };
 
+export const FAMILY_ORDER: Family[] = ['father', 'son', 'spirit', 'mary', 'craft'];
+
+export const FAMILY_LABEL: Record<Family, MessageKey> = {
+  father: 'family.father',
+  son: 'family.son',
+  spirit: 'family.spirit',
+  mary: 'family.mary',
+  craft: 'family.craft',
+};
+
+const M = (
+  id: TraitId,
+  at: number,
+  family: Family,
+  weight: number,
+  scripture?: MessageKey,
+): Trait => ({
+  id,
+  kind: 'milestone',
+  from: 0,
+  to: 1,
+  k: 0,
+  notches: 1,
+  at,
+  family,
+  label: `trait.${id}` as MessageKey,
+  change: `trait.${id}.change` as MessageKey,
+  meaning: `trait.${id}.meaning` as MessageKey,
+  scripture,
+  weight,
+});
+
 export const TRAITS: Trait[] = [
-  // --- Appear once, and are the loudest news when they do -------------------
-  { id: 'dove', kind: 'milestone', from: 0, to: 1, k: 0, notches: 1, at: 150,
-    label: 'trait.dove', change: 'trait.dove.change', weight: 100 },
-  { id: 'crown', kind: 'milestone', from: 0, to: 1, k: 0, notches: 1, at: 600,
-    label: 'trait.crown', change: 'trait.crown.change', weight: 100 },
-  { id: 'roseWindow', kind: 'milestone', from: 0, to: 1, k: 0, notches: 1, at: 1600,
-    label: 'trait.roseWindow', change: 'trait.roseWindow.change', weight: 100 },
-  { id: 'lilies', kind: 'milestone', from: 0, to: 1, k: 0, notches: 1, at: 3600,
-    label: 'trait.lilies', change: 'trait.lilies.change', weight: 100 },
+  // --- The signs, in the order they are given ------------------------------
+  M('monogram', 40, 'mary', 100),
+  M('dove', 90, 'spirit', 100, 'trait.dove.where'),
+  M('flames', 180, 'spirit', 100, 'trait.flames.where'),
+  M('alphaOmega', 300, 'son', 100, 'trait.alphaOmega.where'),
+  M('moon', 450, 'mary', 100, 'trait.moon.where'),
+  M('triquetra', 650, 'father', 100),
+  M('crown', 850, 'mary', 100, 'trait.crown.where'),
+  M('chiRho', 1200, 'son', 100),
+  M('roseWindow', 1700, 'mary', 100),
+  M('hand', 2400, 'father', 100),
+  M('lilies', 3600, 'mary', 100, 'trait.lilies.where'),
 
   // --- Things you can count -------------------------------------------------
-  { id: 'roses', kind: 'counted', from: 0, to: 34, k: 380, notches: 34,
-    label: 'trait.roses', change: 'trait.roses.change', weight: 60 },
-  { id: 'palette', kind: 'counted', from: 0, to: 3, k: 300, notches: 3,
-    label: 'trait.palette', change: 'trait.palette.change', weight: 70 },
-  { id: 'haloRings', kind: 'counted', from: 0, to: 5, k: 1500, notches: 5,
-    label: 'trait.haloRings', change: 'trait.haloRings.change', weight: 55 },
-  { id: 'filigree', kind: 'counted', from: 0, to: 10, k: 260, notches: 10,
-    label: 'trait.filigree', change: 'trait.filigree.change', weight: 50 },
-  { id: 'leaves', kind: 'counted', from: 0, to: 26, k: 900, notches: 26,
-    label: 'trait.leaves', change: 'trait.leaves.change', weight: 45 },
-  { id: 'rays', kind: 'counted', from: 0, to: 40, k: 1400, notches: 40,
-    label: 'trait.rays', change: 'trait.rays.change', weight: 40 },
-  { id: 'stoneFacets', kind: 'counted', from: 0, to: 8, k: 700, notches: 8,
-    label: 'trait.stoneFacets', change: 'trait.stoneFacets.change', weight: 58 },
+  { id: 'roses', kind: 'counted', from: 0, to: 34, k: 380, notches: 34, family: 'mary',
+    label: 'trait.roses', change: 'trait.roses.change', meaning: 'trait.roses.meaning',
+    scripture: 'trait.roses.where', weight: 60 },
+  { id: 'palette', kind: 'counted', from: 0, to: 3, k: 300, notches: 3, family: 'craft',
+    label: 'trait.palette', change: 'trait.palette.change', meaning: 'trait.palette.meaning',
+    weight: 70 },
+  { id: 'haloRings', kind: 'counted', from: 0, to: 5, k: 1500, notches: 5, family: 'spirit',
+    label: 'trait.haloRings', change: 'trait.haloRings.change', meaning: 'trait.haloRings.meaning',
+    scripture: 'trait.haloRings.where', weight: 55 },
+  { id: 'filigree', kind: 'counted', from: 0, to: 10, k: 260, notches: 10, family: 'craft',
+    label: 'trait.filigree', change: 'trait.filigree.change', meaning: 'trait.filigree.meaning',
+    weight: 50 },
+  { id: 'leaves', kind: 'counted', from: 0, to: 26, k: 900, notches: 26, family: 'mary',
+    label: 'trait.leaves', change: 'trait.leaves.change', meaning: 'trait.leaves.meaning',
+    scripture: 'trait.leaves.where', weight: 45 },
+  { id: 'rays', kind: 'counted', from: 0, to: 40, k: 1400, notches: 40, family: 'father',
+    label: 'trait.rays', change: 'trait.rays.change', meaning: 'trait.rays.meaning',
+    scripture: 'trait.rays.where', weight: 40 },
+  { id: 'stoneFacets', kind: 'counted', from: 0, to: 8, k: 700, notches: 8, family: 'craft',
+    label: 'trait.stoneFacets', change: 'trait.stoneFacets.change',
+    meaning: 'trait.stoneFacets.meaning', weight: 58 },
 
   // --- Measurements ---------------------------------------------------------
-  { id: 'stone', kind: 'continuous', from: 10, to: 30, k: 900, notches: 14,
-    label: 'trait.stone', change: 'trait.stone.change', weight: 65 },
-  { id: 'chroma', kind: 'continuous', from: 0.2, to: 1, k: 110, notches: 12,
-    label: 'trait.chroma', change: 'trait.chroma.change', weight: 35 },
-  { id: 'gold', kind: 'continuous', from: 0, to: 1, k: 320, notches: 10,
-    label: 'trait.gold', change: 'trait.gold.change', weight: 48 },
-  { id: 'paterRadius', kind: 'continuous', from: 6.8, to: 10.4, k: 620, notches: 12,
-    label: 'trait.paterRadius', change: 'trait.paterRadius.change', weight: 30 },
-  { id: 'aveRadius', kind: 'continuous', from: 4.6, to: 6.6, k: 420, notches: 10,
-    label: 'trait.aveRadius', change: 'trait.aveRadius.change', weight: 28 },
-  { id: 'cut', kind: 'continuous', from: 0, to: 1, k: 800, notches: 8,
-    label: 'trait.cut', change: 'trait.cut.change', weight: 42 },
-  { id: 'dew', kind: 'continuous', from: 0, to: 1, k: 520, notches: 8,
-    label: 'trait.dew', change: 'trait.dew.change', weight: 26 },
-  { id: 'crossHeight', kind: 'continuous', from: 132, to: 196, k: 1100, notches: 9,
-    label: 'trait.crossHeight', change: 'trait.crossHeight.change', weight: 52 },
-  { id: 'engraving', kind: 'continuous', from: 0, to: 1, k: 1200, notches: 6,
-    label: 'trait.engraving', change: 'trait.engraving.change', weight: 38 },
-  { id: 'patina', kind: 'continuous', from: 0, to: 1, k: 1800, notches: 6,
-    label: 'trait.patina', change: 'trait.patina.change', weight: 24 },
+  { id: 'stone', kind: 'continuous', from: 10, to: 30, k: 900, notches: 14, family: 'craft',
+    label: 'trait.stone', change: 'trait.stone.change', meaning: 'trait.stone.meaning',
+    weight: 65 },
+  { id: 'chroma', kind: 'continuous', from: 0.2, to: 1, k: 110, notches: 12, family: 'craft',
+    label: 'trait.chroma', change: 'trait.chroma.change', meaning: 'trait.chroma.meaning',
+    weight: 35 },
+  { id: 'gold', kind: 'continuous', from: 0, to: 1, k: 320, notches: 10, family: 'mary',
+    label: 'trait.gold', change: 'trait.gold.change', meaning: 'trait.gold.meaning',
+    scripture: 'trait.gold.where', weight: 48 },
+  { id: 'paterRadius', kind: 'continuous', from: 6.8, to: 10.4, k: 620, notches: 12, family: 'craft',
+    label: 'trait.paterRadius', change: 'trait.paterRadius.change',
+    meaning: 'trait.paterRadius.meaning', weight: 30 },
+  { id: 'aveRadius', kind: 'continuous', from: 4.6, to: 6.6, k: 420, notches: 10, family: 'craft',
+    label: 'trait.aveRadius', change: 'trait.aveRadius.change',
+    meaning: 'trait.aveRadius.meaning', weight: 28 },
+  { id: 'cut', kind: 'continuous', from: 0, to: 1, k: 800, notches: 8, family: 'craft',
+    label: 'trait.cut', change: 'trait.cut.change', meaning: 'trait.cut.meaning', weight: 42 },
+  { id: 'dew', kind: 'continuous', from: 0, to: 1, k: 520, notches: 8, family: 'craft',
+    label: 'trait.dew', change: 'trait.dew.change', meaning: 'trait.dew.meaning', weight: 26 },
+  { id: 'crossHeight', kind: 'continuous', from: 132, to: 196, k: 1100, notches: 9, family: 'son',
+    label: 'trait.crossHeight', change: 'trait.crossHeight.change',
+    meaning: 'trait.crossHeight.meaning', scripture: 'trait.crossHeight.where', weight: 52 },
+  { id: 'engraving', kind: 'continuous', from: 0, to: 1, k: 1200, notches: 6, family: 'craft',
+    label: 'trait.engraving', change: 'trait.engraving.change',
+    meaning: 'trait.engraving.meaning', weight: 38 },
+  { id: 'patina', kind: 'continuous', from: 0, to: 1, k: 1800, notches: 6, family: 'craft',
+    label: 'trait.patina', change: 'trait.patina.change', meaning: 'trait.patina.meaning',
+    weight: 24 },
 ];
 
 export const TRAIT_BY_ID = Object.fromEntries(TRAITS.map((t) => [t.id, t])) as Record<

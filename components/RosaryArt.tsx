@@ -108,22 +108,45 @@ export default function RosaryArt({
   // The pendant hangs from the bottom of the outline, whatever its shape.
   const bottom = loop.at(0);
   const medalY = bottom.y + stoneR + 11;
-  const pendantY = [medalY + 25, medalY + 46, medalY + 67, medalY + 94];
+  // The medal sits in the crescent, so the pendant starts below it.
+  const moonDrop = n.moon ? stoneR * 0.95 : 0;
+  const pendantY = [
+    medalY + 25 + moonDrop,
+    medalY + 46 + moonDrop,
+    medalY + 67 + moonDrop,
+    medalY + 94 + moonDrop,
+  ];
   const crossTop = pendantY[3] + 16;
   const crossHeight = v.crossHeight;
 
   const memoryOuter = growth.memory.rings > 0 ? 33 + (growth.memory.rings - 1) * 8 + 6 : 24;
   const raysInner = memoryOuter + 10;
 
-  const contentTop = CY - loop.ry - (raysInner + 90);
-  const contentBottom = crossTop + crossHeight + (n.lilies ? 26 : 8);
-  const offsetY = (H - (contentBottom - contentTop)) / 2 - contentTop;
+  // The signs stack upwards from the loop: dove, then the three circles, then
+  // the hand. The canvas has to leave room for whichever has arrived.
+  const signHeight = n.hand ? 160 : n.triquetra ? 100 : n.dove ? 62 : 24;
+  const contentTop = CY - loop.ry - Math.max(raysInner + 70, signHeight);
+  const contentBottom = crossTop + crossHeight + (n.lilies ? 30 : 8);
+  // Stars are sparse dots; letting the odd one sit at the very edge costs
+  // nothing and keeps the piece itself from being shrunk.
+  const contentHalfWidth = loop.rx + raysInner + 30;
+
+  // A rosary that has been prayed for years carries a great deal. Rather than
+  // let it grow out of the frame, the whole composition is scaled to fit — the
+  // piece gets richer, the frame stays the same.
+  const scale = Math.min(
+    1,
+    (W - 10) / (contentHalfWidth * 2),
+    (H - 10) / (contentBottom - contentTop),
+  );
+  const offsetX = CX - CX * scale;
+  const offsetY = (H - (contentBottom - contentTop) * scale) / 2 - contentTop * scale;
 
   const fractions = beadFractions(LOOP_BEADS, GAP);
 
   const stars = Array.from({ length: growth.stars }, () => {
     const f = random();
-    const distance = raysInner + 34 + random() * 62;
+    const distance = raysInner + 18 + random() * 44;
     const p = outward(loop, f, distance);
     return { x: p.x, y: p.y, size: 1.1 + random() * 2.3, o: 0.2 + random() * 0.5 };
   });
@@ -177,8 +200,16 @@ export default function RosaryArt({
         </linearGradient>
       </defs>
 
-      <g transform={`translate(0 ${offsetY.toFixed(2)})`}>
+      <g transform={`translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale.toFixed(4)})`}>
         {n.roseWindow === 1 && <RoseWindow loop={loop} color={palette.chain} />}
+        {n.chiRho === 1 && (
+          <ChiRho
+            x={CX}
+            y={CY}
+            size={Math.min(loop.rx, loop.ry) * 0.42}
+            color={palette.goldLeaf}
+          />
+        )}
 
         <ellipse cx={CX} cy={CY} rx={loop.rx + 52} ry={loop.ry + 52} fill={`url(#${glowId})`} />
 
@@ -343,12 +374,14 @@ export default function RosaryArt({
           strokeWidth={1.2 + v.gold * 0.6}
         />
 
+        {n.moon === 1 && <Crescent x={CX} y={medalY} r={stoneR} outline={palette.chain} />}
+
         {Array.from({ length: n.haloRings }, (_, i) => (
           <circle
             key={`halo-${i}`}
             cx={CX}
             cy={medalY}
-            r={stoneR + 7 + i * 6}
+            r={stoneR + 4.5 + i * 3.6}
             fill="none"
             stroke={palette.goldLeaf}
             strokeOpacity={0.3 - i * 0.045}
@@ -360,7 +393,7 @@ export default function RosaryArt({
           <g fill={palette.goldLeaf} fillOpacity="0.8">
             {Array.from({ length: 12 }, (_, i) => {
               const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-              const radius = stoneR + 7 + n.haloRings * 6 + 7;
+              const radius = stoneR + 13;
               return (
                 <path
                   key={`crown-${i}`}
@@ -392,6 +425,7 @@ export default function RosaryArt({
           idle={medalState === 'todo'}
           palette={palette}
           gradientId={stoneId}
+          monogram={n.monogram === 1}
         />
 
         {/* Pendant: three Hail Marys, then the Our Father nearest the cross. */}
@@ -423,6 +457,9 @@ export default function RosaryArt({
           );
         })}
 
+        {n.flames === 1 && (
+          <Flames x={CX} y={CY - loop.ry - 34} color={palette.goldLeaf} accent={palette.accent} />
+        )}
         {n.dove === 1 && (
           <Dove
             x={CX}
@@ -431,6 +468,18 @@ export default function RosaryArt({
             color={palette.goldLeaf}
             outline={palette.chain}
             highlight={hot.has('dove')}
+          />
+        )}
+        {n.triquetra === 1 && (
+          <Triquetra x={CX} y={CY - loop.ry - 82} r={12} color={palette.chain} highlight={hot.has('triquetra')} />
+        )}
+        {n.hand === 1 && (
+          <BlessingHand
+            x={CX}
+            y={CY - loop.ry - 138}
+            color={palette.flesh}
+            outline={palette.outline}
+            highlight={hot.has('hand')}
           />
         )}
 
@@ -453,6 +502,7 @@ export default function RosaryArt({
           cloth={palette.cloth}
           line={palette.outline}
           halo={palette.halo}
+          alphaOmega={n.alphaOmega === 1}
         />
 
         {n.lilies === 1 && (
@@ -540,6 +590,7 @@ function Stone({
   idle,
   palette,
   gradientId,
+  monogram,
 }: {
   x: number;
   y: number;
@@ -550,6 +601,7 @@ function Stone({
   idle: boolean;
   palette: Bloom['palette'];
   gradientId: string;
+  monogram: boolean;
 }) {
   const fill = idle ? palette.beadIdle : active ? palette.accent : `url(#${gradientId})`;
   const sides = facets === 0 ? 0 : facets + 4;
@@ -616,10 +668,22 @@ function Stone({
           strokeWidth="0.7"
         />
       )}
-      {engraving > 0.45 && (
-        <g stroke={palette.goldLeaf} strokeOpacity={engraving * 0.8} strokeWidth="0.9" strokeLinecap="round">
-          <line x1={x} y1={y - r * 0.42} x2={x} y2={y + r * 0.42} />
-          <line x1={x - r * 0.26} y1={y - r * 0.14} x2={x + r * 0.26} y2={y - r * 0.14} />
+      {monogram && (
+        // The A and the M under the cross, as on the Miraculous Medal.
+        <g
+          stroke={palette.goldLeaf}
+          strokeOpacity={0.7 + engraving * 0.3}
+          strokeWidth={Math.max(0.7, r * 0.075)}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        >
+          <line x1={x} y1={y - r * 0.9} x2={x} y2={y - r * 0.44} />
+          <line x1={x - r * 0.18} y1={y - r * 0.74} x2={x + r * 0.18} y2={y - r * 0.74} />
+          <line x1={x - r * 0.44} y1={y - r * 0.4} x2={x + r * 0.44} y2={y - r * 0.4} />
+          <path
+            d={`M ${x - r * 0.42} ${y + r * 0.58} L ${x - r * 0.42} ${y - r * 0.22} L ${x} ${y + r * 0.26} L ${x + r * 0.42} ${y - r * 0.22} L ${x + r * 0.42} ${y + r * 0.58}`}
+          />
         </g>
       )}
       <circle cx={x - r * 0.3} cy={y - r * 0.34} r={r * 0.16} fill="#ffffff" fillOpacity="0.4" />
@@ -780,4 +844,166 @@ function idFrom(key: string): string {
     h = Math.imul(h, 16777619);
   }
   return (h >>> 0).toString(36);
+}
+
+/** The seven gifts, in an arc over the dove. */
+function Flames({ x, y, color, accent }: { x: number; y: number; color: string; accent: string }) {
+  return (
+    <g>
+      {Array.from({ length: 7 }, (_, i) => {
+        const angle = -150 + (120 / 6) * i;
+        const rad = (angle * Math.PI) / 180;
+        const radius = 26;
+        return (
+          <g
+            key={`flame-${i}`}
+            transform={`translate(${(x + Math.cos(rad) * radius).toFixed(2)} ${(y + Math.sin(rad) * radius).toFixed(2)}) rotate(${angle + 90})`}
+          >
+            <path
+              d="M 0 0 C -2.6 -3.4, -1.8 -7.2, 0 -9.8 C 1.8 -7.2, 2.6 -3.4, 0 0 Z"
+              fill={color}
+              fillOpacity="0.78"
+            />
+            <path
+              d="M 0 -1.6 C -1.2 -3.4, -0.9 -5.6, 0 -7.2 C 0.9 -5.6, 1.2 -3.4, 0 -1.6 Z"
+              fill={accent}
+              fillOpacity="0.5"
+            />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/** The moon under her feet: the medal comes to rest in its cradle. */
+function Crescent({ x, y, r, outline }: { x: number; y: number; r: number; outline: string }) {
+  const circle = (cx: number, cy: number, radius: number) =>
+    `M ${cx - radius} ${cy} A ${radius} ${radius} 0 1 0 ${cx + radius} ${cy} A ${radius} ${radius} 0 1 0 ${cx - radius} ${cy} Z`;
+  return (
+    <path
+      d={`${circle(x, y + r * 0.45, r * 1.55)} ${circle(x, y + r * 0.02, r * 1.36)}`}
+      fillRule="evenodd"
+      // Moonlight, not another accent: the moon has to read as the moon.
+      fill="#e9e4d8"
+      fillOpacity="0.95"
+      stroke={outline}
+      strokeOpacity="0.4"
+      strokeWidth="0.7"
+    />
+  );
+}
+
+/** Three circles, no beginning and no end, that cannot be pulled apart. */
+function Triquetra({
+  x,
+  y,
+  r,
+  color,
+  highlight,
+}: {
+  x: number;
+  y: number;
+  r: number;
+  color: string;
+  highlight: boolean;
+}) {
+  return (
+    <g
+      className={highlight ? 'animate-bead' : undefined}
+      fill="none"
+      stroke={color}
+      strokeOpacity="0.75"
+      strokeWidth="1.2"
+    >
+      {[-90, 30, 150].map((angle) => {
+        const rad = (angle * Math.PI) / 180;
+        return (
+          <circle
+            key={angle}
+            cx={x + Math.cos(rad) * r * 0.56}
+            cy={y + Math.sin(rad) * r * 0.56}
+            r={r * 0.72}
+          />
+        );
+      })}
+    </g>
+  );
+}
+
+/** The oldest monogram of Christ, at the centre of the crown. */
+function ChiRho({ x, y, size, color }: { x: number; y: number; size: number; color: string }) {
+  const s = size;
+  return (
+    <g
+      transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
+      fill="none"
+      stroke={color}
+      strokeOpacity="0.2"
+      strokeWidth={Math.max(1.6, s * 0.075)}
+      strokeLinecap="round"
+    >
+      {/* The stem and the bowl of the rho. */}
+      <line x1="0" y1={-s} x2="0" y2={s} />
+      <path d={`M 0 ${-s} C ${s * 0.62} ${-s * 1.04}, ${s * 0.62} ${-s * 0.36}, 0 ${-s * 0.34}`} />
+      {/* The chi across it. */}
+      <line x1={-s * 0.74} y1={-s * 0.74} x2={s * 0.74} y2={s * 0.74} />
+      <line x1={-s * 0.74} y1={s * 0.74} x2={s * 0.74} y2={-s * 0.74} />
+    </g>
+  );
+}
+
+/** The hand out of the cloud — the one way the oldest mosaics show the Father. */
+function BlessingHand({
+  x,
+  y,
+  color,
+  outline,
+  highlight,
+}: {
+  x: number;
+  y: number;
+  color: string;
+  outline: string;
+  highlight: boolean;
+}) {
+  /** A finger, as a rounded bar so it can be filled and outlined like the rest. */
+  const finger = (fx: number, top: number, bottom: number, width: number) => {
+    const half = width / 2;
+    return `M ${fx - half} ${top} L ${fx - half} ${bottom - half} A ${half} ${half} 0 0 0 ${fx + half} ${bottom - half} L ${fx + half} ${top} Z`;
+  };
+
+  return (
+    <g
+      transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
+      className={highlight ? 'animate-bead' : undefined}
+    >
+      <g stroke={outline} strokeOpacity="0.55" strokeWidth="0.9" strokeLinejoin="round">
+        <path
+          fill="#e9e4d8"
+          d="M -27 3 C -27 -3, -21 -8, -15 -6 C -13 -13, -4 -16, 1 -11 C 6 -15.5, 15 -13, 17 -6 C 23 -8, 27 -3, 27 3 Z"
+        />
+        {/* Sleeve, palm, then the Latin blessing: two fingers out, two folded. */}
+        <path fill={color} d="M -7.6 0 L 7.6 0 L 8.6 12.5 L -8.6 12.5 Z" />
+        <path
+          fill={color}
+          d="M -9 11.5 L 9 11.5 L 9.4 23 C 9.4 29.5, 5.4 33.5, -0.4 33.5 C -6 33.5, -9.6 29.5, -9.6 23 Z"
+        />
+        <path fill={color} d={finger(-5.4, 26, 50, 5.4)} />
+        <path fill={color} d={finger(0.3, 26, 54, 5.6)} />
+        <path fill={color} d={finger(5.6, 27, 38, 5)} />
+        <path fill={color} d={finger(9.8, 26, 33, 4.2)} />
+        <path
+          fill={color}
+          d="M 9.2 13.5 C 13.4 17, 13.6 23.5, 10.4 27 C 9 28.5, 7.2 27.8, 7.4 25.8 C 7.8 21.5, 8 17, 7.6 14 Z"
+        />
+      </g>
+      <g stroke={outline} strokeOpacity="0.3" strokeWidth="0.7" fill="none" strokeLinecap="round">
+        <path d="M -7.4 12.5 L 7.4 12.5" />
+        <path d="M -2.5 28 L -2.5 46" />
+        <path d="M 3 28 L 3 36" />
+        <path d="M 7.9 28 L 7.9 33" />
+      </g>
+    </g>
+  );
 }

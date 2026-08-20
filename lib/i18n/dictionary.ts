@@ -163,49 +163,143 @@ export const DICT = {
 
     // Generic
 
-    // The growing rosary
+    // The growing rosary — the signs, grouped as the tradition groups them
+    'family.father': 'Le Père',
+    'family.son': 'Le Fils',
+    'family.spirit': 'L’Esprit Saint',
+    'family.mary': 'Marie',
+    'family.craft': 'La facture',
+
+    'trait.monogram': 'Le monogramme de Marie',
+    'trait.monogram.change': 'Le monogramme de Marie est apparu sur la médaille.',
+    'trait.monogram.meaning':
+      'L’A et l’M entrelacés sous la croix, comme au revers de la médaille miraculeuse : le nom de Marie tenu sous celui du Christ.',
+
     'trait.dove': 'La colombe',
     'trait.dove.change': 'Une colombe s’est posée au-dessus de la couronne.',
-    'trait.crown': 'La couronne d’étoiles',
+    'trait.dove.meaning':
+      'La forme sous laquelle l’Esprit s’est rendu visible, au baptême de Jésus dans le Jourdain.',
+    'trait.dove.where': 'Luc 3, 22',
+
+    'trait.flames': 'Les sept flammes',
+    'trait.flames.change': 'Sept flammes se sont allumées autour de la colombe.',
+    'trait.flames.meaning':
+      'Les sept dons : sagesse, intelligence, conseil, force, science, piété, crainte de Dieu. Le feu de la Pentecôte se posa ainsi, une flamme sur chacun.',
+    'trait.flames.where': 'Isaïe 11, 2-3 · Actes 2, 3',
+
+    'trait.alphaOmega': 'Alpha et Oméga',
+    'trait.alphaOmega.change': 'L’alpha et l’oméga sont gravés de part et d’autre de la croix.',
+    'trait.alphaOmega.meaning':
+      'La première et la dernière lettre de l’alphabet grec, encadrant la croix : celui qui commence tout et achève tout.',
+    'trait.alphaOmega.where': 'Apocalypse 22, 13',
+
+    'trait.moon': 'Le croissant de lune',
+    'trait.moon.change': 'La médaille repose désormais sur un croissant de lune.',
+    'trait.moon.meaning':
+      'La femme revêtue de soleil, la lune sous ses pieds : l’image dont toute l’iconographie de l’Immaculée est sortie.',
+    'trait.moon.where': 'Apocalypse 12, 1',
+
+    'trait.triquetra': 'Les trois cercles',
+    'trait.triquetra.change': 'Trois cercles entrelacés se sont noués au sommet.',
+    'trait.triquetra.meaning':
+      'Trois cercles sans commencement ni fin, entrelacés sans se confondre et inséparables : la manière la plus ancienne de dire la Trinité sans la représenter.',
+
+    'trait.crown': 'La couronne de douze étoiles',
     'trait.crown.change': 'Douze étoiles entourent désormais la médaille.',
+    'trait.crown.meaning':
+      'Les douze tribus, les douze apôtres : la couronne de celle qui est reine parce qu’elle a dit oui jusqu’au bout.',
+    'trait.crown.where': 'Apocalypse 12, 1',
+
+    'trait.chiRho': 'Le chrisme',
+    'trait.chiRho.change': 'Le chrisme s’est ouvert au cœur de la couronne.',
+    'trait.chiRho.meaning':
+      'Le X et le P grecs, les deux premières lettres de Χριστός, nouées l’une dans l’autre. Le plus vieux monogramme du Christ.',
+
     'trait.roseWindow': 'La rosace',
     'trait.roseWindow.change': 'Une rosace s’est ouverte derrière le rosaire.',
+    'trait.roseWindow.meaning':
+      'La rosace des cathédrales, presque toutes bâties sous le nom de Notre-Dame : douze pétales de lumière autour d’un même centre.',
+
+    'trait.hand': 'La main bénissante',
+    'trait.hand.change': 'La main de Dieu s’est ouverte au-dessus du rosaire.',
+    'trait.hand.meaning':
+      'La main sortant de la nuée. Dans les mosaïques les plus anciennes, on ne représente pas le Père autrement : on ne montre que son geste.',
+
     'trait.lilies': 'Les lys',
     'trait.lilies.change': 'Des lys ont poussé au pied de la croix.',
-    'trait.roses': 'Les roses',
+    'trait.lilies.meaning':
+      'Le lys de la pureté, que l’ange tient à l’Annonciation, poussé là où Marie se tenait, debout près de la croix.',
+    'trait.lilies.where': 'Cantique 2, 2 · Jean 19, 25',
+
+    'trait.roses': 'Les roses mystiques',
     'trait.roses.change': 'Une nouvelle rose s’est ouverte.',
-    'trait.palette': 'Les couleurs',
-    'trait.palette.change': 'Une couleur de plus est entrée dans le rosaire.',
+    'trait.roses.meaning':
+      'Rosa mystica. Le rosaire est une couronne de roses tressée pour elle — c’est de là que le mot vient.',
+    'trait.roses.where': 'Litanies de Lorette',
+
+    'trait.leaves': 'Le jardin clos',
+    'trait.leaves.change': 'Une feuille de plus est venue.',
+    'trait.leaves.meaning':
+      'Hortus conclusus : le jardin fermé et la source scellée, image de celle qui a gardé entier ce qui lui était confié.',
+    'trait.leaves.where': 'Cantique 4, 12',
+
+    'trait.gold': 'La maison d’or',
+    'trait.gold.change': 'L’or a gagné du terrain sur la chaîne.',
+    'trait.gold.meaning':
+      'Domus aurea. L’or ne se pose pas d’un coup : il gagne, fil après fil, comme une dorure qu’on applique.',
+    'trait.gold.where': 'Litanies de Lorette',
+
+    'trait.rays': 'La lumière incréée',
+    'trait.rays.change': 'Un rayon de plus traverse la couronne.',
+    'trait.rays.meaning':
+      'Dieu est lumière, et de ténèbres il n’y a point en lui. Les rayons ne viennent pas du rosaire : ils le traversent.',
+    'trait.rays.where': '1 Jean 1, 5',
+
     'trait.haloRings': 'Les auréoles',
     'trait.haloRings.change': 'Une auréole de plus entoure la médaille.',
-    'trait.filigree': 'Le filigrane',
-    'trait.filigree.change': 'Le filigrane s’étend entre les dizaines.',
-    'trait.leaves': 'Le feuillage',
-    'trait.leaves.change': 'Une feuille de plus est venue.',
-    'trait.rays': 'Les rayons',
-    'trait.rays.change': 'Un rayon de plus traverse la couronne.',
-    'trait.stoneFacets': 'La taille de la pierre',
-    'trait.stoneFacets.change': 'La pierre a gagné une facette.',
-    'trait.stone': 'La pierre centrale',
-    'trait.stone.change': 'La pierre centrale a grandi.',
-    'trait.chroma': 'L’intensité des couleurs',
-    'trait.chroma.change': 'Les couleurs se sont approfondies.',
-    'trait.gold': 'L’or',
-    'trait.gold.change': 'L’or a gagné du terrain sur la chaîne.',
-    'trait.paterRadius': 'Les grains du Notre Père',
-    'trait.paterRadius.change': 'Les grains du Notre Père ont grossi.',
-    'trait.aveRadius': 'Les grains du Je vous salue Marie',
-    'trait.aveRadius.change': 'Les grains des Je vous salue Marie ont grossi.',
-    'trait.cut': 'La taille des grains',
-    'trait.cut.change': 'Les grains se sont facettés.',
-    'trait.dew': 'Les reflets',
-    'trait.dew.change': 'Les grains prennent mieux la lumière.',
+    'trait.haloRings.meaning':
+      'Le nimbe : la puissance du Très-Haut qui prend sous son ombre, rendue visible par des cercles de lumière.',
+    'trait.haloRings.where': 'Luc 1, 35',
+
     'trait.crossHeight': 'Le crucifix',
     'trait.crossHeight.change': 'Le crucifix s’est élevé.',
+    'trait.crossHeight.meaning':
+      'Quand j’aurai été élevé de terre, j’attirerai à moi tous les hommes. La croix ne s’orne pas : elle grandit.',
+    'trait.crossHeight.where': 'Jean 12, 32',
+
+    'trait.stone': 'La pierre centrale',
+    'trait.stone.change': 'La pierre centrale a grandi.',
+    'trait.stone.meaning': 'La médaille est devenue une pierre, et la pierre grossit avec la prière.',
+    'trait.stoneFacets': 'La taille de la pierre',
+    'trait.stoneFacets.change': 'La pierre a gagné une facette.',
+    'trait.stoneFacets.meaning': 'Une facette de plus, et la pierre prend la lumière d’un angle de plus.',
+    'trait.palette': 'Les couleurs',
+    'trait.palette.change': 'Une couleur de plus est entrée dans le rosaire.',
+    'trait.palette.meaning': 'Les couleurs arrivent une à une, de la plus douce à la plus franche.',
+    'trait.filigree': 'Le filigrane',
+    'trait.filigree.change': 'Le filigrane s’étend entre les dizaines.',
+    'trait.filigree.meaning': 'Les traits d’or qui marquent le passage d’une dizaine à l’autre.',
+    'trait.chroma': 'L’intensité des couleurs',
+    'trait.chroma.change': 'Les couleurs se sont approfondies.',
+    'trait.chroma.meaning': 'Le rosaire commence presque incolore et prend sa couleur à mesure.',
+    'trait.paterRadius': 'Les grains du Notre Père',
+    'trait.paterRadius.change': 'Les grains du Notre Père ont grossi.',
+    'trait.paterRadius.meaning': 'Les six gros grains, un par Notre Père.',
+    'trait.aveRadius': 'Les grains du Je vous salue Marie',
+    'trait.aveRadius.change': 'Les grains des Je vous salue Marie ont grossi.',
+    'trait.aveRadius.meaning': 'Les cinquante-trois petits grains, un par Je vous salue Marie.',
+    'trait.cut': 'La taille des grains',
+    'trait.cut.change': 'Les grains se sont facettés.',
+    'trait.cut.meaning': 'Les grains passent du galet lisse à la pierre taillée.',
+    'trait.dew': 'Les reflets',
+    'trait.dew.change': 'Les grains prennent mieux la lumière.',
+    'trait.dew.meaning': 'Le point de lumière que laisse un grain poli.',
     'trait.engraving': 'La gravure',
     'trait.engraving.change': 'La gravure de la médaille s’est précisée.',
+    'trait.engraving.meaning': 'Le trait se creuse et le monogramme se lit mieux.',
     'trait.patina': 'La patine',
     'trait.patina.change': 'Le bois de la croix a pris sa patine.',
+    'trait.patina.meaning': 'Le bois fonce comme fonce un objet qu’on tient tous les jours.',
 
     'done.changed': 'Ce qui a changé',
     'done.nothingVisible': 'Un trait de plus a été gravé dans la couronne de mémoire.',
@@ -383,49 +477,143 @@ export const DICT = {
       'Liturgical texts: the Apostles’ Creed, Our Father, Hail Mary, Glory Be, the Fatima prayer and the Salve Regina in their traditional English forms. The cycle of mysteries follows the usage confirmed by the apostolic letter Rosarium Virginis Mariae (2002).',
 
 
-    // The growing rosary
+    // The growing rosary — the signs, grouped as the tradition groups them
+    'family.father': 'The Father',
+    'family.son': 'The Son',
+    'family.spirit': 'The Holy Spirit',
+    'family.mary': 'Mary',
+    'family.craft': 'The making',
+
+    'trait.monogram': 'The monogram of Mary',
+    'trait.monogram.change': 'The monogram of Mary has appeared on the medal.',
+    'trait.monogram.meaning':
+      'The interlaced A and M beneath the cross, as on the back of the Miraculous Medal: her name held under his.',
+
     'trait.dove': 'The dove',
     'trait.dove.change': 'A dove has settled above the crown.',
-    'trait.crown': 'The crown of stars',
+    'trait.dove.meaning':
+      'The form in which the Spirit was made visible, at the baptism of Jesus in the Jordan.',
+    'trait.dove.where': 'Luke 3:22',
+
+    'trait.flames': 'The seven flames',
+    'trait.flames.change': 'Seven flames have been lit around the dove.',
+    'trait.flames.meaning':
+      'The seven gifts: wisdom, understanding, counsel, fortitude, knowledge, piety, fear of the Lord. The fire of Pentecost came down like this, one flame on each of them.',
+    'trait.flames.where': 'Isaiah 11:2–3 · Acts 2:3',
+
+    'trait.alphaOmega': 'Alpha and Omega',
+    'trait.alphaOmega.change': 'Alpha and Omega are cut on either side of the cross.',
+    'trait.alphaOmega.meaning':
+      'The first and last letters of the Greek alphabet, set beside the cross: the one who begins everything and finishes it.',
+    'trait.alphaOmega.where': 'Revelation 22:13',
+
+    'trait.moon': 'The crescent moon',
+    'trait.moon.change': 'The medal now rests on a crescent moon.',
+    'trait.moon.meaning':
+      'The woman clothed with the sun, the moon under her feet: the image the whole iconography of the Immaculate came from.',
+    'trait.moon.where': 'Revelation 12:1',
+
+    'trait.triquetra': 'The three circles',
+    'trait.triquetra.change': 'Three interlaced circles have been tied at the summit.',
+    'trait.triquetra.meaning':
+      'Three circles with no beginning and no end, interlaced without merging and impossible to part: the oldest way of saying the Trinity without depicting it.',
+
+    'trait.crown': 'The crown of twelve stars',
     'trait.crown.change': 'Twelve stars now surround the medal.',
+    'trait.crown.meaning':
+      'The twelve tribes, the twelve apostles: the crown of one who is queen because she said yes to the end.',
+    'trait.crown.where': 'Revelation 12:1',
+
+    'trait.chiRho': 'The Chi-Rho',
+    'trait.chiRho.change': 'The Chi-Rho has opened at the heart of the crown.',
+    'trait.chiRho.meaning':
+      'The Greek X and P, the first two letters of Χριστός, tied into one another. The oldest monogram of Christ.',
+
     'trait.roseWindow': 'The rose window',
     'trait.roseWindow.change': 'A rose window has opened behind the rosary.',
+    'trait.roseWindow.meaning':
+      'The rose window of the cathedrals, nearly all of them built under her name: twelve petals of light around one centre.',
+
+    'trait.hand': 'The blessing hand',
+    'trait.hand.change': 'The hand of God has opened above the rosary.',
+    'trait.hand.meaning':
+      'The hand coming out of the cloud. In the oldest mosaics the Father is shown no other way: only his gesture is shown.',
+
     'trait.lilies': 'The lilies',
     'trait.lilies.change': 'Lilies have grown at the foot of the cross.',
-    'trait.roses': 'The roses',
+    'trait.lilies.meaning':
+      'The lily of purity, held by the angel at the Annunciation, grown where Mary stood, by the cross.',
+    'trait.lilies.where': 'Song of Songs 2:2 · John 19:25',
+
+    'trait.roses': 'The mystical roses',
     'trait.roses.change': 'A new rose has opened.',
-    'trait.palette': 'The colours',
-    'trait.palette.change': 'One more colour has entered the rosary.',
+    'trait.roses.meaning':
+      'Rosa mystica. The rosary is a crown of roses woven for her — that is where the word comes from.',
+    'trait.roses.where': 'Litany of Loreto',
+
+    'trait.leaves': 'The enclosed garden',
+    'trait.leaves.change': 'One more leaf has come.',
+    'trait.leaves.meaning':
+      'Hortus conclusus: the enclosed garden and the sealed fountain, the image of one who kept whole what was entrusted to her.',
+    'trait.leaves.where': 'Song of Songs 4:12',
+
+    'trait.gold': 'The house of gold',
+    'trait.gold.change': 'Gold has gained ground along the chain.',
+    'trait.gold.meaning':
+      'Domus aurea. Gold does not arrive at once: it gains thread by thread, the way gilding is laid on.',
+    'trait.gold.where': 'Litany of Loreto',
+
+    'trait.rays': 'The uncreated light',
+    'trait.rays.change': 'One more ray crosses the crown.',
+    'trait.rays.meaning':
+      'God is light, and in him is no darkness at all. The rays do not come from the rosary; they pass through it.',
+    'trait.rays.where': '1 John 1:5',
+
     'trait.haloRings': 'The haloes',
     'trait.haloRings.change': 'One more halo surrounds the medal.',
-    'trait.filigree': 'The filigree',
-    'trait.filigree.change': 'The filigree reaches further between the decades.',
-    'trait.leaves': 'The foliage',
-    'trait.leaves.change': 'One more leaf has come.',
-    'trait.rays': 'The rays',
-    'trait.rays.change': 'One more ray crosses the crown.',
-    'trait.stoneFacets': 'The cut of the stone',
-    'trait.stoneFacets.change': 'The stone has gained a facet.',
-    'trait.stone': 'The centre stone',
-    'trait.stone.change': 'The centre stone has grown.',
-    'trait.chroma': 'The depth of colour',
-    'trait.chroma.change': 'The colours have deepened.',
-    'trait.gold': 'The gold',
-    'trait.gold.change': 'Gold has gained ground along the chain.',
-    'trait.paterRadius': 'The Our Father beads',
-    'trait.paterRadius.change': 'The Our Father beads have grown.',
-    'trait.aveRadius': 'The Hail Mary beads',
-    'trait.aveRadius.change': 'The Hail Mary beads have grown.',
-    'trait.cut': 'The cut of the beads',
-    'trait.cut.change': 'The beads have been faceted.',
-    'trait.dew': 'The highlights',
-    'trait.dew.change': 'The beads catch the light better.',
+    'trait.haloRings.meaning':
+      'The nimbus: the power of the Most High overshadowing, made visible as rings of light.',
+    'trait.haloRings.where': 'Luke 1:35',
+
     'trait.crossHeight': 'The crucifix',
     'trait.crossHeight.change': 'The crucifix stands taller.',
+    'trait.crossHeight.meaning':
+      'And I, if I be lifted up from the earth, will draw all men unto me. The cross is not adorned; it grows.',
+    'trait.crossHeight.where': 'John 12:32',
+
+    'trait.stone': 'The centre stone',
+    'trait.stone.change': 'The centre stone has grown.',
+    'trait.stone.meaning': 'The medal has become a stone, and the stone grows with the praying.',
+    'trait.stoneFacets': 'The cut of the stone',
+    'trait.stoneFacets.change': 'The stone has gained a facet.',
+    'trait.stoneFacets.meaning': 'One more facet, one more angle from which the stone takes light.',
+    'trait.palette': 'The colours',
+    'trait.palette.change': 'One more colour has entered the rosary.',
+    'trait.palette.meaning': 'Colours arrive one at a time, mildest first, boldest last.',
+    'trait.filigree': 'The filigree',
+    'trait.filigree.change': 'The filigree reaches further between the decades.',
+    'trait.filigree.meaning': 'The strokes of gold that mark the passage from one decade to the next.',
+    'trait.chroma': 'The depth of colour',
+    'trait.chroma.change': 'The colours have deepened.',
+    'trait.chroma.meaning': 'The rosary begins almost colourless and takes its colour as it goes.',
+    'trait.paterRadius': 'The Our Father beads',
+    'trait.paterRadius.change': 'The Our Father beads have grown.',
+    'trait.paterRadius.meaning': 'The six large beads, one for each Our Father.',
+    'trait.aveRadius': 'The Hail Mary beads',
+    'trait.aveRadius.change': 'The Hail Mary beads have grown.',
+    'trait.aveRadius.meaning': 'The fifty-three small beads, one for each Hail Mary.',
+    'trait.cut': 'The cut of the beads',
+    'trait.cut.change': 'The beads have been faceted.',
+    'trait.cut.meaning': 'The beads pass from smooth pebble to cut stone.',
+    'trait.dew': 'The highlights',
+    'trait.dew.change': 'The beads catch the light better.',
+    'trait.dew.meaning': 'The point of light a polished bead leaves.',
     'trait.engraving': 'The engraving',
     'trait.engraving.change': 'The engraving on the medal is sharper.',
+    'trait.engraving.meaning': 'The line is cut deeper and the monogram reads better.',
     'trait.patina': 'The patina',
     'trait.patina.change': 'The wood of the cross has taken its patina.',
+    'trait.patina.meaning': 'The wood darkens the way anything darkens that is held every day.',
 
     'done.changed': 'What changed',
     'done.nothingVisible': 'One more stroke has been cut into the band of memory.',

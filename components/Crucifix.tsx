@@ -24,6 +24,8 @@ export type CrucifixProps = {
   halo: string;
   /** Drops the halo and the titulus when the cross is drawn very small. */
   detail?: boolean;
+  /** Cuts alpha and omega into the two upper quarters. */
+  alphaOmega?: boolean;
   opacity?: number;
 };
 
@@ -40,6 +42,7 @@ export default function Crucifix({
   line,
   halo,
   detail = true,
+  alphaOmega = false,
   opacity = 1,
 }: CrucifixProps) {
   const scale = height / BOX_H;
@@ -74,6 +77,26 @@ export default function Crucifix({
             strokeWidth="1.2"
           />
         </>
+      )}
+
+      {alphaOmega && detail && (
+        // The first and the last letter, one in each upper quarter.
+        <g
+          stroke={halo}
+          strokeOpacity="0.85"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <g transform="translate(31 25)">
+            <path d="M -4.4 5.4 L 0 -5.4 L 4.4 5.4" />
+            <path d="M -2.5 1.4 L 2.5 1.4" />
+          </g>
+          <g transform="translate(89 25)">
+            <path d="M -4.8 5.5 L -1.9 5.5 A 5.3 5.3 0 1 1 1.9 5.5 L 4.8 5.5" />
+          </g>
+        </g>
       )}
 
       <g stroke={line} strokeWidth="0.85" strokeLinejoin="round" strokeLinecap="round">
