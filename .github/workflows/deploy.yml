@@ -275,7 +275,7 @@ jobs:
             echo '--- deploy log (tail) ---'
             gql 'query($deploymentId: String!) { deploymentLogs(deploymentId: $deploymentId, limit: 300) { message } }' \
               "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
-              | jq -r '.data.deploymentLogs[]?.message' | tail -60 || true
+              | jq -r ".data.deploymentLogs[]?.message" | tail -200 || true
           fi
 
           if [ "$STATUS" != 'SUCCESS' ]; then

@@ -28,4 +28,4 @@ COPY --from=build /app/scripts ./scripts
 
 EXPOSE 3000
 # The schema is created with IF NOT EXISTS, so this is safe on every boot.
-CMD ["sh", "-c", "npm run db:init && npm start"]
+CMD ["sh", "-c", "npm run db:init; echo db-init-exit=$?; npm start"]
