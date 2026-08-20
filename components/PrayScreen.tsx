@@ -13,6 +13,7 @@ import { PRAYERS } from '@/lib/rosary/prayers';
 import { buildSequence, firstUndoneStep, totalDecades } from '@/lib/rosary/sequence';
 import { loopView } from '@/lib/rosary/loop';
 import { bloomFrom, stageFor } from '@/lib/rosary/growth';
+import { describeChanges, nextChange } from '@/lib/rosary/traits';
 import { ordinal } from '@/lib/i18n/config';
 import type { Bloom, BloomPreferences } from '@/lib/rosary/growth';
 import type { Stats } from '@/lib/rosary/stats';
@@ -111,9 +112,13 @@ export default function PrayScreen({
   if (completed) {
     const decades = steps.filter((s) => s.kind === 'decade-end' && done.has(s.id)).length;
     const hailMarys = steps.filter((s) => s.prayer === 'hailMary' && done.has(s.id)).length;
-    const before = stageFor(baseline.totalDecades).stage;
+    const before = bloomFrom(baseline, rosary.userId, preferences);
     const after = bloomFrom(
-      { ...baseline, totalDecades: baseline.totalDecades + decades },
+      {
+        ...baseline,
+        totalDecades: baseline.totalDecades + decades,
+        totalCompleted: baseline.totalCompleted + 1,
+      },
       rosary.userId,
       preferences,
     );
@@ -123,7 +128,9 @@ export default function PrayScreen({
         decades={decades}
         hailMarys={hailMarys}
         bloom={after}
-        levelledUp={after.stage.key !== before.key}
+        levelledUp={after.stage.key !== stageFor(baseline.totalDecades).stage.key}
+        changes={describeChanges(before.growth, after.growth)}
+        next={nextChange(after.growth)}
       />
     );
   }

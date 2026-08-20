@@ -3,6 +3,7 @@ import { MYSTERY_SETS, MYSTERY_SET_ORDER } from './mysteries';
 import type { Stats } from './stats';
 import { fit, hexToHsl, hsl, hslToHex, isHexColor, lerp, lerpHue, type Hsl } from './color';
 import type { LoopShape } from './shapes';
+import { growthOf, type Growth } from './traits';
 
 export type Stage = {
   index: number;
@@ -123,6 +124,15 @@ export type Palette = {
   onAccent: string;
   /** Soft light behind the loop. */
   glow: string;
+  /** The centre stone, once it is more than a plain medal. */
+  stone: string;
+  stoneLight: string;
+  stoneDark: string;
+  /** Roses and their foliage. */
+  rose: string;
+  leaf: string;
+  /** Real gold, blended into the chain as the `gold` trait rises. */
+  goldLeaf: string;
   /** The crucifix. */
   wood: string;
   flesh: string;
@@ -142,20 +152,10 @@ export type Bloom = {
   palette: Palette;
   /** The outline the beads are threaded onto. */
   shape: LoopShape;
-  /** Number of roses drawn around the loop. */
-  petals: number;
-  /** Rays of light behind the loop. */
-  rays: number;
-  /** Small stars, one per day of the current streak (capped). */
-  stars: number;
+  /** Every measurable property of the artwork, and how far each has come. */
+  growth: Growth;
   /** 0 → 1, how luminous the whole piece is. */
   luminosity: number;
-  /** Whether filigree is drawn between the decades. */
-  filigree: boolean;
-  /** Whether the beads are faceted like stained glass. */
-  faceted: boolean;
-  /** Whether a halo surrounds the centre medal. */
-  halo: boolean;
   /** Dominant hue in degrees. */
   hue: number;
   hueAlt: number;
@@ -226,8 +226,36 @@ function paletteFor(
   t: number,
   luminosity: number,
   colors: { accent: Hsl; bead: Hsl; chain: Hsl },
+  growth: Growth,
 ): Palette {
-  const { accent, bead, chain } = colors;
+  const base = colors;
+  // Depth of colour is a trait like any other: it starts nearly washed out and
+  // deepens with every decade, so the same three chosen colours look different
+  // on day one and after a year.
+  const chroma = growth.value.chroma;
+  const withChroma = (c: Hsl): Hsl => ({ ...c, s: c.s * chroma });
+
+  const accent = withChroma(base.accent);
+  const bead = withChroma(base.bead);
+  const chainBase = withChroma(base.chain);
+
+  // Gold is worked into the chain rather than replacing it.
+  const gold = growth.value.gold;
+  const chain: Hsl = {
+    h: lerpHue(chainBase.h, GOLD_HUE + 6, gold * 0.85),
+    s: lerp(chainBase.s, 58, gold * 0.8),
+    l: lerp(chainBase.l, 52, gold * 0.6),
+  };
+
+  // New colours arrive one at a time, mildest first: the roses warm away from
+  // the accent, then the foliage becomes a true green, and only at the end does
+  // the stone take the split complement — the boldest note, saved for a piece
+  // rich enough to carry it.
+  const extra = growth.notch.palette;
+  const roseHue = extra >= 1 ? (accent.h + 332) % 360 : accent.h;
+  const leafHue = lerpHue(accent.h, 104, extra >= 2 ? 0.7 : 0.2);
+  const stoneHue = extra >= 3 ? (accent.h + 156) % 360 : accent.h;
+
   // The paper stays warm whatever colours are chosen: interpolating its hue
   // towards a blue accent would swing the cream to green.
   const paper = GOLD_HUE;
@@ -244,12 +272,18 @@ function paletteFor(
     border: hsl({ h: paper, s: 26, l: 38 }, 0.15),
     chain: hsl(chain),
     bead: hsl(bead),
-    paterBead: hsl({ h: chain.h, s: chain.s + 8, l: chain.l - 8 }),
+    paterBead: hsl({ h: chain.h, s: chain.s + 10, l: chain.l - 9 }),
+    stone: hsl({ h: stoneHue, s: lerp(16, 52, chroma), l: lerp(62, 44, chroma) }),
+    stoneLight: hsl({ h: stoneHue, s: lerp(18, 48, chroma), l: lerp(80, 70, chroma) }),
+    stoneDark: hsl({ h: stoneHue, s: lerp(20, 56, chroma), l: lerp(48, 30, chroma) }),
+    rose: hsl({ h: roseHue, s: lerp(20, 64, chroma), l: lerp(72, 58, chroma) }),
+    leaf: hsl({ h: leafHue, s: lerp(14, 40, chroma), l: lerp(62, 44, chroma) }),
+    goldLeaf: hsl({ h: GOLD_HUE + 6, s: lerp(30, 66, chroma), l: 52 }),
     beadIdle: hsl({ h: paper, s: 26, l: 78 }),
     accent: hsl(accent),
     onAccent: hsl({ h: paper, s: 62, l: 97 }),
     glow: hsl({ h: accent.h, s: lerp(52, 74, t), l: lerp(74, 68, t) }, 0.07 + luminosity * 0.14),
-    wood: hsl({ h: 24, s: lerp(24, 34, t), l: lerp(27, 22, t) }),
+    wood: hsl({ h: 24, s: lerp(22, 36, growth.value.patina), l: lerp(29, 20, growth.value.patina) }),
     flesh: hsl({ h: 36, s: lerp(30, 44, t), l: 86 }),
     cloth: hsl({ h: 34, s: lerp(28, 42, t), l: 71 }),
     outline: hsl({ h: 28, s: 30, l: lerp(48, 41, t) }),
@@ -306,7 +340,17 @@ export function bloomFrom(
   const span = next ? next.threshold - stage.threshold : 1;
   const toNext = next ? Math.min(1, (stats.totalDecades - stage.threshold) / span) : 1;
 
-  const luminosity = Math.min(1, t + Math.min(stats.currentStreak, 30) / 90);
+  const growth = growthOf({
+    decades: stats.totalDecades,
+    rosaries: stats.totalCompleted,
+    streak: stats.currentStreak,
+    sets: MYSTERY_SET_ORDER.filter((id) => stats.bySet[id] > 0).length,
+  });
+
+  const luminosity = Math.min(
+    1,
+    growth.value.chroma * 0.7 + Math.min(stats.currentStreak, 30) / 100,
+  );
 
   return {
     stage,
@@ -317,14 +361,9 @@ export function bloomFrom(
     shape: preferences.shape ?? 'round',
     custom: chosen !== null,
     trio: [hslToHex(colors.accent), hslToHex(colors.bead), hslToHex(colors.chain)],
-    palette: paletteFor(t, luminosity, colors),
-    petals: stage.index === 0 ? 0 : Math.round(lerp(5, 26, t)),
-    rays: stage.index >= 5 ? Math.round(lerp(12, 36, toNext)) : stage.index >= 3 ? 8 : 0,
-    stars: Math.min(24, stats.currentStreak),
+    growth,
+    palette: paletteFor(t, luminosity, colors, growth),
     luminosity,
-    filigree: stage.index >= 2,
-    faceted: stage.index >= 6,
-    halo: stage.index >= 4,
     hue,
     hueAlt,
   };

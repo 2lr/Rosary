@@ -29,12 +29,22 @@ sur un compte.
   salue Marie, la médaille où l'on dit le Gloire au Père, puis la boucle de cinq
   fois un Notre Père et dix Je vous salue Marie. Cinquante-neuf grains, comme
   dans la main.
-- **Un rosaire qui se personnalise.** L'illustration est générée à partir de
-  votre historique : plus vous priez, plus la couronne s'orne (roses, filigrane,
-  rayons, halo, grains taillés). Huit étapes, de « Semence » à « Couronne ».
-  Vous choisissez la forme de la boucle — ronde, ovale ou carrée — et vos trois
-  couleurs (la lumière, les grains, la chaîne), ou vous laissez la palette venir
-  des mystères que vous priez le plus.
+- **Un rosaire qui pousse.** Vingt et une propriétés du dessin — la taille des
+  grains, celle de la pierre centrale et sa taille en facettes, l'intensité des
+  couleurs, l'or sur la chaîne, les roses, le feuillage, le filigrane, les
+  rayons, les auréoles, la patine, la gravure, la colombe, la couronne de douze
+  étoiles, la rosace, les lys — sont chacune une fonction de ce qui a été prié.
+  Voir « Le modèle » plus bas.
+- **Vous voyez ce qui a changé.** À la fin de chaque rosaire, l'application dit
+  en toutes lettres ce qui est différent dans le dessin, et combien de dizaines
+  vous séparent de la prochaine transformation.
+- **Vous pouvez regarder de près.** Touchez le rosaire : il s'ouvre en plein
+  écran, on zoome jusqu'au grain, et un panneau détaille ce qui est déjà là et
+  ce qui vient.
+- **Un rosaire qui se personnalise.** Vous choisissez la forme de la boucle —
+  ronde, ovale ou carrée — et vos trois couleurs (la lumière, les grains, la
+  chaîne), ou vous laissez la palette venir des mystères que vous priez le plus.
+  Huit âges nomment le chemin, de « Semence » à « Couronne ».
 - **Statistiques.** Rosaires, dizaines, Je vous salue Marie, série en cours,
   plus longue série, jours de prière, 90 derniers jours, historique.
 - **Hors ligne.** La progression est conservée localement et renvoyée au serveur
@@ -51,9 +61,39 @@ Les trois formes de boucle sont la même courbe : une superellipse dont on chang
 les rayons et l'exposant. Les grains sont placés par longueur d'arc, sinon
 l'ovale les tasserait à ses extrémités.
 
-## Textes
+## Le modèle
 
-Français : Symbole des Apôtres, Notre Père dans la traduction liturgique de
+Tout ce qui se voit est une fonction de ce qui a été prié. La monnaie est la
+dizaine ; la courbe est toujours la même :
+
+```
+valeur(D) = depart + (limite − depart) · D / (D + k)
+```
+
+Trois propriétés la rendent juste pour cet usage. Elle monte le plus vite au
+début, donc les premières semaines sont vivantes. Elle n'arrive jamais, donc il
+reste toujours quelque chose devant. Et elle s'inverse en une ligne, donc
+l'application sait toujours dire combien de dizaines séparent de la prochaine
+transformation visible.
+
+`k` est la demi-vie : à `D = k`, la propriété est à mi-chemin de sa limite.
+Donner à chacune son propre `k` est ce qui les décale — la couleur
+s'approfondit dans le premier mois, la pierre grandit encore après mille
+rosaires. Chaque propriété est découpée en crans perceptibles ; c'est le
+franchissement d'un cran qui est annoncé.
+
+À cela s'ajoute la **couronne de mémoire** : un trait fin gravé pour chaque
+rosaire achevé, enroulé en anneaux concentriques. Elle change à chaque fois,
+sans exception, et devient avec les années une bande dense qu'on découvre en
+zoomant.
+
+Le tout est dans `lib/rosary/traits.ts`, sans dépendance ni aléatoire, donc
+entièrement testable : les tests vérifient que rien ne recule jamais, que la
+courbe s'inverse exactement, qu'il se passe quelque chose à presque chaque
+chapelet pendant les premiers mois, et qu'il reste de quoi voir après mille
+rosaires.
+
+## Textes : Symbole des Apôtres, Notre Père dans la traduction liturgique de
 2017 (« et ne nous laisse pas entrer en tentation »), Je vous salue Marie,
 Gloire au Père, prière de Fatima, Salve Regina.
 Anglais : les formes traditionnelles du rite romain.
@@ -120,10 +160,11 @@ app/                     Routes Next.js (App Router)
   journey/               Statistiques, étapes et historique
   settings/              Langue, prénom, apparence, installation, compte
   api/                   Authentification, rosaires, statistiques
-components/              Interface ; RosaryArt.tsx dessine le rosaire génératif
-                         et Crucifix.tsx le crucifix qui le termine
-lib/rosary/              Prières, mystères, séquence, croissance, formes,
-                         couleurs, statistiques
+components/              Interface ; RosaryArt.tsx dessine le rosaire génératif,
+                         Crucifix.tsx le crucifix qui le termine, et
+                         RosaryViewer.tsx la vue rapprochée
+lib/rosary/              Prières, mystères, séquence, traits de croissance,
+                         formes, couleurs, statistiques
 lib/db/                  Accès aux données (SQLite ou Postgres)
 lib/auth/                Mots de passe et sessions
 lib/i18n/                Dictionnaire français / anglais
@@ -165,11 +206,19 @@ The rosary is drawn as it is held: a crucifix with the body of Christ on it,
 then the Our Father bead, three Hail Mary beads, the centre medal, and a loop of
 five decades — fifty-nine beads in all.
 
-The artwork on the home screen is generated from your own history: the more you
-pray, the more the crown is adorned. Choose the shape of the loop — round, oval
-or square — and your own three colours, or let the palette come from the
-mysteries you pray most. Statistics cover rosaries, decades, Hail Marys, current
-and longest streak, days prayed and the last ninety days.
+Twenty-one properties of the drawing — the size of the beads, the size and cut
+of the centre stone, the depth of colour, gold along the chain, roses, foliage,
+filigree, rays, haloes, patina, engraving, a dove, a crown of twelve stars, a
+rose window, lilies — are each a function of what has actually been prayed, on
+one saturating curve that rises fastest at the start and never finishes. At the
+end of every rosary the app says in plain words what is different in the
+picture, and how many decades remain before the next change. Tap the rosary to
+open it full screen and zoom in on any bead.
+
+Choose the shape of the loop — round, oval or square — and your own three
+colours, or let the palette come from the mysteries you pray most. Statistics
+cover rosaries, decades, Hail Marys, current and longest streak, days prayed and
+the last ninety days.
 
 Getting started:
 

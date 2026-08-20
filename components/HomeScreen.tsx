@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import RosaryArt from '@/components/RosaryArt';
 import AppNav from '@/components/AppNav';
 import StartSheet from '@/components/StartSheet';
+import RosaryViewer from '@/components/RosaryViewer';
 import { Button, ButtonLink, Card, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
@@ -28,6 +29,7 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
   const t = useMemo(() => translatorFor(lang), [lang]);
 
   const [sheet, setSheet] = useState<RosaryKind | null>(null);
+  const [viewing, setViewing] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => setNow(new Date()), []);
 
@@ -74,15 +76,24 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
         </span>
       </header>
 
-      {/* The rosary itself: it is the user's record, drawn. */}
-      <div className="relative mt-1 flex justify-center">
+      {/* The rosary itself: it is the user's record, drawn. Tapping it opens
+          the close-up, where every detail can be inspected. */}
+      <button
+        type="button"
+        onClick={() => setViewing(true)}
+        className="tap relative mt-1 flex justify-center"
+        aria-label={t('done.look')}
+      >
         <RosaryArt
           bloom={bloom}
           fill={1}
           className="h-[17rem] w-auto"
           title={`${bloom.stage.name[lang]}`}
         />
-      </div>
+        <span className="absolute bottom-0 right-1 rounded-full px-2 py-1 text-[0.6rem] text-faint">
+          {t('done.look')}
+        </span>
+      </button>
 
       <section className="-mt-3 text-center animate-rise">
         <p className="text-[0.65rem] uppercase tracking-[0.22em] text-faint">
@@ -165,6 +176,10 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
       </section>
 
       <AppNav t={t} />
+
+      {viewing && (
+        <RosaryViewer bloom={bloom} lang={lang} onClose={() => setViewing(false)} />
+      )}
 
       {sheet && (
         <StartSheet

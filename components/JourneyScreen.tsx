@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppNav from '@/components/AppNav';
 import RosaryArt from '@/components/RosaryArt';
+import RosaryViewer from '@/components/RosaryViewer';
 import { Card, Stat, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
@@ -27,6 +28,7 @@ export default function JourneyScreen({
   const t = useMemo(() => translatorFor(lang), [lang]);
   const router = useRouter();
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [viewing, setViewing] = useState(false);
 
   const dateFormat = useMemo(
     () => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }),
@@ -61,13 +63,14 @@ export default function JourneyScreen({
         </p>
       </header>
 
-      <div className="pointer-events-none relative mt-1 flex justify-center">
-        <RosaryArt
-          bloom={bloom}
-          fill={1}
-          className="h-52 w-auto"
-        />
-      </div>
+      <button
+        type="button"
+        onClick={() => setViewing(true)}
+        className="tap relative mt-1 flex justify-center"
+        aria-label={t('done.look')}
+      >
+        <RosaryArt bloom={bloom} fill={1} className="h-52 w-auto" />
+      </button>
 
       <section className="grid grid-cols-3 gap-2.5">
         <Stat value={stats.totalCompleted} label={t('journey.rosaries')} />
@@ -236,6 +239,10 @@ export default function JourneyScreen({
       </section>
 
       <AppNav t={t} />
+
+      {viewing && (
+        <RosaryViewer bloom={bloom} lang={lang} onClose={() => setViewing(false)} />
+      )}
     </div>
   );
 }

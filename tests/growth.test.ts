@@ -33,13 +33,12 @@ describe('the artwork', () => {
     const day1 = bloomFrom(EMPTY_STATS, 'user-1');
     const later = bloomFrom(withStats({ totalDecades: 300, currentStreak: 12 }), 'user-1');
 
-    expect(day1.petals).toBe(0);
-    expect(day1.filigree).toBe(false);
-    expect(later.petals).toBeGreaterThan(0);
-    expect(later.filigree).toBe(true);
-    expect(later.halo).toBe(true);
+    expect(day1.growth.notch.roses).toBe(0);
+    expect(day1.growth.notch.filigree).toBe(0);
+    expect(later.growth.notch.roses).toBeGreaterThan(0);
+    expect(later.growth.notch.filigree).toBeGreaterThan(0);
     expect(later.luminosity).toBeGreaterThan(day1.luminosity);
-    expect(later.stars).toBe(12);
+    expect(later.growth.stars).toBe(12);
   });
 
   it('is stable for a given user and different between users', () => {
@@ -73,7 +72,7 @@ describe('the artwork', () => {
   });
 
   it('counts stars up to the current streak but no further', () => {
-    expect(bloomFrom(withStats({ currentStreak: 200 }), 'u').stars).toBe(24);
+    expect(bloomFrom(withStats({ currentStreak: 200 }), 'u').growth.stars).toBe(24);
   });
 });
 
