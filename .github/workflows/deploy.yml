@@ -185,7 +185,68 @@ jobs:
           railway status || echo 'status still unhappy — the upload will tell us for certain'
 
       - name: Deploy
-        run: railway up --service "$SERVICE" --environment "$ENV_ID" --ci
+        run: |
+          set -euo pipefail
+
+          # Detached rather than streaming: `railway up --ci` tails the build and
+          # does not always come back, which spent a whole job timeout doing
+          # nothing visible. The upload returns at once and the deployment is
+          # then followed through the API, which also yields the build log if it
+          # goes wrong.
+          railway up --service "$SERVICE" --environment "$ENV_ID" --detach
+
+      - name: Follow the build
+        run: |
+          set -euo pipefail
+
+          gql() {
+            jq -n --arg q "$1" --argjson v "$2" '{query:$q, variables:$v}' > payload.json
+            curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+              -H "Project-Access-Token: $RAILWAY_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data @payload.json > reply.json
+            if jq -e '.errors' reply.json >/dev/null; then
+              echo '::error::Railway refused the call:'
+              jq -r '.errors[].message' reply.json
+              exit 1
+            fi
+            cat reply.json
+          }
+
+          LATEST='query($input: DeploymentListInput!) { deployments(input: $input, first: 1) { edges { node { id status createdAt } } } }'
+          SCOPE="$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" \
+            '{input:{projectId:$p, environmentId:$e, serviceId:$s}}')"
+
+          DEPLOY_ID=''
+          STATUS=''
+          for attempt in $(seq 1 90); do
+            NODE="$(gql "$LATEST" "$SCOPE" | jq -r '.data.deployments.edges[0].node // empty')"
+            [ -n "$NODE" ] || { echo "attempt $attempt: no deployment yet"; sleep 10; continue; }
+            DEPLOY_ID="$(echo "$NODE" | jq -r '.id')"
+            STATUS="$(echo "$NODE" | jq -r '.status')"
+            echo "attempt $attempt: $STATUS"
+            case "$STATUS" in
+              SUCCESS) break ;;
+              FAILED|CRASHED|REMOVED|SKIPPED) break ;;
+            esac
+            sleep 10
+          done
+
+          echo "DEPLOY_ID=$DEPLOY_ID" >> "$GITHUB_ENV"
+
+          if [ "$STATUS" != 'SUCCESS' ]; then
+            echo "::error::The deployment ended as $STATUS."
+            echo '--- build log ---'
+            gql 'query($deploymentId: String!) { buildLogs(deploymentId: $deploymentId, limit: 400) { message } }' \
+              "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
+              | jq -r '.data.buildLogs[]?.message' | tail -200 || true
+            echo '--- deploy log ---'
+            gql 'query($deploymentId: String!) { deploymentLogs(deploymentId: $deploymentId, limit: 200) { message } }' \
+              "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
+              | jq -r '.data.deploymentLogs[]?.message' | tail -100 || true
+            exit 1
+          fi
+          echo 'Build succeeded.'
 
       - name: The public address
         id: domain
@@ -239,6 +300,13 @@ jobs:
             echo "attempt $attempt: HTTP $CODE — still starting"
             sleep 15
           done
-          echo 'Never answered with the app.'
+          echo 'Never answered with the app. What the container said:'
           tail -c 800 body.html || true
+          jq -n --arg q 'query($deploymentId: String!) { deploymentLogs(deploymentId: $deploymentId, limit: 200) { message } }' \
+                --argjson v "$(jq -n --arg d "$DEPLOY_ID" '{deploymentId:$d}')" \
+                '{query:$q, variables:$v}' > payload.json
+          curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+            -H "Project-Access-Token: $RAILWAY_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data @payload.json | jq -r '.data.deploymentLogs[]?.message' | tail -120 || true
           exit 1
