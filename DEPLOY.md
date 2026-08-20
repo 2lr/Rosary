@@ -15,10 +15,34 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ---
 
-## Vercel + Neon — le chemin le plus court
+## Railway — l'application et sa base au même endroit
 
-Environ dix minutes, sans carte bancaire (les paliers gratuits suffisent
-largement pour un rosaire partagé entre amis).
+Le plus simple si vous avez déjà un compte : Railway héberge les deux, dans un
+seul projet. Il n'y a rien d'autre à ouvrir.
+
+1. **New Project → Deploy from GitHub repo → `2lr/Rosary`.** Railway reconnaît
+   Next.js ; `railway.json` fixe déjà la commande de build et celle de
+   démarrage.
+2. **Ajouter la base.** Dans le même projet : **+ New → Database → Add
+   PostgreSQL**.
+3. **Brancher les deux.** Sur le service de l'application, onglet **Variables** :
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` — Railway remplace la
+     référence tout seul, il n'y a pas de mot de passe à recopier ;
+   - `SESSION_SECRET` = la valeur générée plus haut.
+4. **Settings → Networking → Generate Domain** pour obtenir l'adresse publique.
+
+Les tables se créent à la première requête. Le conteneur est persistant, donc
+les connexions à la base sont réutilisées — pas de pooler à configurer.
+
+---
+
+## Vercel + Neon — l'autre chemin
+
+Si vous préférez Vercel. **Neon** est simplement un hébergeur de bases
+PostgreSQL : Postgres est le moteur, Neon est la société qui vous en loue une,
+gérée et sauvegardée, avec un palier gratuit. Il ne sert qu'à ça — stocker les
+comptes et les rosaires. Vercel n'héberge pas de base de données, d'où le
+couple. Sur Railway, la question ne se pose pas : les deux sont au même endroit.
 
 1. **Importer le dépôt.** Sur [vercel.com/new](https://vercel.com/new), choisir
    `2lr/Rosary`. Vercel reconnaît Next.js tout seul : ne rien changer aux
