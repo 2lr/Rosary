@@ -34,6 +34,23 @@ seul projet. Il n'y a rien d'autre à ouvrir.
 Les tables se créent à la première requête. Le conteneur est persistant, donc
 les connexions à la base sont réutilisées — pas de pooler à configurer.
 
+### Redéployer tout seul à chaque changement
+
+Railway le fait déjà si vous l'avez branché sur le dépôt GitHub. Si vous
+préférez que ce soit la CI qui pousse — utile pour ne déployer qu'une fois les
+tests verts — le workflow `.github/workflows/deploy.yml` est prêt :
+
+1. Dans Railway : **Project Settings → Tokens → Create Token**. Prenez un jeton
+   *de projet*, pas un jeton de compte : il ne peut toucher que ce projet-là.
+2. Dans GitHub : **Settings → Secrets and variables → Actions → New repository
+   secret**, nommé `RAILWAY_TOKEN`, et collez-y le jeton.
+   Collez-le directement dans GitHub — un jeton qui passe par une conversation
+   ou un e-mail est un jeton à changer.
+3. Si votre service Railway ne s'appelle pas `Rosary`, ajoutez une *variable*
+   (pas un secret) `RAILWAY_SERVICE` avec son nom.
+
+Sans ce secret, le workflow ne fait rien et n'échoue pas.
+
 ---
 
 ## Vercel + Neon — l'autre chemin

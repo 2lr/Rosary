@@ -1,0 +1,47 @@
+name: Deploy
+
+# Deploys to Railway on every push to main, and on demand from the Actions tab.
+# Nothing happens until RAILWAY_TOKEN is set in the repository secrets, so the
+# workflow is safe to merge before the project exists.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Is a token configured?
+        id: guard
+        env:
+          TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::RAILWAY_TOKEN is not set — skipping. See DEPLOY.md."
+          fi
+
+      - name: Install the Railway CLI
+        if: steps.guard.outputs.ready == 'true'
+        run: npm install -g @railway/cli
+
+      - name: Deploy
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          SERVICE: ${{ vars.RAILWAY_SERVICE || 'Rosary' }}
+        run: railway up --service "$SERVICE" --detach
