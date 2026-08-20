@@ -1,0 +1,664 @@
+import type { Lang } from './config';
+
+export const DICT = {
+  fr: {
+    appName: 'Rosaire',
+    tagline: 'Un chapelet par jour, une couronne qui grandit.',
+
+    // Authentication
+    'auth.signIn': 'Se connecter',
+    'auth.signUp': 'Créer un compte',
+    'auth.email': 'Adresse e-mail',
+    'auth.password': 'Mot de passe',
+    'auth.passwordHint': 'Au moins 8 caractères',
+    'auth.name': 'Votre prénom',
+    'auth.nameHint': 'Facultatif',
+    'auth.haveAccount': 'Vous avez déjà un compte ?',
+    'auth.noAccount': 'Pas encore de compte ?',
+    'auth.signOut': 'Se déconnecter',
+    'auth.welcome': 'Bienvenue',
+    'auth.welcomeBack': 'Content de vous revoir',
+    'auth.introTitle': 'Priez le rosaire, jour après jour.',
+    'auth.introBody':
+      'Un chapelet guidé, en français ou en anglais, que vous pouvez prier d’un trait ou reprendre au fil de la journée. Chaque dizaine priée fait grandir votre rosaire.',
+    'auth.working': 'Un instant…',
+
+    'error.invalidEmail': 'Cette adresse e-mail ne semble pas valide.',
+    'error.passwordTooShort': 'Le mot de passe doit faire au moins 8 caractères.',
+    'error.passwordTooLong': 'Le mot de passe est trop long.',
+    'error.emailTaken': 'Un compte existe déjà avec cette adresse.',
+    'error.invalidCredentials': 'E-mail ou mot de passe incorrect.',
+    'error.generic': 'Quelque chose s’est mal passé. Réessayez.',
+    'error.offline': 'Vous semblez hors ligne. Vos avancées seront envoyées au retour du réseau.',
+    'error.notFound': 'Ce rosaire est introuvable.',
+
+    // Home
+    'home.today': 'Aujourd’hui',
+    'home.todaysMysteries': 'Mystères du jour',
+    'home.begin': 'Commencer',
+    'home.resume': 'Reprendre le rosaire en cours',
+    'home.resumeAt': 'Repris à {progress} %',
+    'home.chaplet': 'Chapelet du jour',
+    'home.chapletDesc': 'Les cinq dizaines des mystères d’aujourd’hui.',
+    'home.full': 'Rosaire complet',
+    'home.fullDesc': 'Les vingt mystères, joyeux, lumineux, douloureux et glorieux.',
+    'home.free': 'Rosaire libre',
+    'home.freeDesc': 'Cinq dizaines, avec vos propres intentions à chaque dizaine.',
+    'home.chooseSet': 'Choisir d’autres mystères',
+    'home.mode': 'Comment souhaitez-vous prier ?',
+    'home.modeSpoken': 'À voix haute',
+    'home.modeSpokenDesc': 'Le texte défile, vous priez.',
+    'home.modeWritten': 'En écrivant',
+    'home.modeWrittenDesc': 'Vous écrivez votre méditation avant de la dire.',
+    'home.intention': 'Intention',
+    'home.intentionPlaceholder': 'Pour qui, pour quoi priez-vous aujourd’hui ?',
+    'home.optional': 'facultatif',
+    'home.start': 'Commencer le rosaire',
+    'home.journey': 'Mon chemin',
+    'home.settings': 'Réglages',
+    'home.greetingMorning': 'Bonjour',
+    'home.greetingAfternoon': 'Bon après-midi',
+    'home.greetingEvening': 'Bonsoir',
+    'home.prayedToday': 'Prié aujourd’hui',
+    'home.notPrayedToday': 'Pas encore prié aujourd’hui',
+
+    // Prayer flow
+    'pray.opening': 'Ouverture',
+    'pray.conclusion': 'Conclusion',
+    'pray.decade': 'Dizaine {n}',
+    'pray.decadeOf': 'Dizaine {n} sur {total}',
+    'pray.bead': 'Grain {n} sur {total}',
+    'pray.mystery': '{ordinal} mystère',
+    'pray.fruit': 'Fruit du mystère',
+    'pray.scripture': 'Écriture',
+    'pray.meditation': 'Méditation',
+    'pray.next': 'Suivant',
+    'pray.back': 'Précédent',
+    'pray.amen': 'Amen',
+    'pray.prayed': 'Prié',
+    'pray.finish': 'Terminer le rosaire',
+    'pray.pause': 'Mettre en pause',
+    'pray.paused': 'Vous pourrez reprendre exactement ici.',
+    'pray.writePlaceholder': 'Écrivez votre méditation, puis dites-la.',
+    'pray.freeTitle': 'Votre intention',
+    'pray.saving': 'Enregistrement…',
+    'pray.saved': 'Enregistré',
+    'pray.pendingSync': 'En attente de réseau',
+    'pray.autoAdvance': 'Avance automatique',
+    'pray.overview': 'Vue d’ensemble',
+    'pray.intentionLabel': 'Intention de ce rosaire',
+    'pray.tapToPray': 'Touchez le grain quand vous avez prié',
+
+    // Completion
+    'done.title': 'Rosaire achevé',
+    'done.body': 'Vous avez prié {decades} dizaines, soit {hailMarys} Je vous salue Marie.',
+    'done.grown': 'Votre rosaire a grandi.',
+    'done.stageReached': 'Nouvelle étape atteinte : {stage}',
+    'done.home': 'Revenir à l’accueil',
+    'done.journey': 'Voir mon chemin',
+
+    // Journey / statistics
+    'journey.title': 'Mon chemin',
+    'journey.subtitle': 'Ce que la prière a déposé, jour après jour.',
+    'journey.rosaries': 'Rosaires',
+    'journey.decades': 'Dizaines',
+    'journey.hailMarys': 'Je vous salue Marie',
+    'journey.streak': 'Série en cours',
+    'journey.longestStreak': 'Plus longue série',
+    'journey.daysPrayed': 'Jours de prière',
+    'journey.minutes': 'Minutes en prière',
+    'journey.since': 'Depuis le {date}',
+    'journey.sinceNever': 'Votre premier rosaire vous attend.',
+    'journey.days': '{n} jours',
+    'journey.day': '{n} jour',
+    'journey.stage': 'Étape',
+    'journey.nextStage': 'Prochaine étape',
+    'journey.toNext': 'Encore {n} dizaines avant « {stage} »',
+    'journey.complete': 'Toutes les étapes sont franchies. Continuez.',
+    'journey.bySet': 'Par mystères',
+    'journey.history': 'Historique',
+    'journey.noHistory': 'Rien encore. Le premier chapelet est le plus beau.',
+    'journey.lastNinety': 'Les 90 derniers jours',
+    'journey.inProgress': 'en cours',
+    'journey.resume': 'Reprendre',
+    'journey.delete': 'Supprimer',
+    'journey.confirmDelete': 'Supprimer ce rosaire ?',
+
+    // Settings
+    'settings.title': 'Réglages',
+    'settings.language': 'Langue',
+    'settings.name': 'Votre prénom',
+    'settings.namePlaceholder': 'Comment vous appeler ?',
+    'settings.save': 'Enregistrer',
+    'settings.saved': 'Enregistré',
+    'settings.account': 'Compte',
+    'settings.appearance': 'Apparence',
+    'settings.shape': 'Forme du rosaire',
+    'settings.shapeRound': 'Rond',
+    'settings.shapeOval': 'Ovale',
+    'settings.shapeSquare': 'Carré',
+    'settings.colors': 'Vos trois couleurs',
+    'settings.colorsHint':
+      'Sans choix de votre part, les couleurs viennent des mystères que vous priez le plus.',
+    'settings.colorAccent': 'Lumière',
+    'settings.colorBead': 'Grains',
+    'settings.colorChain': 'Chaîne',
+    'settings.harmonies': 'Harmonies',
+    'settings.resetColors': 'Revenir aux couleurs des mystères',
+    'settings.preview': 'Aperçu',
+    'harmony.gold': 'Or et ivoire',
+    'harmony.marian': 'Bleu marial',
+    'harmony.rose': 'Rose ancienne',
+    'harmony.olive': 'Vert olivier',
+    'harmony.plum': 'Prune',
+    'harmony.ember': 'Braise',
+    'settings.install': 'Installer sur l’écran d’accueil',
+    'settings.installIos':
+      'Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». L’app s’ouvrira alors en plein écran.',
+    'settings.installAndroid': 'Installer l’application',
+    'settings.installed': 'L’application est installée.',
+    'settings.about': 'À propos',
+    'settings.aboutBody':
+      'Textes liturgiques : Symbole des Apôtres, Notre Père (traduction de 2017), Je vous salue Marie, Gloire au Père, prière de Fatima et Salve Regina. Le cycle des mystères suit l’usage confirmé par la lettre apostolique Rosarium Virginis Mariae (2002).',
+
+    // Generic
+
+    // The growing rosary — the signs, grouped as the tradition groups them
+    'family.father': 'Le Père',
+    'family.son': 'Le Fils',
+    'family.spirit': 'L’Esprit Saint',
+    'family.mary': 'Marie',
+    'family.craft': 'La facture',
+
+    'trait.monogram': 'Le monogramme de Marie',
+    'trait.monogram.change': 'Le monogramme de Marie est apparu sur la médaille.',
+    'trait.monogram.meaning':
+      'L’A et l’M entrelacés sous la croix, comme au revers de la médaille miraculeuse : le nom de Marie tenu sous celui du Christ.',
+
+    'trait.dove': 'La colombe',
+    'trait.dove.change': 'Une colombe s’est posée au-dessus de la couronne.',
+    'trait.dove.meaning':
+      'La forme sous laquelle l’Esprit s’est rendu visible, au baptême de Jésus dans le Jourdain.',
+    'trait.dove.where': 'Luc 3, 22',
+
+    'trait.flames': 'Les sept flammes',
+    'trait.flames.change': 'Sept flammes se sont allumées autour de la colombe.',
+    'trait.flames.meaning':
+      'Les sept dons : sagesse, intelligence, conseil, force, science, piété, crainte de Dieu. Le feu de la Pentecôte se posa ainsi, une flamme sur chacun.',
+    'trait.flames.where': 'Isaïe 11, 2-3 · Actes 2, 3',
+
+    'trait.alphaOmega': 'Alpha et Oméga',
+    'trait.alphaOmega.change': 'L’alpha et l’oméga sont gravés de part et d’autre de la croix.',
+    'trait.alphaOmega.meaning':
+      'La première et la dernière lettre de l’alphabet grec, encadrant la croix : celui qui commence tout et achève tout.',
+    'trait.alphaOmega.where': 'Apocalypse 22, 13',
+
+    'trait.moon': 'Le croissant de lune',
+    'trait.moon.change': 'La médaille repose désormais sur un croissant de lune.',
+    'trait.moon.meaning':
+      'La femme revêtue de soleil, la lune sous ses pieds : l’image dont toute l’iconographie de l’Immaculée est sortie.',
+    'trait.moon.where': 'Apocalypse 12, 1',
+
+    'trait.triquetra': 'Les trois cercles',
+    'trait.triquetra.change': 'Trois cercles entrelacés se sont noués au sommet.',
+    'trait.triquetra.meaning':
+      'Trois cercles sans commencement ni fin, entrelacés sans se confondre et inséparables : la manière la plus ancienne de dire la Trinité sans la représenter.',
+
+    'trait.crown': 'La couronne de douze étoiles',
+    'trait.crown.change': 'Douze étoiles entourent désormais la médaille.',
+    'trait.crown.meaning':
+      'Les douze tribus, les douze apôtres : la couronne de celle qui est reine parce qu’elle a dit oui jusqu’au bout.',
+    'trait.crown.where': 'Apocalypse 12, 1',
+
+    'trait.chiRho': 'Le chrisme',
+    'trait.chiRho.change': 'Le chrisme s’est ouvert au cœur de la couronne.',
+    'trait.chiRho.meaning':
+      'Le X et le P grecs, les deux premières lettres de Χριστός, nouées l’une dans l’autre. Le plus vieux monogramme du Christ.',
+
+    'trait.roseWindow': 'La rosace',
+    'trait.roseWindow.change': 'Une rosace s’est ouverte derrière le rosaire.',
+    'trait.roseWindow.meaning':
+      'La rosace des cathédrales, presque toutes bâties sous le nom de Notre-Dame : douze pétales de lumière autour d’un même centre.',
+
+    'trait.glory': 'Le triangle dans la gloire',
+    'trait.glory.change': 'Un triangle rayonnant s’est ouvert au sommet du rosaire.',
+    'trait.glory.meaning':
+      'Trois côtés égaux, un seul contour, la lumière tout autour. C’est ainsi qu’on figure Dieu au fronton des retables : par une forme et par une lumière, jamais par un visage.',
+
+    'trait.lilies': 'Les lys',
+    'trait.lilies.change': 'Des lys ont poussé au pied de la croix.',
+    'trait.lilies.meaning':
+      'Le lys de la pureté, que l’ange tient à l’Annonciation, poussé là où Marie se tenait, debout près de la croix.',
+    'trait.lilies.where': 'Cantique 2, 2 · Jean 19, 25',
+
+    'trait.roses': 'Les roses mystiques',
+    'trait.roses.change': 'Une nouvelle rose s’est ouverte.',
+    'trait.roses.meaning':
+      'Rosa mystica. Le rosaire est une couronne de roses tressée pour elle — c’est de là que le mot vient.',
+    'trait.roses.where': 'Litanies de Lorette',
+
+    'trait.leaves': 'Le jardin clos',
+    'trait.leaves.change': 'Une feuille de plus est venue.',
+    'trait.leaves.meaning':
+      'Hortus conclusus : le jardin fermé et la source scellée, image de celle qui a gardé entier ce qui lui était confié.',
+    'trait.leaves.where': 'Cantique 4, 12',
+
+    'trait.gold': 'La maison d’or',
+    'trait.gold.change': 'L’or a gagné du terrain sur la chaîne.',
+    'trait.gold.meaning':
+      'Domus aurea. L’or ne se pose pas d’un coup : il gagne, fil après fil, comme une dorure qu’on applique.',
+    'trait.gold.where': 'Litanies de Lorette',
+
+    'trait.rays': 'La lumière incréée',
+    'trait.rays.change': 'Un rayon de plus traverse la couronne.',
+    'trait.rays.meaning':
+      'Dieu est lumière, et de ténèbres il n’y a point en lui. Les rayons ne viennent pas du rosaire : ils le traversent.',
+    'trait.rays.where': '1 Jean 1, 5',
+
+    'trait.haloRings': 'Les auréoles',
+    'trait.haloRings.change': 'Une auréole de plus entoure la médaille.',
+    'trait.haloRings.meaning':
+      'Le nimbe : la puissance du Très-Haut qui prend sous son ombre, rendue visible par des cercles de lumière.',
+    'trait.haloRings.where': 'Luc 1, 35',
+
+    'trait.crossHeight': 'Le crucifix',
+    'trait.crossHeight.change': 'Le crucifix s’est élevé.',
+    'trait.crossHeight.meaning':
+      'Quand j’aurai été élevé de terre, j’attirerai à moi tous les hommes. La croix ne s’orne pas : elle grandit.',
+    'trait.crossHeight.where': 'Jean 12, 32',
+
+    'trait.stone': 'La pierre centrale',
+    'trait.stone.change': 'La pierre centrale a grandi.',
+    'trait.stone.meaning': 'La médaille est devenue une pierre, et la pierre grossit avec la prière.',
+    'trait.stoneFacets': 'La taille de la pierre',
+    'trait.stoneFacets.change': 'La pierre a gagné une facette.',
+    'trait.stoneFacets.meaning': 'Une facette de plus, et la pierre prend la lumière d’un angle de plus.',
+    'trait.palette': 'Les couleurs',
+    'trait.palette.change': 'Une couleur de plus est entrée dans le rosaire.',
+    'trait.palette.meaning': 'Les couleurs arrivent une à une, de la plus douce à la plus franche.',
+    'trait.filigree': 'Le filigrane',
+    'trait.filigree.change': 'Le filigrane s’étend entre les dizaines.',
+    'trait.filigree.meaning': 'Les traits d’or qui marquent le passage d’une dizaine à l’autre.',
+    'trait.chroma': 'L’intensité des couleurs',
+    'trait.chroma.change': 'Les couleurs se sont approfondies.',
+    'trait.chroma.meaning': 'Le rosaire commence presque incolore et prend sa couleur à mesure.',
+    'trait.paterRadius': 'Les grains du Notre Père',
+    'trait.paterRadius.change': 'Les grains du Notre Père ont grossi.',
+    'trait.paterRadius.meaning': 'Les six gros grains, un par Notre Père.',
+    'trait.aveRadius': 'Les grains du Je vous salue Marie',
+    'trait.aveRadius.change': 'Les grains des Je vous salue Marie ont grossi.',
+    'trait.aveRadius.meaning': 'Les cinquante-trois petits grains, un par Je vous salue Marie.',
+    'trait.cut': 'La taille des grains',
+    'trait.cut.change': 'Les grains se sont facettés.',
+    'trait.cut.meaning': 'Les grains passent du galet lisse à la pierre taillée.',
+    'trait.dew': 'Les reflets',
+    'trait.dew.change': 'Les grains prennent mieux la lumière.',
+    'trait.dew.meaning': 'Le point de lumière que laisse un grain poli.',
+    'trait.engraving': 'La gravure',
+    'trait.engraving.change': 'La gravure de la médaille s’est précisée.',
+    'trait.engraving.meaning': 'Le trait se creuse et le monogramme se lit mieux.',
+    'trait.patina': 'La patine',
+    'trait.patina.change': 'Le bois de la croix a pris sa patine.',
+    'trait.patina.meaning': 'Le bois fonce comme fonce un objet qu’on tient tous les jours.',
+
+    'done.changed': 'Ce qui a changé',
+    'done.heart': '{n} grains de plus au cœur de la rose.',
+    'done.nothingVisible': 'Rien d’autre n’a bougé cette fois.',
+    'done.next': 'Encore {n} dizaines : {what}',
+    'done.look': 'Regarder de près',
+
+    'viewer.title': 'Votre rosaire',
+    'viewer.hint': 'Pincez ou faites défiler pour zoomer.',
+    'viewer.traits': 'Ce que la prière a déposé',
+    'viewer.toCome': 'À venir',
+    'viewer.heart': 'Le cœur de la rose',
+    'viewer.heartHint': 'Un grain déposé par dizaine priée : {n}.',
+    'viewer.heartMeaning':
+      'Chaque grain se pose à l’angle d’or du précédent, comme les graines au cœur d’une fleur. Aucun n’est jamais déplacé, le motif ne se répète jamais, et l’espacement reste égal quel qu’en soit le nombre.',
+    'viewer.remaining': 'encore {n}',
+    'viewer.reset': 'Recentrer',
+
+    'common.close': 'Fermer',
+    'common.cancel': 'Annuler',
+    'common.continue': 'Continuer',
+    'common.of': 'sur',
+    'common.loading': 'Chargement…',
+  },
+
+  en: {
+    appName: 'Rosary',
+    tagline: 'One chaplet a day, a crown that grows.',
+
+    'auth.signIn': 'Sign in',
+    'auth.signUp': 'Create an account',
+    'auth.email': 'Email address',
+    'auth.password': 'Password',
+    'auth.passwordHint': 'At least 8 characters',
+    'auth.name': 'Your first name',
+    'auth.nameHint': 'Optional',
+    'auth.haveAccount': 'Already have an account?',
+    'auth.noAccount': 'No account yet?',
+    'auth.signOut': 'Sign out',
+    'auth.welcome': 'Welcome',
+    'auth.welcomeBack': 'Good to see you again',
+    'auth.introTitle': 'Pray the rosary, day after day.',
+    'auth.introBody':
+      'A guided chaplet, in English or French, to pray in one sitting or pick up through the day. Every decade you pray makes your rosary grow.',
+    'auth.working': 'One moment…',
+
+    'error.invalidEmail': 'That email address does not look valid.',
+    'error.passwordTooShort': 'Your password must be at least 8 characters.',
+    'error.passwordTooLong': 'That password is too long.',
+    'error.emailTaken': 'An account already exists with that address.',
+    'error.invalidCredentials': 'Wrong email or password.',
+    'error.generic': 'Something went wrong. Please try again.',
+    'error.offline': 'You appear to be offline. Your progress will sync when the network returns.',
+    'error.notFound': 'That rosary could not be found.',
+
+    'home.today': 'Today',
+    'home.todaysMysteries': 'Today’s mysteries',
+    'home.begin': 'Begin',
+    'home.resume': 'Resume the rosary in progress',
+    'home.resumeAt': 'Resumed at {progress}%',
+    'home.chaplet': 'Chaplet of the day',
+    'home.chapletDesc': 'The five decades of today’s mysteries.',
+    'home.full': 'Full rosary',
+    'home.fullDesc': 'All twenty mysteries: joyful, luminous, sorrowful and glorious.',
+    'home.free': 'Free rosary',
+    'home.freeDesc': 'Five decades, with your own intention for each one.',
+    'home.chooseSet': 'Choose other mysteries',
+    'home.mode': 'How would you like to pray?',
+    'home.modeSpoken': 'Aloud',
+    'home.modeSpokenDesc': 'The text unfolds, you pray it.',
+    'home.modeWritten': 'In writing',
+    'home.modeWrittenDesc': 'You write your meditation before saying it.',
+    'home.intention': 'Intention',
+    'home.intentionPlaceholder': 'Who or what are you praying for today?',
+    'home.optional': 'optional',
+    'home.start': 'Begin the rosary',
+    'home.journey': 'My journey',
+    'home.settings': 'Settings',
+    'home.greetingMorning': 'Good morning',
+    'home.greetingAfternoon': 'Good afternoon',
+    'home.greetingEvening': 'Good evening',
+    'home.prayedToday': 'Prayed today',
+    'home.notPrayedToday': 'Not prayed yet today',
+
+    'pray.opening': 'Opening',
+    'pray.conclusion': 'Conclusion',
+    'pray.decade': 'Decade {n}',
+    'pray.decadeOf': 'Decade {n} of {total}',
+    'pray.bead': 'Bead {n} of {total}',
+    'pray.mystery': '{ordinal} mystery',
+    'pray.fruit': 'Fruit of the mystery',
+    'pray.scripture': 'Scripture',
+    'pray.meditation': 'Meditation',
+    'pray.next': 'Next',
+    'pray.back': 'Back',
+    'pray.amen': 'Amen',
+    'pray.prayed': 'Prayed',
+    'pray.finish': 'Finish the rosary',
+    'pray.pause': 'Pause',
+    'pray.paused': 'You will pick up exactly here.',
+    'pray.writePlaceholder': 'Write your meditation, then pray it.',
+    'pray.freeTitle': 'Your intention',
+    'pray.saving': 'Saving…',
+    'pray.saved': 'Saved',
+    'pray.pendingSync': 'Waiting for network',
+    'pray.autoAdvance': 'Auto-advance',
+    'pray.overview': 'Overview',
+    'pray.intentionLabel': 'Intention of this rosary',
+    'pray.tapToPray': 'Tap the bead once you have prayed it',
+
+    'done.title': 'Rosary completed',
+    'done.body': 'You prayed {decades} decades — {hailMarys} Hail Marys.',
+    'done.grown': 'Your rosary has grown.',
+    'done.stageReached': 'New stage reached: {stage}',
+    'done.home': 'Back to home',
+    'done.journey': 'See my journey',
+
+    'journey.title': 'My journey',
+    'journey.subtitle': 'What prayer has laid down, day after day.',
+    'journey.rosaries': 'Rosaries',
+    'journey.decades': 'Decades',
+    'journey.hailMarys': 'Hail Marys',
+    'journey.streak': 'Current streak',
+    'journey.longestStreak': 'Longest streak',
+    'journey.daysPrayed': 'Days prayed',
+    'journey.minutes': 'Minutes in prayer',
+    'journey.since': 'Since {date}',
+    'journey.sinceNever': 'Your first rosary is waiting.',
+    'journey.days': '{n} days',
+    'journey.day': '{n} day',
+    'journey.stage': 'Stage',
+    'journey.nextStage': 'Next stage',
+    'journey.toNext': '{n} more decades before “{stage}”',
+    'journey.complete': 'Every stage has been reached. Keep going.',
+    'journey.bySet': 'By mysteries',
+    'journey.history': 'History',
+    'journey.noHistory': 'Nothing yet. The first chaplet is the finest.',
+    'journey.lastNinety': 'The last 90 days',
+    'journey.inProgress': 'in progress',
+    'journey.resume': 'Resume',
+    'journey.delete': 'Delete',
+    'journey.confirmDelete': 'Delete this rosary?',
+
+    'settings.title': 'Settings',
+    'settings.language': 'Language',
+    'settings.name': 'Your first name',
+    'settings.namePlaceholder': 'What should we call you?',
+    'settings.save': 'Save',
+    'settings.saved': 'Saved',
+    'settings.account': 'Account',
+    'settings.appearance': 'Appearance',
+    'settings.shape': 'Shape of the rosary',
+    'settings.shapeRound': 'Round',
+    'settings.shapeOval': 'Oval',
+    'settings.shapeSquare': 'Square',
+    'settings.colors': 'Your three colours',
+    'settings.colorsHint':
+      'Left alone, the colours come from the mysteries you pray most.',
+    'settings.colorAccent': 'Light',
+    'settings.colorBead': 'Beads',
+    'settings.colorChain': 'Chain',
+    'settings.harmonies': 'Harmonies',
+    'settings.resetColors': 'Back to the colours of the mysteries',
+    'settings.preview': 'Preview',
+    'harmony.gold': 'Gold and ivory',
+    'harmony.marian': 'Marian blue',
+    'harmony.rose': 'Old rose',
+    'harmony.olive': 'Olive green',
+    'harmony.plum': 'Plum',
+    'harmony.ember': 'Ember',
+    'settings.install': 'Add to home screen',
+    'settings.installIos':
+      'On iPhone: tap Share, then “Add to Home Screen”. The app will then open full screen.',
+    'settings.installAndroid': 'Install the app',
+    'settings.installed': 'The app is installed.',
+    'settings.about': 'About',
+    'settings.aboutBody':
+      'Liturgical texts: the Apostles’ Creed, Our Father, Hail Mary, Glory Be, the Fatima prayer and the Salve Regina in their traditional English forms. The cycle of mysteries follows the usage confirmed by the apostolic letter Rosarium Virginis Mariae (2002).',
+
+
+    // The growing rosary — the signs, grouped as the tradition groups them
+    'family.father': 'The Father',
+    'family.son': 'The Son',
+    'family.spirit': 'The Holy Spirit',
+    'family.mary': 'Mary',
+    'family.craft': 'The making',
+
+    'trait.monogram': 'The monogram of Mary',
+    'trait.monogram.change': 'The monogram of Mary has appeared on the medal.',
+    'trait.monogram.meaning':
+      'The interlaced A and M beneath the cross, as on the back of the Miraculous Medal: her name held under his.',
+
+    'trait.dove': 'The dove',
+    'trait.dove.change': 'A dove has settled above the crown.',
+    'trait.dove.meaning':
+      'The form in which the Spirit was made visible, at the baptism of Jesus in the Jordan.',
+    'trait.dove.where': 'Luke 3:22',
+
+    'trait.flames': 'The seven flames',
+    'trait.flames.change': 'Seven flames have been lit around the dove.',
+    'trait.flames.meaning':
+      'The seven gifts: wisdom, understanding, counsel, fortitude, knowledge, piety, fear of the Lord. The fire of Pentecost came down like this, one flame on each of them.',
+    'trait.flames.where': 'Isaiah 11:2–3 · Acts 2:3',
+
+    'trait.alphaOmega': 'Alpha and Omega',
+    'trait.alphaOmega.change': 'Alpha and Omega are cut on either side of the cross.',
+    'trait.alphaOmega.meaning':
+      'The first and last letters of the Greek alphabet, set beside the cross: the one who begins everything and finishes it.',
+    'trait.alphaOmega.where': 'Revelation 22:13',
+
+    'trait.moon': 'The crescent moon',
+    'trait.moon.change': 'The medal now rests on a crescent moon.',
+    'trait.moon.meaning':
+      'The woman clothed with the sun, the moon under her feet: the image the whole iconography of the Immaculate came from.',
+    'trait.moon.where': 'Revelation 12:1',
+
+    'trait.triquetra': 'The three circles',
+    'trait.triquetra.change': 'Three interlaced circles have been tied at the summit.',
+    'trait.triquetra.meaning':
+      'Three circles with no beginning and no end, interlaced without merging and impossible to part: the oldest way of saying the Trinity without depicting it.',
+
+    'trait.crown': 'The crown of twelve stars',
+    'trait.crown.change': 'Twelve stars now surround the medal.',
+    'trait.crown.meaning':
+      'The twelve tribes, the twelve apostles: the crown of one who is queen because she said yes to the end.',
+    'trait.crown.where': 'Revelation 12:1',
+
+    'trait.chiRho': 'The Chi-Rho',
+    'trait.chiRho.change': 'The Chi-Rho has opened at the heart of the crown.',
+    'trait.chiRho.meaning':
+      'The Greek X and P, the first two letters of Χριστός, tied into one another. The oldest monogram of Christ.',
+
+    'trait.roseWindow': 'The rose window',
+    'trait.roseWindow.change': 'A rose window has opened behind the rosary.',
+    'trait.roseWindow.meaning':
+      'The rose window of the cathedrals, nearly all of them built under her name: twelve petals of light around one centre.',
+
+    'trait.glory': 'The triangle in glory',
+    'trait.glory.change': 'A radiant triangle has opened at the summit of the rosary.',
+    'trait.glory.meaning':
+      'Three equal sides, one single outline, light all around. This is how God is shown on the pediment of an altarpiece: by a shape and by a light, never by a face.',
+
+    'trait.lilies': 'The lilies',
+    'trait.lilies.change': 'Lilies have grown at the foot of the cross.',
+    'trait.lilies.meaning':
+      'The lily of purity, held by the angel at the Annunciation, grown where Mary stood, by the cross.',
+    'trait.lilies.where': 'Song of Songs 2:2 · John 19:25',
+
+    'trait.roses': 'The mystical roses',
+    'trait.roses.change': 'A new rose has opened.',
+    'trait.roses.meaning':
+      'Rosa mystica. The rosary is a crown of roses woven for her — that is where the word comes from.',
+    'trait.roses.where': 'Litany of Loreto',
+
+    'trait.leaves': 'The enclosed garden',
+    'trait.leaves.change': 'One more leaf has come.',
+    'trait.leaves.meaning':
+      'Hortus conclusus: the enclosed garden and the sealed fountain, the image of one who kept whole what was entrusted to her.',
+    'trait.leaves.where': 'Song of Songs 4:12',
+
+    'trait.gold': 'The house of gold',
+    'trait.gold.change': 'Gold has gained ground along the chain.',
+    'trait.gold.meaning':
+      'Domus aurea. Gold does not arrive at once: it gains thread by thread, the way gilding is laid on.',
+    'trait.gold.where': 'Litany of Loreto',
+
+    'trait.rays': 'The uncreated light',
+    'trait.rays.change': 'One more ray crosses the crown.',
+    'trait.rays.meaning':
+      'God is light, and in him is no darkness at all. The rays do not come from the rosary; they pass through it.',
+    'trait.rays.where': '1 John 1:5',
+
+    'trait.haloRings': 'The haloes',
+    'trait.haloRings.change': 'One more halo surrounds the medal.',
+    'trait.haloRings.meaning':
+      'The nimbus: the power of the Most High overshadowing, made visible as rings of light.',
+    'trait.haloRings.where': 'Luke 1:35',
+
+    'trait.crossHeight': 'The crucifix',
+    'trait.crossHeight.change': 'The crucifix stands taller.',
+    'trait.crossHeight.meaning':
+      'And I, if I be lifted up from the earth, will draw all men unto me. The cross is not adorned; it grows.',
+    'trait.crossHeight.where': 'John 12:32',
+
+    'trait.stone': 'The centre stone',
+    'trait.stone.change': 'The centre stone has grown.',
+    'trait.stone.meaning': 'The medal has become a stone, and the stone grows with the praying.',
+    'trait.stoneFacets': 'The cut of the stone',
+    'trait.stoneFacets.change': 'The stone has gained a facet.',
+    'trait.stoneFacets.meaning': 'One more facet, one more angle from which the stone takes light.',
+    'trait.palette': 'The colours',
+    'trait.palette.change': 'One more colour has entered the rosary.',
+    'trait.palette.meaning': 'Colours arrive one at a time, mildest first, boldest last.',
+    'trait.filigree': 'The filigree',
+    'trait.filigree.change': 'The filigree reaches further between the decades.',
+    'trait.filigree.meaning': 'The strokes of gold that mark the passage from one decade to the next.',
+    'trait.chroma': 'The depth of colour',
+    'trait.chroma.change': 'The colours have deepened.',
+    'trait.chroma.meaning': 'The rosary begins almost colourless and takes its colour as it goes.',
+    'trait.paterRadius': 'The Our Father beads',
+    'trait.paterRadius.change': 'The Our Father beads have grown.',
+    'trait.paterRadius.meaning': 'The six large beads, one for each Our Father.',
+    'trait.aveRadius': 'The Hail Mary beads',
+    'trait.aveRadius.change': 'The Hail Mary beads have grown.',
+    'trait.aveRadius.meaning': 'The fifty-three small beads, one for each Hail Mary.',
+    'trait.cut': 'The cut of the beads',
+    'trait.cut.change': 'The beads have been faceted.',
+    'trait.cut.meaning': 'The beads pass from smooth pebble to cut stone.',
+    'trait.dew': 'The highlights',
+    'trait.dew.change': 'The beads catch the light better.',
+    'trait.dew.meaning': 'The point of light a polished bead leaves.',
+    'trait.engraving': 'The engraving',
+    'trait.engraving.change': 'The engraving on the medal is sharper.',
+    'trait.engraving.meaning': 'The line is cut deeper and the monogram reads better.',
+    'trait.patina': 'The patina',
+    'trait.patina.change': 'The wood of the cross has taken its patina.',
+    'trait.patina.meaning': 'The wood darkens the way anything darkens that is held every day.',
+
+    'done.changed': 'What changed',
+    'done.heart': '{n} more grains at the heart of the rose.',
+    'done.nothingVisible': 'Nothing else moved this time.',
+    'done.next': '{n} more decades: {what}',
+    'done.look': 'Look closely',
+
+    'viewer.title': 'Your rosary',
+    'viewer.hint': 'Pinch or scroll to zoom.',
+    'viewer.traits': 'What prayer has laid down',
+    'viewer.toCome': 'Still to come',
+    'viewer.heart': 'The heart of the rose',
+    'viewer.heartHint': 'One grain laid for every decade prayed: {n}.',
+    'viewer.heartMeaning':
+      'Each grain is laid at the golden angle from the one before it, the way seeds are laid in the heart of a flower. None is ever moved, the pattern never repeats, and the spacing stays even however many there are.',
+    'viewer.remaining': '{n} to go',
+    'viewer.reset': 'Recentre',
+
+    'common.close': 'Close',
+    'common.cancel': 'Cancel',
+    'common.continue': 'Continue',
+    'common.of': 'of',
+    'common.loading': 'Loading…',
+  },
+} as const;
+
+export type MessageKey = keyof (typeof DICT)['fr'];
+
+export function translate(
+  lang: Lang,
+  key: MessageKey,
+  params?: Record<string, string | number>,
+): string {
+  const template: string = DICT[lang][key] ?? DICT.fr[key] ?? key;
+  if (!params) return template;
+  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
+    name in params ? String(params[name]) : match,
+  );
+}
+
+export type Translator = (key: MessageKey, params?: Record<string, string | number>) => string;
+
+export function translatorFor(lang: Lang): Translator {
+  return (key, params) => translate(lang, key, params);
+}

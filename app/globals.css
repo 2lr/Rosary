@@ -1,0 +1,148 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: var(--font-cormorant), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  /* Day-one values. BloomVars overrides these per user, and everything below
+     is derived from them, so the whole interface follows one palette. */
+  --bloom-bg-0: #fbf6ec;
+  --bloom-bg-1: #f5ecdd;
+  --bloom-bg-2: #f1e6d4;
+  --bloom-ink: #2a231b;
+  --bloom-surface: rgb(255 253 248 / 0.66);
+  --bloom-border: rgb(122 98 68 / 0.15);
+  --bloom-chain: #94795a;
+  --bloom-bead: #c8a878;
+  --bloom-pater: #a8875e;
+  --bloom-accent: #a97b32;
+  --bloom-on-accent: #fdf8ee;
+  --bloom-glow: rgb(214 176 116 / 0.18);
+
+  /* Derived once, so no component has to hard-code a tint. */
+  --bloom-fill: color-mix(in srgb, var(--bloom-ink) 5%, transparent);
+  --bloom-fill-2: color-mix(in srgb, var(--bloom-ink) 9%, transparent);
+  --bloom-fill-3: color-mix(in srgb, var(--bloom-ink) 16%, transparent);
+  --bloom-placeholder: color-mix(in srgb, var(--bloom-ink) 36%, transparent);
+  --bloom-scrim: color-mix(in srgb, var(--bloom-ink) 45%, transparent);
+
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bloom-bg-0);
+  color: var(--bloom-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* The living background: warm paper, lit softly from above, shifting as the
+   rosary grows. */
+.bloom-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 74% at 50% -8%, var(--bloom-glow), transparent 62%),
+    radial-gradient(88% 58% at 8% 104%, var(--bloom-bg-2), transparent 60%),
+    radial-gradient(78% 66% at 96% 90%, var(--bloom-bg-2), transparent 58%),
+    linear-gradient(180deg, var(--bloom-bg-0), var(--bloom-bg-1) 62%, var(--bloom-bg-0));
+  transition: background 1.2s ease;
+}
+
+/* A whisper of grain, so the cream reads as paper rather than a flat fill. */
+.bloom-canvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image: radial-gradient(rgb(120 92 56 / 0.055) 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+}
+
+/* Safe areas so the standalone app never hides behind the notch or home bar. */
+.pad-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.pad-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.surface {
+  background: var(--bloom-surface);
+  border: 1px solid var(--bloom-border);
+  box-shadow: 0 1px 2px rgb(90 68 40 / 0.04), 0 8px 24px -16px rgb(90 68 40 / 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.text-muted {
+  color: color-mix(in srgb, var(--bloom-ink) 66%, transparent);
+}
+.text-faint {
+  color: color-mix(in srgb, var(--bloom-ink) 46%, transparent);
+}
+
+.lining {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.tap {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@keyframes bead-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+.animate-bead {
+  animation: bead-pulse 2.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Scrollable rails without a visible bar on mobile. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}

@@ -1,0 +1,108 @@
+import { describe, expect, it } from 'vitest';
+import { STAGES, bloomFrom, seedFrom, stageFor } from '@/lib/rosary/growth';
+import { EMPTY_STATS, streaks, diffDays } from '@/lib/rosary/stats';
+import { MYSTERY_SETS } from '@/lib/rosary/mysteries';
+import type { Stats } from '@/lib/rosary/stats';
+
+const withStats = (patch: Partial<Stats>): Stats => ({ ...EMPTY_STATS, ...patch });
+
+describe('stages', () => {
+  it('rise only with decades prayed', () => {
+    expect(stageFor(0).stage.key).toBe('seed');
+    expect(stageFor(4).stage.key).toBe('seed');
+    expect(stageFor(5).stage.key).toBe('bud');
+    expect(stageFor(999).stage.key).toBe('glass');
+    expect(stageFor(1000).stage.key).toBe('crown');
+  });
+
+  it('are ordered by an increasing threshold', () => {
+    for (let i = 1; i < STAGES.length; i++) {
+      expect(STAGES[i].threshold).toBeGreaterThan(STAGES[i - 1].threshold);
+      expect(STAGES[i].index).toBe(i);
+    }
+  });
+
+  it('stop offering a next stage at the last one', () => {
+    expect(stageFor(5000).next).toBeNull();
+    expect(bloomFrom(withStats({ totalDecades: 5000 }), 'u').toNext).toBe(1);
+  });
+});
+
+describe('the artwork', () => {
+  it('starts bare and gains ornament as the rosary is prayed', () => {
+    const day1 = bloomFrom(EMPTY_STATS, 'user-1');
+    const later = bloomFrom(withStats({ totalDecades: 300, currentStreak: 12 }), 'user-1');
+
+    expect(day1.growth.notch.roses).toBe(0);
+    expect(day1.growth.notch.filigree).toBe(0);
+    expect(later.growth.notch.roses).toBeGreaterThan(0);
+    expect(later.growth.notch.filigree).toBeGreaterThan(0);
+    expect(later.luminosity).toBeGreaterThan(day1.luminosity);
+    expect(later.growth.stars).toBe(12);
+  });
+
+  it('is stable for a given user and different between users', () => {
+    expect(seedFrom('a')).toBe(seedFrom('a'));
+    expect(seedFrom('a')).not.toBe(seedFrom('b'));
+    expect(bloomFrom(EMPTY_STATS, 'a').hue).not.toBeCloseTo(
+      bloomFrom(EMPTY_STATS, 'b').hue,
+      3,
+    );
+  });
+
+  it('takes its colour from the mysteries actually prayed', () => {
+    const glorious = bloomFrom(
+      withStats({ totalDecades: 60, bySet: { ...EMPTY_STATS.bySet, glorious: 12 } }),
+      'steady',
+    );
+    // Within the per-user rotation of the set's own hue.
+    expect(Math.abs(glorious.hue - MYSTERY_SETS.glorious.hue)).toBeLessThan(12);
+  });
+
+  it('settles back towards gold when the four sets are prayed evenly', () => {
+    const balanced = bloomFrom(
+      withStats({
+        totalDecades: 120,
+        bySet: { joyful: 6, luminous: 6, sorrowful: 6, glorious: 6, free: 0 },
+      }),
+      'balanced',
+    );
+    // Nothing dominates, so the hue must not chase a meaningless average.
+    expect(Math.min(balanced.hue, 360 - balanced.hue)).toBeLessThan(40);
+  });
+
+  it('counts stars up to the current streak but no further', () => {
+    expect(bloomFrom(withStats({ currentStreak: 200 }), 'u').growth.stars).toBe(24);
+  });
+});
+
+describe('streaks', () => {
+  it('is zero without any day prayed', () => {
+    expect(streaks([], '2026-08-20')).toEqual({ current: 0, longest: 0 });
+  });
+
+  it('counts consecutive days ending today', () => {
+    const days = ['2026-08-18', '2026-08-19', '2026-08-20'];
+    expect(streaks(days, '2026-08-20')).toEqual({ current: 3, longest: 3 });
+  });
+
+  it('survives a day that is not over yet', () => {
+    const days = ['2026-08-18', '2026-08-19'];
+    expect(streaks(days, '2026-08-20').current).toBe(2);
+  });
+
+  it('breaks once a whole day has been missed', () => {
+    const days = ['2026-08-17', '2026-08-18'];
+    expect(streaks(days, '2026-08-20').current).toBe(0);
+  });
+
+  it('remembers the longest run even after it breaks', () => {
+    const days = ['2026-08-01', '2026-08-02', '2026-08-03', '2026-08-10'];
+    expect(streaks(days, '2026-08-20')).toEqual({ current: 0, longest: 3 });
+  });
+
+  it('measures days across a month boundary', () => {
+    expect(diffDays('2026-07-31', '2026-08-01')).toBe(1);
+    expect(diffDays('2026-02-28', '2026-03-01')).toBe(1);
+  });
+});

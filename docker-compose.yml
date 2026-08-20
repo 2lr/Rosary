@@ -1,0 +1,32 @@
+# Everything the rosary needs, on one machine:
+#   SESSION_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))") docker compose up
+# then open http://localhost:3000
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: rosary
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rosary}
+      POSTGRES_DB: rosary
+    volumes:
+      - rosary-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rosary']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://rosary:${POSTGRES_PASSWORD:-rosary}@db:5432/rosary
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET before starting}
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+
+volumes:
+  rosary-db:
