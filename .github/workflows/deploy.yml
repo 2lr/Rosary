@@ -40,11 +40,48 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "RAILWAY_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
-      - name: What is in the project already?
+      - name: Find the project and link to it
         run: |
-          set -x
-          railway status --json > status.json || railway status --json || true
-          cat status.json || true
+          set -euo pipefail
+
+          echo '--- who does this token belong to? ---'
+          railway status --json > status.json 2>&1 || true
+          cat status.json
+
+          echo '--- projects in the workspace ---'
+          railway list --json > projects.json 2>&1 || railway list > projects.json 2>&1 || true
+          cat projects.json
+
+          # A project is an object that carries an id, a name, and the shape of
+          # a project rather than of a service.
+          PROJECTS="$(jq -r '[.. | objects
+                              | select(has("id") and has("name"))
+                              | select(has("environments") or has("services") or has("createdAt"))
+                              | {id: .id, name: .name}]
+                             | unique_by(.id)' projects.json 2>/dev/null || echo '[]')"
+          echo "$PROJECTS"
+
+          COUNT="$(echo "$PROJECTS" | jq 'length')"
+          echo "candidates: $COUNT"
+
+          if [ "$COUNT" = "0" ]; then
+            echo '::error::No project found for this token. Create one in Railway first.'
+            exit 1
+          fi
+
+          PROJECT_ID="$(echo "$PROJECTS" | jq -r '.[0].id')"
+          PROJECT_NAME="$(echo "$PROJECTS" | jq -r '.[0].name')"
+          if [ "$COUNT" != "1" ]; then
+            echo "::warning::$COUNT projects visible; taking the first: $PROJECT_NAME"
+          fi
+          echo "Linking to $PROJECT_NAME ($PROJECT_ID)"
+
+          railway link --project "$PROJECT_ID" --environment production \
+            || railway link --project "$PROJECT_ID"
+
+          echo '--- linked ---'
+          railway status --json > status.json 2>&1 || true
+          cat status.json
 
       - name: The database
         run: |
