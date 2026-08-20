@@ -33,10 +33,36 @@ jobs:
           echo '--- domain ---'
           railway domain --help || true
 
+      - name: Which secret names actually carry a value?
+        env:
+          # Only lengths are ever printed, never a value.
+          A: ${{ secrets.RAILWAY_TOKEN }}
+          B: ${{ secrets.RAILWAY_API_TOKEN }}
+          C: ${{ secrets.RAILWAY }}
+          D: ${{ secrets.RAILWAY_PROJECT_TOKEN }}
+          E: ${{ vars.RAILWAY_TOKEN }}
+          F: ${{ vars.RAILWAY_API_TOKEN }}
+        run: |
+          report() { printf '%-34s %s\n' "$1" "${#2} characters"; }
+          report 'secrets.RAILWAY_TOKEN'         "$A"
+          report 'secrets.RAILWAY_API_TOKEN'     "$B"
+          report 'secrets.RAILWAY'               "$C"
+          report 'secrets.RAILWAY_PROJECT_TOKEN' "$D"
+          report 'vars.RAILWAY_TOKEN'            "$E"
+          report 'vars.RAILWAY_API_TOKEN'        "$F"
+          echo
+          echo 'A Railway token is a UUID: 36 characters. Zero means the name is'
+          echo 'empty at repository level — wrong name, saved as a variable, or'
+          echo 'saved under a GitHub Environment rather than the repository.'
+
       - name: What does the token open?
         env:
-          SECRET: ${{ secrets.RAILWAY_TOKEN }}
+          SECRET: ${{ secrets.RAILWAY_TOKEN || secrets.RAILWAY_API_TOKEN || secrets.RAILWAY }}
         run: |
+          if [ -z "$SECRET" ]; then
+            echo 'No token reached the job — nothing to try.'
+            exit 0
+          fi
           echo '--- as an account token (RAILWAY_API_TOKEN) ---'
           if RAILWAY_API_TOKEN="$SECRET" railway whoami; then
             echo 'account token: yes'
