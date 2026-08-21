@@ -65,3 +65,34 @@ jobs:
             500|502|503|000)     echo "::error::The login route is broken ($CODE)."; exit 1 ;;
             *)                   echo "Unexpected $CODE — worth a look." ;;
           esac
+
+  # Temporary: find out what the liturgical sources actually return before
+  # writing anything against them. Removed once the shape is known.
+  gospel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: AELF, the French liturgical texts
+        run: |
+          set -euo pipefail
+          D=$(date -u +%Y-%m-%d)
+          echo "date: $D"
+          curl -sS --max-time 25 "https://api.aelf.org/v1/messes/$D/france" -o aelf.json \
+            -w 'HTTP %{http_code} bytes=%{size_download}\n'
+          echo '--- top level ---'
+          jq 'keys' aelf.json
+          echo '--- informations ---'
+          jq '.informations' aelf.json
+          echo '--- readings in the first mass ---'
+          jq -r '.messes[0].lectures[] | "\(.type)\t\(.ref)\t\(.titre // "")"' aelf.json
+          echo '--- the gospel, in full ---'
+          jq '.messes[0].lectures[] | select(.type == "evangile")' aelf.json
+          echo '--- every field a reading carries ---'
+          jq -r '.messes[0].lectures[0] | keys[]' aelf.json
+
+      - name: A public-domain English text, addressed by reference
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 25 "https://bible-api.com/Matthew+19:3-12" -o web.json \
+            -w 'HTTP %{http_code} bytes=%{size_download}\n'
+          jq '{reference, translation_name, verses: (.verses | length), first: .verses[0].text}' web.json
