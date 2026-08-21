@@ -162,6 +162,7 @@ export const DICT = {
     'home.nextSign': 'Prochain signe',
     'home.nextSignAt': '{sign}, dans {n} dizaines',
     'home.nextSignSoon': '{sign}, au prochain chapelet',
+    'gospel.title': 'Évangile du jour',
     'settings.install': 'Installer sur l’écran d’accueil',
     'settings.installIos':
       'Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». L’app s’ouvrira alors en plein écran.',
@@ -490,6 +491,7 @@ export const DICT = {
     'home.nextSign': 'Next sign',
     'home.nextSignAt': '{sign}, in {n} decades',
     'home.nextSignSoon': '{sign}, with the next chaplet',
+    'gospel.title': 'Gospel of the day',
     'settings.install': 'Add to home screen',
     'settings.installIos':
       'On iPhone: tap Share, then “Add to Home Screen”. The app will then open full screen.',

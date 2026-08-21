@@ -6,6 +6,7 @@ import RosaryArt from '@/components/RosaryArt';
 import AppNav from '@/components/AppNav';
 import StartSheet from '@/components/StartSheet';
 import RosaryViewer from '@/components/RosaryViewer';
+import GospelCard from '@/components/GospelCard';
 import { Button, ButtonLink, Card, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
@@ -183,6 +184,10 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
           description={t('home.freeDesc')}
           onClick={() => setSheet('free')}
         />
+
+        {/* The day's own word, under the day's mysteries. Folded away: it is
+            there for whoever wants it, and never in the way of praying. */}
+        <GospelCard lang={lang} t={t} />
       </section>
 
       <section className="mt-6 grid grid-cols-3 gap-2.5">
