@@ -189,3 +189,41 @@ describe('a novena begun on any day', () => {
     expect(novenaProgress('2026-07-02', prayed, '2026-07-05').kept).toBe(3);
   });
 });
+
+describe('days marked by hand', () => {
+  it('counts a day marked even when no rosary was recorded on it', () => {
+    // The case this exists for: six days prayed on paper before the app was
+    // ever opened on them.
+    const { kept, days } = novenaProgress(
+      '2026-08-14',
+      [],
+      '2026-08-22',
+      ['2026-08-14', '2026-08-15', '2026-08-16'],
+    );
+    expect(kept).toBe(3);
+    expect(days.filter((d) => d.prayed).map((d) => d.key)).toEqual([
+      '2026-08-14',
+      '2026-08-15',
+      '2026-08-16',
+    ]);
+    // None of them came from a rosary, so all three can be taken back.
+    expect(days.filter((d) => d.fromRosary)).toHaveLength(0);
+  });
+
+  it('does not count a day twice when it was both prayed and marked', () => {
+    const { kept, days } = novenaProgress(
+      '2026-08-14',
+      ['2026-08-14'],
+      '2026-08-22',
+      ['2026-08-14', '2026-08-15'],
+    );
+    expect(kept).toBe(2);
+    expect(days.find((d) => d.key === '2026-08-14')!.fromRosary).toBe(true);
+    expect(days.find((d) => d.key === '2026-08-15')!.fromRosary).toBe(false);
+  });
+
+  it('ignores a mark that falls outside the nine days', () => {
+    const { kept } = novenaProgress('2026-08-14', [], '2026-08-30', ['2026-09-01']);
+    expect(kept).toBe(0);
+  });
+});

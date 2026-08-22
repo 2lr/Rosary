@@ -29,7 +29,7 @@ import {
 /** How long a novena stays listed after its last day, so it can still be entered. */
 const RECENT_DAYS = 12;
 
-type Run = { novena: string; startedOn: string; keptAt: string | null };
+type Run = { novena: string; startedOn: string; keptAt: string | null; days: string[] };
 
 export default function NovenasScreen({
   lang,
@@ -86,7 +86,7 @@ export default function NovenasScreen({
   async function act(
     novena: string,
     startedOn: string,
-    options: { stop?: boolean; moveTo?: string; kept?: boolean } = {},
+    options: { stop?: boolean; moveTo?: string; kept?: boolean; day?: string; prayed?: boolean } = {},
   ) {
     setBusy(`${novena}:${startedOn}`);
     try {
@@ -162,8 +162,8 @@ export default function NovenasScreen({
   const upcoming = mine.filter((m) => m.run.startedOn > today);
   const done = mine.filter((m) => m.window.over);
 
-  const keptOf = (startedOn: string) =>
-    novenaProgress(startedOn, prayedDays, today);
+  const keptOf = (run: Run) =>
+    novenaProgress(run.startedOn, prayedDays, today, run.days ?? []);
   const decadesIn = (startedOn: string) =>
     Array.from(
       { length: NOVENA_DAYS },
@@ -171,7 +171,7 @@ export default function NovenasScreen({
     ).reduce((sum, n) => sum + n, 0);
 
   const isKept = (m: (typeof mine)[number]) =>
-    m.run.keptAt !== null || keptOf(m.run.startedOn).kept === NOVENA_DAYS;
+    m.run.keptAt !== null || keptOf(m.run).kept === NOVENA_DAYS;
 
   const completed = done.filter(isKept).length;
 
@@ -179,7 +179,7 @@ export default function NovenasScreen({
 
   type Mine = (typeof mine)[number];
   const cardProps = (m: Mine) => {
-    const { kept, days } = keptOf(m.run.startedOn);
+    const { kept, days } = keptOf(m.run);
     const id = `${m.run.novena}:${m.run.startedOn}`;
     return {
       title: m.novena?.name[lang] ?? m.run.novena,
@@ -218,6 +218,8 @@ export default function NovenasScreen({
         }),
       onKept: (next: boolean) =>
         void act(m.run.novena, m.run.startedOn, { kept: next }),
+      onDay: (day: string, prayed: boolean) =>
+        void act(m.run.novena, m.run.startedOn, { day, prayed }),
     };
   };
 
@@ -375,6 +377,7 @@ function RunCard({
   keptLine,
   kept,
   onKept,
+  onDay,
   onPray,
   editing,
   busy,
@@ -389,7 +392,7 @@ function RunCard({
   title: string;
   when: string;
   dates: string;
-  days: { key: string; prayed: boolean; ahead: boolean }[];
+  days: { key: string; prayed: boolean; ahead: boolean; fromRosary: boolean }[];
   today: string;
   /** 1 → 9 while it runs, 0 before it opens, 10 once it is over. */
   day: number;
@@ -397,6 +400,8 @@ function RunCard({
   /** Said to have been kept, whatever the rosaries recorded. */
   kept: boolean;
   onKept: (next: boolean) => void;
+  /** Marking one of the nine days by hand, or taking the mark back. */
+  onDay: (day: string, prayed: boolean) => void;
   onPray: () => void;
   editing: boolean;
   busy: boolean;
@@ -465,7 +470,7 @@ function RunCard({
           the one intended. */}
       <p className="mt-1 text-[0.7rem] text-muted">{dates}</p>
 
-      <Days days={days} today={today} />
+      <Days days={days} today={today} lang={lang} t={t} busy={busy} onDay={onDay} />
 
       <p className="mt-2 text-[0.68rem] text-faint">
         {keptLine}
@@ -528,31 +533,77 @@ function RunCard({
   );
 }
 
+/**
+ * The nine days, each one its own date and each one tappable.
+ *
+ * A day fills in on its own when a rosary is recorded on it. Every other day
+ * can be filled in by hand, which is the only way a novena prayed on paper, or
+ * begun before the app was ever opened, can be told apart from one missed — and
+ * it was the thing that made the whole tab useless without it. A day carrying a
+ * rosary is left alone: there is nothing to add to it, and nothing to take
+ * away that would be true.
+ */
 function Days({
   days,
   today,
+  lang,
+  t,
+  busy,
+  onDay,
 }: {
-  days: { key: string; prayed: boolean; ahead: boolean }[];
+  days: { key: string; prayed: boolean; ahead: boolean; fromRosary: boolean }[];
   today: string;
+  lang: Lang;
+  t: ReturnType<typeof translatorFor>;
+  busy: boolean;
+  onDay: (day: string, prayed: boolean) => void;
 }) {
+  const dateOf = useMemo(
+    () => new Intl.DateTimeFormat(lang, { day: "numeric", month: "long", timeZone: "UTC" }),
+    [lang],
+  );
+
   return (
-    <div className="mt-3 flex items-center gap-1.5">
-      {days.map((day) => (
-        <span
-          key={day.key}
-          className={cx(
-            "h-2 flex-1 rounded-full transition",
-            day.prayed
-              ? "bg-[var(--bloom-accent)]"
-              : day.ahead
-                ? "bg-[var(--bloom-fill-2)]"
-                : "bg-[var(--bloom-fill-3)]",
-            day.key === today &&
-              !day.prayed &&
-              "ring-1 ring-[var(--bloom-accent)]",
-          )}
-        />
-      ))}
-    </div>
+    <>
+      <div className="mt-3 flex items-stretch gap-1">
+        {days.map((day, i) => {
+          const date = dateOf.format(new Date(`${day.key}T12:00:00Z`));
+          const label = day.fromRosary
+            ? t("novena.dayFromRosary", { n: i + 1, date })
+            : day.prayed
+              ? t("novena.dayUnmark", { n: i + 1, date })
+              : t("novena.dayMark", { n: i + 1, date });
+
+          return (
+            <button
+              key={day.key}
+              type="button"
+              // Nothing was prayed tomorrow, and a day already carrying a
+              // rosary is counted whether or not it is tapped.
+              disabled={busy || day.ahead || day.fromRosary}
+              aria-pressed={day.prayed}
+              aria-label={label}
+              title={label}
+              onClick={() => onDay(day.key, !day.prayed)}
+              className={cx(
+                "tap h-8 flex-1 rounded-lg text-[0.6rem] tabular-nums transition",
+                day.prayed
+                  ? "bg-[var(--bloom-accent)] text-[var(--bloom-on-accent)]"
+                  : day.ahead
+                    ? "bg-[var(--bloom-fill-2)] text-faint"
+                    : "bg-[var(--bloom-fill-3)] text-muted",
+                day.key === today && !day.prayed && "ring-1 ring-[var(--bloom-accent)]",
+              )}
+            >
+              {Number(day.key.slice(8, 10))}
+            </button>
+          );
+        })}
+      </div>
+
+      {days.some((day) => !day.prayed && !day.ahead) && (
+        <p className="mt-1.5 text-[0.62rem] text-faint">{t("novena.tapDay")}</p>
+      )}
+    </>
   );
 }

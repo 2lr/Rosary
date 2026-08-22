@@ -419,14 +419,38 @@ export type NovenaStep = {
   id: string;
   title: string;
   lines: string[];
+  /** Said more than once, when it is. */
+  times?: number;
 };
+
+/**
+ * The novenas built on the Marian pattern, which opens with three Hail Marys.
+ *
+ * The three are the shape of a Marian novena — they are what is actually said
+ * before the prayer proper, and leaving them out was leaving out the part
+ * anyone praying one would notice first. The novenas addressed to Christ, to
+ * the Holy Spirit and to Saint Joseph do not carry them, so they do not get
+ * them here either.
+ */
+const MARIAN = new Set([
+  'lourdes',
+  'annunciation',
+  'fatima',
+  'carmel',
+  'assumption',
+  'queenship',
+  'sorrows',
+  'rosary',
+  'immaculate',
+]);
 
 /**
  * The whole of a day, in order, with nothing left to look up.
  *
  * The common prayers come from the same place as the rosary's, so they read
  * identically wherever they appear — including the French Notre Père in its
- * current form.
+ * current form. What is said more than once carries how many times rather than
+ * being printed again.
  */
 export function novenaOrder(
   key: string,
@@ -450,6 +474,7 @@ export function novenaOrder(
   return [
     common('signOfTheCross'),
     { id: 'opening', title: labels.opening, lines: prayer.opening[lang] },
+    ...(MARIAN.has(key) ? [{ ...common('hailMary'), id: 'threeHailMarys', times: 3 }] : []),
     ...(intention ? [{ id: 'intention', title: labels.intention, lines: [intention] }] : []),
     { id: 'daily', title: labels.prayer, lines: prayer.daily[lang] },
     common('ourFather'),

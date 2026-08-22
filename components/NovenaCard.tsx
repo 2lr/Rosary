@@ -23,7 +23,7 @@ import {
 /** How early the next one is worth mentioning. */
 const HERALD_DAYS = 6;
 
-type Run = { novena: string; startedOn: string };
+type Run = { novena: string; startedOn: string; days?: string[] };
 
 export default function NovenaCard({
   lang,
@@ -68,10 +68,13 @@ export default function NovenaCard({
   if (!showing) return null;
 
   const running = showing === state.active;
-  const isJoined = (runs ?? []).some(
+  const joined = (runs ?? []).find(
     (r) => r.novena === showing.key && r.startedOn === showing.start,
   );
-  const { kept, days } = novenaProgress(showing.start, prayedDays, today);
+  const isJoined = joined !== undefined;
+  // Days marked by hand on the novena tab count here too, or the same novena
+  // would read differently on two screens.
+  const { kept, days } = novenaProgress(showing.start, prayedDays, today, joined?.days ?? []);
 
   async function join(next: boolean) {
     if (!showing) return;

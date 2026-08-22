@@ -1,6 +1,13 @@
 import { fail, handle, json, readJson } from '@/lib/api';
 import { requireUser } from '@/lib/auth/guard';
-import { listNovenas, markNovenaKept, startNovena, stopNovena } from '@/lib/db/novenas';
+import {
+  listNovenas,
+  markNovenaDay,
+  markNovenaKept,
+  moveNovenaDays,
+  startNovena,
+  stopNovena,
+} from '@/lib/db/novenas';
 import { NOVENA_KEYS } from '@/lib/rosary/novenas';
 
 type Body = {
@@ -9,6 +16,9 @@ type Body = {
   moveTo?: string;
   stop?: boolean;
   kept?: boolean;
+  /** One of the nine days, to mark as prayed or to unmark. */
+  day?: string;
+  prayed?: boolean;
 };
 
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
@@ -39,7 +49,15 @@ export async function POST(request: Request) {
     const months = Math.abs(day.getTime() - Date.now()) / 2_592_000_000;
     if (months > 18) return fail('invalid_date');
 
-    if (typeof body.kept === 'boolean') {
+    if (typeof body.day === 'string') {
+      // Marking one of the nine by hand. Starting it first so a novena can be
+      // entered day by day without having been registered beforehand.
+      if (!DAY_KEY.test(body.day) || Number.isNaN(Date.parse(`${body.day}T00:00:00Z`))) {
+        return fail('invalid_date');
+      }
+      await startNovena(user.id, body.novena, body.startedOn);
+      await markNovenaDay(user.id, body.novena, body.startedOn, body.day, body.prayed !== false);
+    } else if (typeof body.kept === 'boolean') {
       // Starting it first means a novena can be marked kept in one gesture,
       // whether or not it was ever registered.
       await startNovena(user.id, body.novena, body.startedOn);
@@ -54,6 +72,9 @@ export async function POST(request: Request) {
       }
       await startNovena(user.id, body.novena, body.moveTo);
       if (body.moveTo !== body.startedOn) {
+        // Carry the days already marked over before the old run goes, since
+        // dropping a run drops its marks with it.
+        await moveNovenaDays(user.id, body.novena, body.startedOn, body.moveTo);
         await stopNovena(user.id, body.novena, body.startedOn);
       }
     } else {

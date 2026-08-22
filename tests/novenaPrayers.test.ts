@@ -101,8 +101,20 @@ describe('a day of a novena, in order', () => {
   });
 
   it('runs from the sign of the cross to the novena\'s own last word', () => {
-    const steps = novenaOrder('carmel', 'fr', 1, LABELS);
-    expect(steps.map((step) => step.id)).toEqual([
+    // Marian: the three Hail Marys stand between the opening and the prayer.
+    expect(novenaOrder('carmel', 'fr', 1, LABELS).map((step) => step.id)).toEqual([
+      'signOfTheCross',
+      'opening',
+      'threeHailMarys',
+      'daily',
+      'ourFather',
+      'hailMary',
+      'gloryBe',
+      'closing',
+    ]);
+
+    // Addressed to Christ rather than to his mother: no three.
+    expect(novenaOrder('sacred-heart', 'fr', 1, LABELS).map((step) => step.id)).toEqual([
       'signOfTheCross',
       'opening',
       'daily',
@@ -111,6 +123,15 @@ describe('a day of a novena, in order', () => {
       'gloryBe',
       'closing',
     ]);
+  });
+
+  it('says the three Hail Marys three times, in the same words as the one', () => {
+    const steps = novenaOrder('immaculate', 'fr', 1, LABELS);
+    const three = steps.find((step) => step.id === 'threeHailMarys')!;
+    const one = steps.find((step) => step.id === 'hailMary')!;
+    expect(three.times).toBe(3);
+    expect(three.lines).toEqual(one.lines);
+    expect(one.times).toBeUndefined();
   });
 
   it('slots the day\'s intention in before the prayer, and changes it daily', () => {

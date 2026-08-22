@@ -308,19 +308,28 @@ export function runWindow(novena: string, startedOn: string, today: string): Nov
 }
 
 /**
- * How many of the nine days were prayed on. A day counts when a rosary was
- * finished on it — the novena is not a separate thing to keep up with, it is
- * the rosary you already pray, nine days running.
+ * How many of the nine days were prayed on.
+ *
+ * A day counts when a rosary was finished on it — the novena is not a separate
+ * thing to keep up with, it is the rosary you already pray, nine days running.
+ * It also counts when it was marked by hand, which is the only way a day prayed
+ * away from the app can ever be told apart from a day missed.
  */
 export function novenaProgress(
   startedOn: string,
   prayedDays: Iterable<string>,
   today: string,
-): { kept: number; days: { key: string; prayed: boolean; ahead: boolean }[] } {
+  markedDays: Iterable<string> = [],
+): {
+  kept: number;
+  days: { key: string; prayed: boolean; ahead: boolean; fromRosary: boolean }[];
+} {
   const prayed = prayedDays instanceof Set ? prayedDays : new Set(prayedDays);
+  const marked = markedDays instanceof Set ? markedDays : new Set(markedDays);
   const days = Array.from({ length: NOVENA_DAYS }, (_, i) => {
     const key = shiftDays(startedOn, i);
-    return { key, prayed: prayed.has(key), ahead: key > today };
+    const fromRosary = prayed.has(key);
+    return { key, prayed: fromRosary || marked.has(key), ahead: key > today, fromRosary };
   });
   return { kept: days.filter((d) => d.prayed).length, days };
 }

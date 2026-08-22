@@ -64,6 +64,12 @@ export default function NovenaPrayerSheet({
               <span className="shrink-0 text-[0.62rem] tabular-nums text-faint">{i + 1}</span>
               <h3 className="text-[0.62rem] uppercase tracking-[0.18em] text-faint">
                 {step.title}
+                {/* Said more than once — printed once, with how many times. */}
+                {step.times && step.times > 1 && (
+                  <span className="text-[var(--bloom-accent)]">
+                    {` · ${t('novena.times', { n: step.times })}`}
+                  </span>
+                )}
               </h3>
             </div>
             <div className="mt-1.5 space-y-2 pl-5">
