@@ -159,12 +159,17 @@ export default function SettingsScreen({
 
         <p className="mt-3 text-xs text-faint">{HAIL_MARY[hailMary].note[lang]}</p>
 
-        {/* Seeing the words themselves is the only way to choose between them. */}
-        <blockquote className="mt-3 border-l border-[var(--bloom-fill-3)] pl-3">
-          <p className="font-display text-sm leading-relaxed text-muted text-pretty">
-            {HAIL_MARY[hailMary].text[lang][0]}
-          </p>
-        </blockquote>
+        {/* Seeing the words themselves is the only way to choose between them,
+            and when there are several, seeing that they differ. */}
+        <div className="mt-3 space-y-2.5">
+          {HAIL_MARY[hailMary].wordings.map((wording, i) => (
+            <blockquote key={i} className="border-l border-[var(--bloom-fill-3)] pl-3">
+              <p className="font-display text-sm leading-relaxed text-muted text-pretty">
+                {wording.text[lang][0]}
+              </p>
+            </blockquote>
+          ))}
+        </div>
 
         <Button className="mt-4 w-full" onClick={() => void save()} disabled={busy}>
           {saved ? t('settings.saved') : t('settings.save')}

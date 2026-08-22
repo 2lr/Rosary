@@ -394,7 +394,9 @@ function StepBody({
     );
   }
 
-  const prayer = step.prayer ? prayerWith(step.prayer, hailMary) : null;
+  // The decade picks the wording, so the words are steady while this decade
+  // is being prayed and different in the next.
+  const prayer = step.prayer ? prayerWith(step.prayer, hailMary, step.decade ?? 0) : null;
   if (!prayer) return null;
 
   return (

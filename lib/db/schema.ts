@@ -30,6 +30,13 @@ export const SCHEMA_STATEMENTS = [
      updated_at        TEXT NOT NULL,
      completed_at      TEXT
    )`,
+  `CREATE TABLE IF NOT EXISTS novenas (
+     user_id   TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+     novena    TEXT NOT NULL,
+     year      INTEGER NOT NULL,
+     joined_at TEXT NOT NULL,
+     PRIMARY KEY (user_id, novena, year)
+   )`,
   `CREATE INDEX IF NOT EXISTS rosaries_user_started
      ON rosaries (user_id, started_at DESC)`,
   `CREATE INDEX IF NOT EXISTS rosaries_user_status

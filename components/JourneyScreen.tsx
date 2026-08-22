@@ -38,12 +38,7 @@ export default function JourneyScreen({
     () => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }),
     [lang],
   );
-  const shortFormat = useMemo(
-    () => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short' }),
-    [lang],
-  );
 
-  const heatmap = useMemo(() => buildHeatmap(stats), [stats]);
   const maxSet = Math.max(1, ...MYSTERY_SET_ORDER.map((id) => stats.bySet[id]));
 
   async function remove(id: string) {
@@ -89,29 +84,6 @@ export default function JourneyScreen({
           squares tells you the shape of a habit but never which day was which. */}
       <Card className="mt-4 px-4 py-4">
         <PrayerCalendar lang={lang} stats={stats} t={t} />
-      </Card>
-
-      {/* And the longer view underneath, where the run matters more than the
-          date: three months of squares, one per day. */}
-      <Card className="mt-3 px-4 py-4">
-        <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
-          {t('journey.lastNinety')}
-        </p>
-        <div className="mt-3 grid grid-flow-col grid-rows-7 gap-[3px]">
-          {heatmap.map((cell) => (
-            <span
-              key={cell.date}
-              title={`${shortFormat.format(new Date(`${cell.date}T12:00:00Z`))} — ${cell.decades}`}
-              className="aspect-square rounded-[3px]"
-              style={{
-                background:
-                  cell.decades === 0
-                    ? 'var(--bloom-fill)'
-                    : `color-mix(in srgb, var(--bloom-accent) ${Math.min(100, 26 + cell.decades * 11)}%, transparent)`,
-              }}
-            />
-          ))}
-        </div>
       </Card>
 
       {/* Which mysteries the user actually prays — this drives the palette. */}
@@ -306,16 +278,3 @@ export default function JourneyScreen({
 }
 
 /** 91 days ending today, laid out in seven-day columns. */
-function buildHeatmap(stats: Stats): { date: string; decades: number }[] {
-  const byDate = new Map(stats.byDay.map((d) => [d.date, d.decades]));
-  const cells: { date: string; decades: number }[] = [];
-  const today = new Date();
-  today.setUTCHours(12, 0, 0, 0);
-
-  for (let i = 90; i >= 0; i--) {
-    const day = new Date(today.getTime() - i * 86_400_000);
-    const key = day.toISOString().slice(0, 10);
-    cells.push({ date: key, decades: byDate.get(key) ?? 0 });
-  }
-  return cells;
-}
