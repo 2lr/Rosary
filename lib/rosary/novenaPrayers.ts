@@ -483,3 +483,32 @@ export function novenaOrder(
     { id: 'closing', title: labels.closing, lines: prayer.closing[lang] },
   ];
 }
+
+/**
+ * What one day of a novena actually says, counted.
+ *
+ * Read off the same order the sheet renders, so the two can never drift: change
+ * the shape of a novena and the count changes with it. A Marian day says four
+ * Hail Marys — the three, and the one after the Our Father — where the others
+ * say one.
+ *
+ * This is what a day of a novena is worth. Ten Hail Marys make a decade, and
+ * that is how these come to count towards the rosary itself.
+ */
+export function novenaDayPrayers(key: string): {
+  hailMarys: number;
+  ourFathers: number;
+  gloryBes: number;
+} {
+  const blank = { opening: '', intention: '', prayer: '', closing: '' };
+  const totals = { hailMarys: 0, ourFathers: 0, gloryBes: 0 };
+
+  for (const step of novenaOrder(key, 'fr', 1, blank)) {
+    const times = step.times ?? 1;
+    if (step.id === 'hailMary' || step.id === 'threeHailMarys') totals.hailMarys += times;
+    else if (step.id === 'ourFather') totals.ourFathers += times;
+    else if (step.id === 'gloryBe') totals.gloryBes += times;
+  }
+
+  return totals;
+}

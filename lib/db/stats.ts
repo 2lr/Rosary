@@ -5,7 +5,7 @@ import type { Stats } from '@/lib/rosary/stats';
 
 export type { DayCount, Stats } from '@/lib/rosary/stats';
 export { EMPTY_STATS } from '@/lib/rosary/stats';
-import { dayKey, diffDays, streaks } from '@/lib/rosary/stats';
+import { HAIL_MARYS_PER_DECADE, dayKey, diffDays, streaks } from '@/lib/rosary/stats';
 
 type CompletedRow = {
   completed_at: string;
@@ -29,6 +29,18 @@ export async function getStats(userId: string, today = new Date()): Promise<Stat
     `SELECT COUNT(*) AS n FROM rosaries WHERE user_id = ? AND status = 'in_progress'`,
     [userId],
   );
+
+  // The days of a novena marked as prayed. What was said on them is real
+  // prayer, so it counts: the Hail Marys towards the rosary at ten to a decade,
+  // the Our Fathers towards the totals.
+  const novenaRow = await one<{ hail_marys: number; our_fathers: number }>(
+    `SELECT COALESCE(SUM(hail_marys), 0) AS hail_marys,
+            COALESCE(SUM(our_fathers), 0) AS our_fathers
+       FROM novena_days WHERE user_id = ?`,
+    [userId],
+  );
+  const novenaHailMarys = Number(novenaRow?.hail_marys) || 0;
+  const novenaOurFathers = Number(novenaRow?.our_fathers) || 0;
 
   const bySet: Stats['bySet'] = { joyful: 0, luminous: 0, sorrowful: 0, glorious: 0, free: 0 };
   const perDay = new Map<string, { count: number; decades: number }>();
@@ -63,8 +75,10 @@ export async function getStats(userId: string, today = new Date()): Promise<Stat
 
   return {
     totalCompleted: rows.length,
-    totalDecades,
-    totalHailMarys,
+    totalDecades: totalDecades + Math.floor(novenaHailMarys / HAIL_MARYS_PER_DECADE),
+    totalHailMarys: totalHailMarys + novenaHailMarys,
+    novenaHailMarys,
+    novenaOurFathers,
     totalMinutes: Math.round(totalMinutes),
     firstPrayedAt,
     lastPrayedAt,

@@ -130,6 +130,12 @@ export async function markNovenaDay(
   startedOn: string,
   day: string,
   prayed: boolean,
+  /** What that day of this novena says, stored so the totals can count it. */
+  said: { hailMarys: number; ourFathers: number; gloryBes: number } = {
+    hailMarys: 0,
+    ourFathers: 0,
+    gloryBes: 0,
+  },
 ): Promise<void> {
   if (!prayed) {
     await run(
@@ -150,9 +156,19 @@ export async function markNovenaDay(
   if (existing.length > 0) return;
 
   await run(
-    `INSERT INTO novena_days (user_id, novena, started_on, day, marked_at)
-       VALUES (?, ?, ?, ?, ?)`,
-    [userId, novena, startedOn, day, new Date().toISOString()],
+    `INSERT INTO novena_days
+       (user_id, novena, started_on, day, marked_at, hail_marys, our_fathers, glory_bes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      userId,
+      novena,
+      startedOn,
+      day,
+      new Date().toISOString(),
+      said.hailMarys,
+      said.ourFathers,
+      said.gloryBes,
+    ],
   );
 }
 

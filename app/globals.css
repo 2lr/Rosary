@@ -121,6 +121,26 @@ body {
   transform-origin: center;
 }
 
+/*
+ * One breath of the filigree behind the prayer: a rise and a fall, restarted on
+ * each step so that every Hail Mary has one of its own. The first and last
+ * frames are the resting opacity rather than nothing, so that the reduced-motion
+ * rule below — which collapses the animation to its final frame — leaves a still
+ * filigree instead of an empty page.
+ */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.05;
+  }
+  45% {
+    opacity: 0.16;
+  }
+}
+.animate-breathe {
+  animation: breathe 5.5s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+
 @keyframes rise {
   from {
     opacity: 0;

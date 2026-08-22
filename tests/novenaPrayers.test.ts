@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { NOVENA_PRAYERS, novenaOrder, novenaPrayer } from '@/lib/rosary/novenaPrayers';
+import {
+  NOVENA_PRAYERS,
+  novenaDayPrayers,
+  novenaOrder,
+  novenaPrayer,
+} from '@/lib/rosary/novenaPrayers';
 import { PRAYERS } from '@/lib/rosary/prayers';
 import { NOVENA_DAYS, NOVENA_KEYS } from '@/lib/rosary/novenas';
 
@@ -156,5 +161,41 @@ describe('a day of a novena, in order', () => {
 
   it('has nothing to say for a novena that does not exist', () => {
     expect(novenaOrder('gibberish', 'fr', 1, LABELS)).toEqual([]);
+  });
+});
+
+describe('what a day of a novena is worth', () => {
+  it('counts the three Hail Marys and the one after the Our Father', () => {
+    expect(novenaDayPrayers('assumption')).toEqual({
+      hailMarys: 4,
+      ourFathers: 1,
+      gloryBes: 1,
+    });
+  });
+
+  it('counts one Hail Mary where the novena has no three', () => {
+    expect(novenaDayPrayers('sacred-heart')).toEqual({
+      hailMarys: 1,
+      ourFathers: 1,
+      gloryBes: 1,
+    });
+  });
+
+  it('counts exactly what the sheet renders, for every novena', () => {
+    // The two must never drift: the count is what makes a marked day grow the
+    // rosary, and the order is what the person actually said.
+    for (const key of NOVENA_KEYS) {
+      const steps = novenaOrder(key, 'fr', 1, LABELS);
+      const said = novenaDayPrayers(key);
+      const shown = (id: string) =>
+        steps.filter((step) => step.id === id).reduce((n, step) => n + (step.times ?? 1), 0);
+      expect(said.hailMarys, key).toBe(shown('hailMary') + shown('threeHailMarys'));
+      expect(said.ourFathers, key).toBe(shown('ourFather'));
+      expect(said.gloryBes, key).toBe(shown('gloryBe'));
+    }
+  });
+
+  it('gives nothing for a novena that does not exist', () => {
+    expect(novenaDayPrayers('gibberish')).toEqual({ hailMarys: 0, ourFathers: 0, gloryBes: 0 });
   });
 });

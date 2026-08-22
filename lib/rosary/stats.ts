@@ -2,10 +2,21 @@ import type { MysterySetId } from './mysteries';
 
 export type DayCount = { date: string; count: number; decades: number };
 
+/** Ten Hail Marys is a decade — which is how prayers said outside a rosary count. */
+export const HAIL_MARYS_PER_DECADE = 10;
+
 export type Stats = {
   totalCompleted: number;
+  /**
+   * Decades from rosaries, plus a decade for every ten Hail Marys said on the
+   * days of a novena. Everything that grows — the stage, the degrees, the
+   * artwork — is measured from this.
+   */
   totalDecades: number;
   totalHailMarys: number;
+  /** Of those, the ones said on a day of a novena rather than in a rosary. */
+  novenaHailMarys: number;
+  novenaOurFathers: number;
   totalMinutes: number;
   firstPrayedAt: string | null;
   lastPrayedAt: string | null;
@@ -24,6 +35,8 @@ export const EMPTY_STATS: Stats = {
   totalCompleted: 0,
   totalDecades: 0,
   totalHailMarys: 0,
+  novenaHailMarys: 0,
+  novenaOurFathers: 0,
   totalMinutes: 0,
   firstPrayedAt: null,
   lastPrayedAt: null,

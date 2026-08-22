@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import RosaryArt from '@/components/RosaryArt';
+import VirginFiligree from '@/components/VirginFiligree';
 import CompletionScreen from '@/components/CompletionScreen';
 import { Button, cx } from '@/components/ui';
 import { useRosarySync } from '@/lib/client/useRosarySync';
@@ -180,6 +181,10 @@ export default function PrayScreen({
         </span>
       </header>
 
+      {/* The one thing on this screen you are meant to be following with a
+          thumb, so it takes what the screen can spare: a share of the height
+          rather than a fixed box, floored on a small phone and capped on a tall
+          one so the words are never pushed off. */}
       <div className="relative mt-1 flex shrink-0 justify-center">
         <RosaryArt
           bloom={bloom}
@@ -188,7 +193,7 @@ export default function PrayScreen({
           medal={view.medal}
           cross={view.cross}
           focus={focus}
-          className="h-48 w-full sm:h-56"
+          className="h-[38vh] max-h-[20rem] min-h-[13rem] w-full"
           onBeadClick={(beadIndex) => jumpToBead(beadIndex, steps, view.chaplet, goTo)}
         />
         {view.chaplets > 1 && (
@@ -204,7 +209,24 @@ export default function PrayScreen({
         completed={steps.filter((s) => s.kind === 'decade-end' && done.has(s.id)).length}
       />
 
-      <div ref={scroller} className="no-scrollbar mt-3 flex min-h-0 flex-1 flex-col justify-center overflow-y-auto">
+      <div className="relative mt-3 flex min-h-0 flex-1 flex-col">
+        {/* The Virgin behind the words, breathing once for each prayer said:
+            the key is the step, so the rise and fall begins again on every bead
+            rather than running to a clock of its own. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+        >
+          <VirginFiligree
+            key={step.id}
+            className="animate-breathe h-[92%] max-h-full w-auto max-w-none"
+          />
+        </div>
+
+        <div
+          ref={scroller}
+          className="no-scrollbar relative flex min-h-0 flex-1 flex-col justify-center overflow-y-auto"
+        >
         <StepBody
           key={step.id}
           step={step}
@@ -216,9 +238,10 @@ export default function PrayScreen({
           }
           t={t}
         />
+        </div>
       </div>
 
-      <footer className="shrink-0 pt-3 pad-bottom">
+      <footer className="relative shrink-0 pt-3 pad-bottom">
         <div className="flex items-center gap-2.5">
           <button
             type="button"

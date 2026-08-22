@@ -9,6 +9,7 @@ import {
   stopNovena,
 } from '@/lib/db/novenas';
 import { NOVENA_KEYS } from '@/lib/rosary/novenas';
+import { novenaDayPrayers } from '@/lib/rosary/novenaPrayers';
 
 type Body = {
   novena?: string;
@@ -56,7 +57,16 @@ export async function POST(request: Request) {
         return fail('invalid_date');
       }
       await startNovena(user.id, body.novena, body.startedOn);
-      await markNovenaDay(user.id, body.novena, body.startedOn, body.day, body.prayed !== false);
+      // What the day says is worked out here rather than sent by the browser:
+      // it decides how much the day is worth, and nothing a client posts should.
+      await markNovenaDay(
+        user.id,
+        body.novena,
+        body.startedOn,
+        body.day,
+        body.prayed !== false,
+        novenaDayPrayers(body.novena),
+      );
     } else if (typeof body.kept === 'boolean') {
       // Starting it first means a novena can be marked kept in one gesture,
       // whether or not it was ever registered.

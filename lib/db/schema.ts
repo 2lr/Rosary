@@ -45,6 +45,9 @@ export const SCHEMA_STATEMENTS = [
      started_on TEXT NOT NULL,
      day        TEXT NOT NULL,
      marked_at  TEXT NOT NULL,
+     hail_marys INTEGER NOT NULL DEFAULT 0,
+     our_fathers INTEGER NOT NULL DEFAULT 0,
+     glory_bes  INTEGER NOT NULL DEFAULT 0,
      PRIMARY KEY (user_id, novena, started_on, day)
    )`,
   `CREATE INDEX IF NOT EXISTS novena_days_user
@@ -67,4 +70,7 @@ export const MIGRATION_STATEMENTS = [
   `ALTER TABLE users ADD COLUMN loop_shape TEXT`,
   `ALTER TABLE users ADD COLUMN hail_mary TEXT`,
   `ALTER TABLE novena_runs ADD COLUMN kept_at TEXT`,
+  `ALTER TABLE novena_days ADD COLUMN hail_marys INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE novena_days ADD COLUMN our_fathers INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE novena_days ADD COLUMN glory_bes INTEGER NOT NULL DEFAULT 0`,
 ];

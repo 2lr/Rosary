@@ -6,7 +6,7 @@ import Sheet from '@/components/Sheet';
 import type { Lang } from '@/lib/i18n/config';
 import type { translatorFor } from '@/lib/i18n/dictionary';
 import { NOVENA_DAYS } from '@/lib/rosary/novenas';
-import { novenaOrder } from '@/lib/rosary/novenaPrayers';
+import { novenaDayPrayers, novenaOrder } from '@/lib/rosary/novenaPrayers';
 
 /**
  * The words of a novena, for the day it is on — the whole day, in order.
@@ -49,6 +49,8 @@ export default function NovenaPrayerSheet({
     [novena, lang, onDay, t],
   );
 
+  const said = novenaDayPrayers(novena);
+
   if (steps.length === 0) return null;
 
   return (
@@ -86,10 +88,16 @@ export default function NovenaPrayerSheet({
         ))}
       </ol>
 
+      {/* What this day is worth, since it is worth something: the prayers said
+          on it count towards the rosary like any others. */}
+      <p className="mt-6 text-[0.68rem] leading-relaxed text-faint text-pretty">
+        {t('novena.dayCounts', { ave: said.hailMarys, pater: said.ourFathers })}
+      </p>
+
       {/* The nine days are made of rosaries; this is the way back to one. */}
       <Link
         href="/home"
-        className="tap mt-6 flex w-full items-center justify-center rounded-full bg-[var(--bloom-accent)] px-4 py-3 text-sm text-[var(--bloom-on-accent)] transition"
+        className="tap mt-3 flex w-full items-center justify-center rounded-full bg-[var(--bloom-accent)] px-4 py-3 text-sm text-[var(--bloom-on-accent)] transition"
       >
         {t('novena.thenRosary')}
       </Link>
