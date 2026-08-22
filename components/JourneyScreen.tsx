@@ -7,6 +7,7 @@ import AppNav from '@/components/AppNav';
 import RosaryArt from '@/components/RosaryArt';
 import RosaryViewer from '@/components/RosaryViewer';
 import PrayerCalendar from '@/components/PrayerCalendar';
+import StageLadder from '@/components/StageLadder';
 import { Card, Stat, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
@@ -31,6 +32,7 @@ export default function JourneyScreen({
   const router = useRouter();
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [viewing, setViewing] = useState(false);
+  const [ladder, setLadder] = useState(false);
 
   const dateFormat = useMemo(
     () => new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }),
@@ -205,7 +207,19 @@ export default function JourneyScreen({
         <p className="mt-3 text-xs text-muted">
           {t('journey.toNext', { n: bloom.decadesToNext, stage: bloom.nextStage.name[lang] })}
         </p>
-        <p className="mt-1 text-[0.65rem] text-whisper">{t('journey.ladderEndless')}</p>
+
+        {/* The window shows five rungs of something that has no last one. This
+            is the way in to the rest of it. */}
+        <button
+          type="button"
+          onClick={() => setLadder(true)}
+          className="tap mt-3 flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs text-[var(--bloom-accent)] transition hover:bg-[var(--bloom-accent)]/8"
+        >
+          <span>{t('journey.allStages')}</span>
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
       </Card>
 
       <section className="mt-5">
@@ -274,6 +288,15 @@ export default function JourneyScreen({
       </section>
 
       <AppNav t={t} />
+
+      {ladder && (
+        <StageLadder
+          bloom={bloom}
+          lang={lang}
+          decades={stats.totalDecades}
+          onClose={() => setLadder(false)}
+        />
+      )}
 
       {viewing && (
         <RosaryViewer bloom={bloom} lang={lang} onClose={() => setViewing(false)} />

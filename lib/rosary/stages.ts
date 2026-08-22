@@ -323,6 +323,35 @@ export function stageTone(index: number): number {
   return Math.min(1, index / (NAMED_STAGES - 1));
 }
 
+const SUPERSCRIPT = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+
+/**
+ * A threshold as it should be read.
+ *
+ * Plain up to a million, compact up to a thousand billion, and powers of ten
+ * beyond that — because Intl's compact notation runs out of names around there
+ * and starts printing the whole number followed by a unit, which is how
+ * "2 600 000 000 000 000 000 000 000 000 000 Bn" ends up on a row.
+ */
+export function formatThreshold(value: number, lang: Lang): string {
+  if (!Number.isFinite(value)) return '∞';
+  if (value < 1_000_000) return new Intl.NumberFormat(lang).format(value);
+  if (value < 1e12) {
+    return new Intl.NumberFormat(lang, { notation: 'compact', maximumFractionDigits: 1 }).format(
+      value,
+    );
+  }
+
+  const exponent = Math.floor(Math.log10(value));
+  const mantissa = value / 10 ** exponent;
+  const digits = String(exponent)
+    .split('')
+    .map((d) => SUPERSCRIPT[Number(d)] ?? d)
+    .join('');
+  const lead = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(mantissa);
+  return `${lead} × 10${digits}`;
+}
+
 /** A slice of the ladder around a stage, for showing where you are on it. */
 export function stageWindow(index: number, before = 1, after = 3): Stage[] {
   // Near the bottom there is nothing behind to show, so the window slides

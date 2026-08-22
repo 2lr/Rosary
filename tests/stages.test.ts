@@ -8,6 +8,7 @@ import {
   stageAt,
   stageFor,
   stageTone,
+  formatThreshold,
   stageWindow,
   thresholdAt,
 } from '@/lib/rosary/stages';
@@ -137,5 +138,37 @@ describe('showing where you stand', () => {
     // Past what Rome could write, plain digits are the honest answer.
     expect(roman(4000)).toBe('4000');
     expect(roman(0)).toBe('');
+  });
+});
+
+describe('writing the numbers on the rungs', () => {
+  it('spells out anything a person could actually pray', () => {
+    expect(formatThreshold(0, 'en')).toBe('0');
+    expect(formatThreshold(1000, 'en')).toBe('1,000');
+    expect(formatThreshold(35_000, 'en')).toBe('35,000');
+  });
+
+  it('compacts the merely enormous', () => {
+    expect(formatThreshold(2_000_000, 'en')).toBe('2M');
+    expect(formatThreshold(3_400_000_000, 'en')).toBe('3.4B');
+  });
+
+  it('gives up on digits past what has a name, and says the power instead', () => {
+    // Intl runs out of unit names around here and starts printing the whole
+    // number with a unit stuck on the end: 2 600 000 …000 Bn, thirty digits
+    // wide, straight through the side of the row.
+    const huge = formatThreshold(2.6e30, 'en');
+    expect(huge).toBe('2.6 × 10³⁰');
+    expect(huge.length).toBeLessThan(14);
+
+    for (const value of [1e13, 1e18, 5e42, 9.9e120]) {
+      expect(formatThreshold(value, 'fr').length).toBeLessThan(16);
+    }
+  });
+
+  it('never lets a rung run off the side, however deep the ladder goes', () => {
+    for (let i = 0; i < 300; i++) {
+      expect(formatThreshold(thresholdAt(i), 'fr').length, `stage ${i}`).toBeLessThan(16);
+    }
   });
 });

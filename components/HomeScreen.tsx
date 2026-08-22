@@ -16,6 +16,7 @@ import { MYSTERY_SETS, type MysterySetId } from '@/lib/rosary/mysteries';
 import { buildSequence } from '@/lib/rosary/sequence';
 import { nextMilestone } from '@/lib/rosary/traits';
 import { roman } from '@/lib/rosary/stages';
+import StageLadder from '@/components/StageLadder';
 import type { Rosary } from '@/lib/rosary/types';
 
 type Props = {
@@ -33,6 +34,7 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
   const sign = useMemo(() => nextMilestone(bloom.growth), [bloom.growth]);
 
   const [starting, setStarting] = useState(false);
+  const [ladder, setLadder] = useState(false);
   const [viewing, setViewing] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => setNow(new Date()), []);
@@ -103,9 +105,16 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
         <p className="text-[0.65rem] uppercase tracking-[0.22em] text-faint">
           {t('journey.stage')}
         </p>
-        <h1 className="font-display text-3xl text-[var(--bloom-accent)]">
-          {bloom.stage.name[lang]}
-        </h1>
+        <button
+          type="button"
+          onClick={() => setLadder(true)}
+          className="tap rounded-2xl px-3 py-0.5"
+          aria-label={t('journey.allStages')}
+        >
+          <h1 className="font-display text-3xl text-[var(--bloom-accent)]">
+            {bloom.stage.name[lang]}
+          </h1>
+        </button>
         <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-muted text-pretty">
           {bloom.stage.note[lang]}
         </p>
@@ -214,6 +223,15 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
       </section>
 
       <AppNav t={t} />
+
+      {ladder && (
+        <StageLadder
+          bloom={bloom}
+          lang={lang}
+          decades={stats.totalDecades}
+          onClose={() => setLadder(false)}
+        />
+      )}
 
       {viewing && (
         <RosaryViewer bloom={bloom} lang={lang} onClose={() => setViewing(false)} />
