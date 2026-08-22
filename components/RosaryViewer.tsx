@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import RosaryArt from '@/components/RosaryArt';
+import AppNav from '@/components/AppNav';
 import { cx } from '@/components/ui';
 import type { Bloom } from '@/lib/rosary/growth';
 import type { Lang } from '@/lib/i18n/config';
@@ -155,15 +156,17 @@ export default function RosaryViewer({
               {t('viewer.reset')}
             </button>
           )}
+          {/* A bare cross in the corner was not read as a way out. It says
+              what it does. */}
           <button
             type="button"
             onClick={onClose}
-            aria-label={t('common.close')}
-            className="tap surface flex h-9 w-9 items-center justify-center rounded-full text-muted"
+            className="tap surface flex h-9 items-center gap-1.5 rounded-full pl-2.5 pr-3.5 text-sm text-[var(--bloom-ink)]"
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
+            {t('common.close')}
           </button>
         </div>
       </header>
@@ -196,7 +199,7 @@ export default function RosaryViewer({
         )}
       </div>
 
-      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 pb-6 pad-bottom">
+      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-5 pb-28 pad-bottom">
         <section>
           <h3 className="text-[0.62rem] uppercase tracking-[0.18em] text-faint">
             {t('viewer.traits')}
@@ -257,6 +260,7 @@ export default function RosaryViewer({
           </section>
         )}
       </div>
+      <AppNav t={t} />
     </div>
   );
 }

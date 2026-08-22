@@ -160,7 +160,11 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
         </Card>
       )}
 
-      <section className="mt-6 space-y-3">
+      {/* One thing to do, and it is obvious. Three cards side by side asked a
+          question nobody came here to answer: on most days the chaplet of the
+          day is simply what you pray. The other two kinds stay reachable, a
+          line below, for whoever actually wants them. */}
+      <section className="mt-6">
         <div className="flex items-baseline justify-between">
           <h2 className="text-[0.65rem] uppercase tracking-[0.22em] text-faint">
             {t('home.todaysMysteries')}
@@ -168,26 +172,37 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
           <span className="text-xs text-muted">{set.name[lang]}</span>
         </div>
 
-        <StartOption
-          title={t('home.chaplet')}
-          description={set.mysteries.map((m) => m.title[lang]).join(' · ')}
-          accent
-          onClick={() => setSheet('chaplet')}
-        />
-        <StartOption
-          title={t('home.full')}
-          description={t('home.fullDesc')}
-          onClick={() => setSheet('full')}
-        />
-        <StartOption
-          title={t('home.free')}
-          description={t('home.freeDesc')}
-          onClick={() => setSheet('free')}
-        />
+        <p className="mt-2 text-xs leading-relaxed text-muted text-pretty">
+          {set.mysteries.map((m) => m.title[lang]).join(' · ')}
+        </p>
+
+        <Button size="lg" className="mt-4 w-full" onClick={() => setSheet('chaplet')}>
+          {t('home.startToday')}
+        </Button>
+
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setSheet('full')}
+            className="tap rounded-full px-2 py-1 text-xs text-muted transition hover:text-[var(--bloom-ink)]"
+          >
+            {t('home.full')}
+          </button>
+          <span aria-hidden className="text-whisper">·</span>
+          <button
+            type="button"
+            onClick={() => setSheet('free')}
+            className="tap rounded-full px-2 py-1 text-xs text-muted transition hover:text-[var(--bloom-ink)]"
+          >
+            {t('home.free')}
+          </button>
+        </div>
 
         {/* The day's own word, under the day's mysteries. Folded away: it is
             there for whoever wants it, and never in the way of praying. */}
-        <GospelCard lang={lang} t={t} />
+        <div className="mt-4">
+          <GospelCard lang={lang} t={t} />
+        </div>
       </section>
 
       <section className="mt-6 grid grid-cols-3 gap-2.5">
@@ -212,41 +227,6 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
         />
       )}
     </div>
-  );
-}
-
-function StartOption({
-  title,
-  description,
-  onClick,
-  accent,
-}: {
-  title: string;
-  description: string;
-  onClick: () => void;
-  accent?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cx(
-        'tap surface w-full rounded-3xl px-4 py-3.5 text-left transition hover:bg-[var(--bloom-fill-2)] active:scale-[0.99]',
-        accent && 'border-[var(--bloom-accent)]/35',
-      )}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className={cx('font-display text-lg', accent && 'text-[var(--bloom-accent)]')}>
-            {title}
-          </p>
-          <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted">{description}</p>
-        </div>
-        <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-faint" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 6l6 6-6 6" />
-        </svg>
-      </div>
-    </button>
   );
 }
 
