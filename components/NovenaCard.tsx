@@ -137,12 +137,11 @@ export default function NovenaCard({
       </div>
 
       <p className="mt-2 text-[0.68rem] text-faint">
-        {running
-          ? t('novena.kept', { n: kept, of: NOVENA_DAYS })
-          : t('novena.from', {
-              from: dateRange.format(new Date(`${showing.start}T12:00:00Z`)),
-              to: dateRange.format(new Date(`${showing.end}T12:00:00Z`)),
-            })}
+        {t('novena.from', {
+          from: dateRange.format(new Date(`${showing.start}T12:00:00Z`)),
+          to: dateRange.format(new Date(`${showing.end}T12:00:00Z`)),
+        })}
+        {running && ` · ${t('novena.kept', { n: kept, of: NOVENA_DAYS })}`}
       </p>
 
       {isJoined ? (

@@ -111,11 +111,26 @@ export default function NovenasScreen({
     });
   }, [year, today]);
 
-  const mine = (runs ?? []).map((run) => ({
-    run,
-    novena: novenaByKey(run.novena, Number(run.startedOn.slice(0, 4))),
-    window: runWindow(run.novena, run.startedOn, today),
-  }));
+  const mine = (runs ?? []).map((run) => {
+    const window = runWindow(run.novena, run.startedOn, today);
+    const startYear = Number(run.startedOn.slice(0, 4));
+
+    // The feast is worth naming when these nine days actually lead into it —
+    // which includes starting a day early or a day late, the usual case. A
+    // novena begun in August for a February feast is being prayed for its own
+    // sake, and naming a date five months off would only confuse.
+    const leadsTo =
+      [startYear, startYear + 1]
+        .map((year) => novenaByKey(run.novena, year))
+        .find((n) => n && n.feast >= run.startedOn && n.feast <= shiftDays(window.end, 1)) ?? null;
+
+    return {
+      run,
+      novena: novenaByKey(run.novena, startYear),
+      leadsTo,
+      window,
+    };
+  });
 
   const running = mine.filter((m) => !m.window.over);
   const done = mine.filter((m) => m.window.over);
@@ -149,7 +164,7 @@ export default function NovenasScreen({
             {t("novena.running")}
           </h2>
           <div className="mt-3 space-y-3">
-            {running.map(({ run, novena, window }) => {
+            {running.map(({ run, novena, leadsTo, window }) => {
               const { kept, days } = keptOf(run.startedOn);
               return (
                 <Card
@@ -170,6 +185,20 @@ export default function NovenasScreen({
                           })}
                     </p>
                   </div>
+
+                  {/* Which nine days these are. Without them there is no way to
+                      tell one novena from another once it is under way, nor
+                      whether the one being prayed is the one intended. */}
+                  <p className="mt-1 text-[0.65rem] text-faint">
+                    {t("novena.from", {
+                      from: dateOf.format(new Date(`${run.startedOn}T12:00:00Z`)),
+                      to: dateOf.format(new Date(`${window.end}T12:00:00Z`)),
+                    })}
+                    {leadsTo &&
+                      ` · ${t("novena.feastOn", {
+                        date: dateOf.format(new Date(`${leadsTo.feast}T12:00:00Z`)),
+                      })}`}
+                  </p>
 
                   <Days days={days} today={today} />
 

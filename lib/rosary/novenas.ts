@@ -165,6 +165,15 @@ const SPECS: Spec[] = [
     feast: (y) => fixed(y, 8, 15),
   },
   {
+    key: 'queenship',
+    name: { fr: 'La Vierge Marie Reine', en: 'The Queenship of Mary' },
+    about: {
+      fr: 'L’octave de l’Assomption : couronnée, elle reste la mère.',
+      en: 'The octave of the Assumption: crowned, and still the mother.',
+    },
+    feast: (y) => fixed(y, 8, 22),
+  },
+  {
     key: 'sorrows',
     name: { fr: 'Notre-Dame des Douleurs', en: 'Our Lady of Sorrows' },
     about: {

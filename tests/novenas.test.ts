@@ -67,10 +67,19 @@ describe('the novenas', () => {
     expect(new Date('2026-06-12T00:00:00Z').getUTCDay()).toBe(5);
   });
 
-  it('names thirteen, each one only once', () => {
-    expect(NOVENA_KEYS).toHaveLength(13);
-    expect(new Set(NOVENA_KEYS).size).toBe(13);
-    expect(novenasIn(2026)).toHaveLength(13);
+  it('names fourteen, each one only once', () => {
+    expect(NOVENA_KEYS).toHaveLength(14);
+    expect(new Set(NOVENA_KEYS).size).toBe(14);
+    expect(novenasIn(2026)).toHaveLength(14);
+  });
+
+  it('keeps the octave of the Assumption, which is a feast of its own', () => {
+    // The twenty-second of August: Mary crowned, eight days after her
+    // Assumption. Its novena runs straight out of the Assumption's.
+    const queenship = novenaByKey('queenship', 2026)!;
+    expect(queenship.feast).toBe('2026-08-22');
+    expect(queenship.start).toBe('2026-08-13');
+    expect(queenship.end).toBe('2026-08-21');
   });
 
   it('lists them in the order they fall', () => {
