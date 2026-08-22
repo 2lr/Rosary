@@ -124,6 +124,7 @@ export const DICT = {
     'journey.allStages': 'Voir toutes les étapes',
     'journey.nextStage': 'Prochaine étape',
     'journey.toNext': 'Encore {n} dizaines avant « {stage} »',
+    'journey.toNext.one': 'Encore une dizaine avant « {stage} »',
     'journey.complete': 'Toutes les étapes sont franchies. Continuez.',
     'journey.bySet': 'Par mystères',
     'journey.history': 'Historique',
@@ -168,6 +169,7 @@ export const DICT = {
     'journey.prevMonth': 'Mois précédent',
     'journey.nextMonth': 'Mois suivant',
     'journey.dayPrayed': '{n} dizaines',
+    'journey.dayPrayed.one': '{n} dizaine',
     'journey.today': 'Aujourd’hui',
     'home.nextSign': 'Prochain signe',
     'home.nextSignAt': '{sign}, dans {n} dizaines',
@@ -192,13 +194,21 @@ export const DICT = {
     'novena.rightNow': 'en ce moment',
     'novena.justEnded': 'vient de se terminer',
     'novena.alreadyOver': 'déjà accomplie',
+    'novena.markKept': 'Je l’ai faite',
+    'novena.unmark': 'Finalement non',
+    'novena.keptSaid': 'accomplie',
+    'novena.over': 'Terminée',
     'novena.startsOn': 'Commence le {date}',
     'novena.alreadyRunning': 'Vous la faites en ce moment.',
     'novena.decades': '{n} dizaines',
+    'novena.decades.one': '{n} dizaine',
     'novena.completed': '{n} neuvaines menées à bout.',
+    'novena.completed.one': 'Une neuvaine menée à bout.',
     'novena.day': 'Jour {n} sur {of}',
     'novena.opensIn': 'Dans {n} jours',
+    'novena.opensIn.one': 'Demain',
     'novena.kept': '{n} jours sur {of} priés',
+    'novena.kept.one': '{n} jour sur {of} prié',
     'novena.from': 'Du {from} au {to}',
     'novena.feastOn': 'fête le {date}',
     'novena.join': 'Faire cette neuvaine',
@@ -496,6 +506,7 @@ export const DICT = {
     'journey.allStages': 'See every stage',
     'journey.nextStage': 'Next stage',
     'journey.toNext': '{n} more decades before “{stage}”',
+    'journey.toNext.one': 'One decade to “{stage}”',
     'journey.complete': 'Every stage has been reached. Keep going.',
     'journey.bySet': 'By mysteries',
     'journey.history': 'History',
@@ -539,6 +550,7 @@ export const DICT = {
     'journey.prevMonth': 'Previous month',
     'journey.nextMonth': 'Next month',
     'journey.dayPrayed': '{n} decades',
+    'journey.dayPrayed.one': '{n} decade',
     'journey.today': 'Today',
     'home.nextSign': 'Next sign',
     'home.nextSignAt': '{sign}, in {n} decades',
@@ -563,13 +575,21 @@ export const DICT = {
     'novena.rightNow': 'right now',
     'novena.justEnded': 'just ended',
     'novena.alreadyOver': 'already behind you',
+    'novena.markKept': 'I prayed it',
+    'novena.unmark': 'Undo',
+    'novena.keptSaid': 'kept',
+    'novena.over': 'Finished',
     'novena.startsOn': 'Begins {date}',
     'novena.alreadyRunning': 'You are praying it now.',
     'novena.decades': '{n} decades',
+    'novena.decades.one': '{n} decade',
     'novena.completed': '{n} novenas carried through.',
+    'novena.completed.one': 'One novena carried through.',
     'novena.day': 'Day {n} of {of}',
     'novena.opensIn': 'In {n} days',
+    'novena.opensIn.one': 'Tomorrow',
     'novena.kept': '{n} of {of} days prayed',
+    'novena.kept.one': '{n} of {of} days prayed',
     'novena.from': 'From {from} to {to}',
     'novena.feastOn': 'feast on {date}',
     'novena.join': 'Pray this novena',
@@ -756,7 +776,16 @@ export function translate(
   key: MessageKey,
   params?: Record<string, string | number>,
 ): string {
-  const template: string = DICT[lang][key] ?? DICT.fr[key] ?? key;
+  // French and English both say "1 jour" and "2 jours". Rather than a plural
+  // engine, a phrase that needs a singular gets a sibling key ending in `.one`,
+  // used whenever the count passed as `n` is exactly one.
+  const singular =
+    params && Number(params.n) === 1
+      ? ((DICT[lang] as Record<string, string>)[`${key}.one`] ??
+        (DICT.fr as Record<string, string>)[`${key}.one`])
+      : undefined;
+
+  const template: string = singular ?? DICT[lang][key] ?? DICT.fr[key] ?? key;
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
     name in params ? String(params[name]) : match,

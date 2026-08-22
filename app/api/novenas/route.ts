@@ -1,9 +1,15 @@
 import { fail, handle, json, readJson } from '@/lib/api';
 import { requireUser } from '@/lib/auth/guard';
-import { listNovenas, startNovena, stopNovena } from '@/lib/db/novenas';
+import { listNovenas, markNovenaKept, startNovena, stopNovena } from '@/lib/db/novenas';
 import { NOVENA_KEYS } from '@/lib/rosary/novenas';
 
-type Body = { novena?: string; startedOn?: string; moveTo?: string; stop?: boolean };
+type Body = {
+  novena?: string;
+  startedOn?: string;
+  moveTo?: string;
+  stop?: boolean;
+  kept?: boolean;
+};
 
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -33,7 +39,12 @@ export async function POST(request: Request) {
     const months = Math.abs(day.getTime() - Date.now()) / 2_592_000_000;
     if (months > 18) return fail('invalid_date');
 
-    if (body.stop === true) {
+    if (typeof body.kept === 'boolean') {
+      // Starting it first means a novena can be marked kept in one gesture,
+      // whether or not it was ever registered.
+      await startNovena(user.id, body.novena, body.startedOn);
+      await markNovenaKept(user.id, body.novena, body.startedOn, body.kept);
+    } else if (body.stop === true) {
       await stopNovena(user.id, body.novena, body.startedOn);
     } else if (typeof body.moveTo === 'string') {
       // Correcting the first day of one already started. Done in one request so

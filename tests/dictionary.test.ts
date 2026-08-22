@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { DICT } from '@/lib/i18n/dictionary';
+import { DICT, translate } from '@/lib/i18n/dictionary';
 
 describe('the two languages', () => {
   it('say the same things', () => {
@@ -41,6 +41,35 @@ describe('the two languages', () => {
       const french = DICT.fr[key as keyof typeof DICT.fr] as string;
       const english = DICT.en[key as keyof typeof DICT.en] as string;
       expect(holders(english), key).toEqual(holders(french));
+    }
+  });
+});
+
+describe('one of a thing', () => {
+  it('uses the singular phrasing when the count is one', () => {
+    // French and English both say "1 jour" and "2 jours"; the sibling key
+    // ending in .one is what carries the singular.
+    expect(translate('fr', 'novena.decades', { n: 1 })).toBe('1 dizaine');
+    expect(translate('fr', 'novena.decades', { n: 3 })).toBe('3 dizaines');
+    expect(translate('en', 'novena.decades', { n: 1 })).toBe('1 decade');
+    expect(translate('en', 'novena.decades', { n: 4 })).toBe('4 decades');
+  });
+
+  it('falls back to the plural phrasing when there is no singular', () => {
+    expect(translate('fr', 'novena.day', { n: 1, of: 9 })).toBe('Jour 1 sur 9');
+  });
+
+  it('leaves phrases without a count alone', () => {
+    expect(translate('fr', 'novena.title')).toBe('Neuvaines');
+  });
+
+  it('gives every singular a plural to sit beside', () => {
+    // A .one on its own would never be reached for any other count.
+    for (const lang of ['fr', 'en'] as const) {
+      for (const key of Object.keys(DICT[lang])) {
+        if (!key.endsWith('.one')) continue;
+        expect(Object.keys(DICT[lang]), key).toContain(key.slice(0, -4));
+      }
     }
   });
 });

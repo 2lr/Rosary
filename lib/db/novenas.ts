@@ -14,19 +14,32 @@ import { all, run } from './index';
  * rosaries already recorded. A novena is not a second thing to keep up with.
  */
 
-export type NovenaRow = { novena: string; startedOn: string; createdAt: string };
+export type NovenaRow = {
+  novena: string;
+  startedOn: string;
+  createdAt: string;
+  /** When the user said they had kept it, whatever the rosaries recorded. */
+  keptAt: string | null;
+};
 
-type Row = { novena: string; started_on: string; created_at: string };
+type Row = {
+  novena: string;
+  started_on: string;
+  created_at: string;
+  kept_at: string | null;
+};
 
 export async function listNovenas(userId: string): Promise<NovenaRow[]> {
   const rows = await all<Row>(
-    'SELECT novena, started_on, created_at FROM novena_runs WHERE user_id = ? ORDER BY started_on DESC',
+    `SELECT novena, started_on, created_at, kept_at FROM novena_runs
+       WHERE user_id = ? ORDER BY started_on DESC`,
     [userId],
   );
   return rows.map((row) => ({
     novena: row.novena,
     startedOn: row.started_on,
     createdAt: row.created_at,
+    keptAt: row.kept_at,
   }));
 }
 
@@ -58,4 +71,24 @@ export async function stopNovena(
     novena,
     startedOn,
   ]);
+}
+
+/**
+ * Marking a novena kept, or unmarking it.
+ *
+ * The nine days are otherwise counted from the rosaries recorded, which is only
+ * true of someone who opened the app every one of those days. A novena prayed
+ * on a train, or on paper, or from memory was still prayed — so it can be said
+ * so, and the saying is stored apart from the counting.
+ */
+export async function markNovenaKept(
+  userId: string,
+  novena: string,
+  startedOn: string,
+  kept: boolean,
+): Promise<void> {
+  await run(
+    'UPDATE novena_runs SET kept_at = ? WHERE user_id = ? AND novena = ? AND started_on = ?',
+    [kept ? new Date().toISOString() : null, userId, novena, startedOn],
+  );
 }

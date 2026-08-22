@@ -36,6 +36,7 @@ export const SCHEMA_STATEMENTS = [
      novena     TEXT NOT NULL,
      started_on TEXT NOT NULL,
      created_at TEXT NOT NULL,
+     kept_at    TEXT,
      UNIQUE (user_id, novena, started_on)
    )`,
   `CREATE INDEX IF NOT EXISTS novena_runs_user
@@ -55,4 +56,5 @@ export const MIGRATION_STATEMENTS = [
   `ALTER TABLE users ADD COLUMN colors TEXT`,
   `ALTER TABLE users ADD COLUMN loop_shape TEXT`,
   `ALTER TABLE users ADD COLUMN hail_mary TEXT`,
+  `ALTER TABLE novena_runs ADD COLUMN kept_at TEXT`,
 ];

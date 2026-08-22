@@ -27,7 +27,7 @@ import {
 /** How long a novena stays listed after its last day, so it can still be entered. */
 const RECENT_DAYS = 12;
 
-type Run = { novena: string; startedOn: string };
+type Run = { novena: string; startedOn: string; keptAt: string | null };
 
 export default function NovenasScreen({
   lang,
@@ -82,7 +82,7 @@ export default function NovenasScreen({
   async function act(
     novena: string,
     startedOn: string,
-    options: { stop?: boolean; moveTo?: string } = {},
+    options: { stop?: boolean; moveTo?: string; kept?: boolean } = {},
   ) {
     setBusy(`${novena}:${startedOn}`);
     try {
@@ -160,9 +160,10 @@ export default function NovenasScreen({
       (_, i) => decadesByDay.get(shiftDays(startedOn, i)) ?? 0,
     ).reduce((sum, n) => sum + n, 0);
 
-  const completed = done.filter(
-    (m) => keptOf(m.run.startedOn).kept === NOVENA_DAYS,
-  ).length;
+  const isKept = (m: (typeof mine)[number]) =>
+    m.run.keptAt !== null || keptOf(m.run.startedOn).kept === NOVENA_DAYS;
+
+  const completed = done.filter(isKept).length;
 
   const show = (key: string) => dateOf.format(new Date(`${key}T12:00:00Z`));
 
@@ -172,8 +173,9 @@ export default function NovenasScreen({
     const id = `${m.run.novena}:${m.run.startedOn}`;
     return {
       title: m.novena?.name[lang] ?? m.run.novena,
-      when:
-        m.window.day >= 1 && m.window.day <= NOVENA_DAYS
+      when: m.window.over
+        ? t("novena.over")
+        : m.window.day >= 1
           ? t("novena.day", { n: m.window.day, of: NOVENA_DAYS })
           : t("novena.startsOn", { date: show(m.run.startedOn) }),
       dates:
@@ -181,7 +183,7 @@ export default function NovenasScreen({
         (m.leadsTo ? ` · ${t("novena.feastOn", { date: show(m.leadsTo.feast) })}` : ""),
       days,
       today,
-      kept:
+      keptLine:
         t("novena.kept", { n: kept, of: NOVENA_DAYS }) +
         (decadesIn(m.run.startedOn) > 0
           ? ` · ${t("novena.decades", { n: decadesIn(m.run.startedOn) })}`
@@ -196,6 +198,9 @@ export default function NovenasScreen({
       onMove: (moveTo: string) =>
         void act(m.run.novena, m.run.startedOn, { moveTo }),
       onLeave: () => void act(m.run.novena, m.run.startedOn, { stop: true }),
+      kept: m.run.keptAt !== null,
+      onKept: (next: boolean) =>
+        void act(m.run.novena, m.run.startedOn, { kept: next }),
     };
   };
 
@@ -227,51 +232,11 @@ export default function NovenasScreen({
       )}
 
       {done.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-[0.65rem] uppercase tracking-[0.22em] text-faint">
-            {t("novena.past")}
-          </h2>
-          <ul className="mt-3 space-y-2">
-            {done.map(({ run, novena }) => {
-              const { kept } = keptOf(run.startedOn);
-              const whole = kept === NOVENA_DAYS;
-              return (
-                <li
-                  key={`${run.novena}-${run.startedOn}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl px-3 py-2"
-                >
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <span
-                      aria-hidden
-                      className={cx(
-                        "h-1.5 w-1.5 shrink-0 rounded-full",
-                        whole
-                          ? "bg-[var(--bloom-accent)]"
-                          : "bg-[var(--bloom-fill-3)]",
-                      )}
-                    />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm">
-                        {novena?.name[lang] ?? run.novena}
-                      </span>
-                      <span className="block text-[0.65rem] text-faint">
-                        {dateOf.format(new Date(`${run.startedOn}T12:00:00Z`))}
-                      </span>
-                    </span>
-                  </span>
-                  <span
-                    className={cx(
-                      "shrink-0 text-xs tabular-nums",
-                      whole ? "text-[var(--bloom-accent)]" : "text-faint",
-                    )}
-                  >
-                    {kept}/{NOVENA_DAYS}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <MineSection title={t("novena.past")}>
+          {done.map((m) => (
+            <RunCard key={`${m.run.novena}-${m.run.startedOn}`} {...cardProps(m)} />
+          ))}
+        </MineSection>
       )}
 
       <section className="mt-6">
@@ -370,7 +335,9 @@ function RunCard({
   dates,
   days,
   today,
+  keptLine,
   kept,
+  onKept,
   editing,
   busy,
   t,
@@ -386,7 +353,10 @@ function RunCard({
   dates: string;
   days: { key: string; prayed: boolean; ahead: boolean }[];
   today: string;
-  kept: string;
+  keptLine: string;
+  /** Said to have been kept, whatever the rosaries recorded. */
+  kept: boolean;
+  onKept: (next: boolean) => void;
   editing: boolean;
   busy: boolean;
   t: ReturnType<typeof translatorFor>;
@@ -411,7 +381,12 @@ function RunCard({
 
       <Days days={days} today={today} />
 
-      <p className="mt-2 text-[0.68rem] text-faint">{kept}</p>
+      <p className="mt-2 text-[0.68rem] text-faint">
+        {keptLine}
+        {kept && (
+          <span className="text-[var(--bloom-accent)]">{` · ${t("novena.keptSaid")}`}</span>
+        )}
+      </p>
 
       {editing ? (
         <NovenaStarter
@@ -433,6 +408,17 @@ function RunCard({
             className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
           >
             {t("novena.editDate")}
+          </button>
+          {/* The nine days are otherwise counted from rosaries recorded here,
+              which is only true of someone who opened the app every day. One
+              prayed on paper or from memory was still prayed. */}
+          <button
+            type="button"
+            onClick={() => onKept(!kept)}
+            disabled={busy}
+            className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
+          >
+            {kept ? t("novena.unmark") : t("novena.markKept")}
           </button>
           <button
             type="button"
