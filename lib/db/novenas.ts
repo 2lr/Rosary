@@ -183,6 +183,23 @@ export async function moveNovenaDays(
   to: string,
 ): Promise<void> {
   if (from === to) return;
+
+  // The same novena can be running twice over overlapping days, so the target
+  // may already hold a mark for one of these dates. Clear those first: the key
+  // is (user, novena, first day, day), and colliding with it would fail the
+  // whole correction.
+  const moving = await all<DayRow>(
+    `SELECT day FROM novena_days WHERE user_id = ? AND novena = ? AND started_on = ?`,
+    [userId, novena, from],
+  );
+  for (const mark of moving) {
+    await run(
+      `DELETE FROM novena_days
+         WHERE user_id = ? AND novena = ? AND started_on = ? AND day = ?`,
+      [userId, novena, to, mark.day],
+    );
+  }
+
   await run(
     `UPDATE novena_days SET started_on = ?
        WHERE user_id = ? AND novena = ? AND started_on = ?`,
