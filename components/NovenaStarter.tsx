@@ -18,8 +18,12 @@ import { NOVENA_DAYS, daysBetween, shiftDays } from '@/lib/rosary/novenas';
  * The same form starts a novena and corrects one already started.
  */
 
-/** How far back one can claim to have begun: far enough that today is the last day. */
-const FURTHEST_BACK = NOVENA_DAYS - 1;
+/**
+ * How far back a first day may be put. Far enough to enter a novena that has
+ * just finished — the day after its feast is exactly when someone thinks to
+ * record it — rather than only one still running.
+ */
+const FURTHEST_BACK = 40;
 
 export default function NovenaStarter({
   lang,
@@ -54,9 +58,11 @@ export default function NovenaStarter({
   const end = shiftDays(day, NOVENA_DAYS - 1);
   const position = daysBetween(day, today) + 1;
 
+  // Its own dates are worth one tap whether they are ahead or just behind: a
+  // novena is usually recorded the day it ends, not the day it starts.
   const shortcuts = [
     { key: today, label: t('novena.dayToday') },
-    ...(liturgical && liturgical > today
+    ...(liturgical && liturgical !== today && liturgical >= earliest
       ? [{ key: liturgical, label: t('novena.dayItsOwn', { date: show(liturgical) }) }]
       : []),
   ];
@@ -99,11 +105,14 @@ export default function NovenaStarter({
         />
       </label>
 
+      {/* What confirming actually gives, before confirming it. */}
       <p className="mt-2.5 text-[0.68rem] text-faint">
         {t('novena.from', { from: show(day), to: show(end) })}
-        {day <= today
-          ? ` · ${t('novena.day', { n: Math.min(NOVENA_DAYS, position), of: NOVENA_DAYS })}`
-          : ` · ${t('novena.startsOn', { date: show(day) })}`}
+        {end < today
+          ? ` · ${t('novena.alreadyOver')}`
+          : day > today
+            ? ` · ${t('novena.startsOn', { date: show(day) })}`
+            : ` · ${t('novena.day', { n: position, of: NOVENA_DAYS })}`}
       </p>
 
       <div className="mt-3 flex gap-2">

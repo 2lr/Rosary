@@ -24,6 +24,9 @@ import {
  * start it this evening.
  */
 
+/** How long a novena stays listed after its last day, so it can still be entered. */
+const RECENT_DAYS = 12;
+
 type Run = { novena: string; startedOn: string };
 
 export default function NovenasScreen({
@@ -108,8 +111,13 @@ export default function NovenasScreen({
    * copy it deduplicates against is the one that has already passed.
    */
   const catalogue = useMemo(() => {
-    const ahead = [...novenasIn(year), ...novenasIn(year + 1)]
-      .filter((n) => n.end >= today)
+    // A novena stays listed for a while after its last day, so one just prayed
+    // can still be recorded with the days it actually had. Jumping to next
+    // year's dates the morning after leaves no way to enter what was prayed
+    // yesterday.
+    const reachable = shiftDays(today, -RECENT_DAYS);
+    const ahead = [...novenasIn(year - 1), ...novenasIn(year), ...novenasIn(year + 1)]
+      .filter((n) => n.end >= reachable)
       .sort((a, b) => a.start.localeCompare(b.start));
     const seen = new Set<string>();
     return ahead.filter((n) => {
@@ -277,7 +285,6 @@ export default function NovenasScreen({
                 r.novena === novena.key &&
                 !runWindow(r.novena, r.startedOn, today).over,
             );
-            const soon = novena.start > today;
 
             return (
               <Card key={novena.key} className="px-4 py-4">
@@ -292,6 +299,18 @@ export default function NovenasScreen({
                     from: dateOf.format(new Date(`${novena.start}T12:00:00Z`)),
                     to: dateOf.format(new Date(`${novena.end}T12:00:00Z`)),
                   })}
+                  {novena.start <= today && today <= novena.end && (
+                    <span className="text-[var(--bloom-accent)]">
+                      {" · "}
+                      {t("novena.rightNow")}
+                    </span>
+                  )}
+                  {novena.end < today && (
+                    <span className="text-[var(--bloom-accent)]">
+                      {" · "}
+                      {t("novena.justEnded")}
+                    </span>
+                  )}
                 </p>
 
                 {already ? (
@@ -303,7 +322,7 @@ export default function NovenasScreen({
                     lang={lang}
                     t={t}
                     today={today}
-                    liturgical={soon ? novena.start : null}
+                    liturgical={novena.start}
                     busy={busy !== null}
                     onConfirm={(startedOn) => void act(novena.key, startedOn)}
                     onCancel={() => setChoosing(null)}
