@@ -23,7 +23,7 @@ import {
 /** How early the next one is worth mentioning. */
 const HERALD_DAYS = 6;
 
-type Joined = { novena: string; year: number };
+type Run = { novena: string; startedOn: string };
 
 export default function NovenaCard({
   lang,
@@ -37,7 +37,7 @@ export default function NovenaCard({
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const state = useMemo(() => novenaState(today), [today]);
 
-  const [joined, setJoined] = useState<Joined[] | null>(null);
+  const [runs, setRuns] = useState<Run[] | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -46,8 +46,8 @@ export default function NovenaCard({
       try {
         const response = await fetch('/api/novenas');
         if (!response.ok) return;
-        const data = (await response.json()) as { joined: Joined[] };
-        if (!cancelled) setJoined(data.joined);
+        const data = (await response.json()) as { novenas: Run[] };
+        if (!cancelled) setRuns(data.novenas);
       } catch {
         // Without this the card simply offers to join again; nothing breaks.
       }
@@ -68,10 +68,10 @@ export default function NovenaCard({
   if (!showing) return null;
 
   const running = showing === state.active;
-  const isJoined = (joined ?? []).some(
-    (j) => j.novena === showing.key && j.year === showing.year,
+  const isJoined = (runs ?? []).some(
+    (r) => r.novena === showing.key && r.startedOn === showing.start,
   );
-  const { kept, days } = novenaProgress(showing, prayedDays, today);
+  const { kept, days } = novenaProgress(showing.start, prayedDays, today);
 
   async function join(next: boolean) {
     if (!showing) return;
@@ -80,11 +80,11 @@ export default function NovenaCard({
       const response = await fetch('/api/novenas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ novena: showing.key, year: showing.year, joined: next }),
+        body: JSON.stringify({ novena: showing.key, startedOn: showing.start, stop: !next }),
       });
       if (response.ok) {
-        const data = (await response.json()) as { joined: Joined[] };
-        setJoined(data.joined);
+        const data = (await response.json()) as { novenas: Run[] };
+        setRuns(data.novenas);
       }
     } catch {
       // Leave the button as it was; tapping again will try again.

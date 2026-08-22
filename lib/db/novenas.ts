@@ -1,44 +1,61 @@
 import 'server-only';
+import { randomUUID } from 'node:crypto';
 import { all, run } from './index';
 
 /**
- * Which novenas a user has joined.
+ * The novenas a user is praying, or has prayed.
  *
- * Only the joining is stored. Whether the nine days were kept is read from the
- * rosaries already recorded — a novena is not a second thing to keep up with,
- * it is the rosary you pray anyway, nine days running.
+ * What is stored is the day a novena was begun — not the feast it belongs to.
+ * The liturgical ones open nine days before their feast, but a novena can be
+ * prayed at any time for any reason, so the day it started is the only thing
+ * that fixes its nine days.
+ *
+ * Whether those days were kept is not stored at all: it is read from the
+ * rosaries already recorded. A novena is not a second thing to keep up with.
  */
 
-export type JoinedNovena = { novena: string; year: number; joinedAt: string };
+export type NovenaRow = { novena: string; startedOn: string; createdAt: string };
 
-type Row = { novena: string; year: number; joined_at: string };
+type Row = { novena: string; started_on: string; created_at: string };
 
-export async function listJoinedNovenas(userId: string): Promise<JoinedNovena[]> {
+export async function listNovenas(userId: string): Promise<NovenaRow[]> {
   const rows = await all<Row>(
-    'SELECT novena, year, joined_at FROM novenas WHERE user_id = ? ORDER BY year DESC, novena',
+    'SELECT novena, started_on, created_at FROM novena_runs WHERE user_id = ? ORDER BY started_on DESC',
     [userId],
   );
-  return rows.map((row) => ({ novena: row.novena, year: row.year, joinedAt: row.joined_at }));
+  return rows.map((row) => ({
+    novena: row.novena,
+    startedOn: row.started_on,
+    createdAt: row.created_at,
+  }));
 }
 
-export async function joinNovena(userId: string, novena: string, year: number): Promise<void> {
-  // Joining twice is not an error, it is the same thing again.
+/** Starting the same novena on the same day twice is the same thing once. */
+export async function startNovena(
+  userId: string,
+  novena: string,
+  startedOn: string,
+): Promise<void> {
   const existing = await all<Row>(
-    'SELECT novena FROM novenas WHERE user_id = ? AND novena = ? AND year = ?',
-    [userId, novena, year],
+    'SELECT novena FROM novena_runs WHERE user_id = ? AND novena = ? AND started_on = ?',
+    [userId, novena, startedOn],
   );
   if (existing.length > 0) return;
 
   await run(
-    'INSERT INTO novenas (user_id, novena, year, joined_at) VALUES (?, ?, ?, ?)',
-    [userId, novena, year, new Date().toISOString()],
+    'INSERT INTO novena_runs (id, user_id, novena, started_on, created_at) VALUES (?, ?, ?, ?, ?)',
+    [randomUUID(), userId, novena, startedOn, new Date().toISOString()],
   );
 }
 
-export async function leaveNovena(userId: string, novena: string, year: number): Promise<void> {
-  await run('DELETE FROM novenas WHERE user_id = ? AND novena = ? AND year = ?', [
+export async function stopNovena(
+  userId: string,
+  novena: string,
+  startedOn: string,
+): Promise<void> {
+  await run('DELETE FROM novena_runs WHERE user_id = ? AND novena = ? AND started_on = ?', [
     userId,
     novena,
-    year,
+    startedOn,
   ]);
 }

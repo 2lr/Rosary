@@ -8,6 +8,7 @@ import type { Translator } from '@/lib/i18n/dictionary';
 const ICONS = {
   home: 'M4 11.2 12 4l8 7.2M6 10v9h12v-9',
   journey: 'M4 19V9m5 10V5m5 14v-7m5 7V8',
+  novena: 'M6 6h0M12 6h0M18 6h0M6 12h0M12 12h0M18 12h0M6 18h0M12 18h0M18 18h0',
   settings: 'M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z M19.4 12a7.4 7.4 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7.5 7.5 0 0 0-2-1.2l-.3-2.5H10.3l-.4 2.5a7.5 7.5 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7.4 7.4 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7.5 7.5 0 0 0 2 1.2l.4 2.5h3.4l.3-2.5a7.5 7.5 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.06-.4.1-.8.1-1.2Z',
 } as const;
 
@@ -16,6 +17,7 @@ export default function AppNav({ t }: { t: Translator }) {
 
   const items = [
     { href: '/home', label: t('home.today'), icon: ICONS.home },
+    { href: '/novenas', label: t('novena.title'), icon: ICONS.novena },
     { href: '/journey', label: t('home.journey'), icon: ICONS.journey },
     { href: '/settings', label: t('home.settings'), icon: ICONS.settings },
   ];
@@ -36,14 +38,14 @@ export default function AppNav({ t }: { t: Translator }) {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cx(
-                'tap flex flex-1 flex-col items-center gap-1 rounded-full px-3 py-2 text-[0.65rem] transition',
+                'tap flex min-w-0 flex-1 flex-col items-center gap-1 rounded-full px-1 py-2 text-[0.62rem] transition',
                 active ? 'text-[var(--bloom-accent)]' : 'text-faint hover:text-[var(--bloom-ink)]',
               )}
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={item.href === '/novenas' ? 2.6 : 1.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d={item.icon} />
               </svg>
-              <span className="tracking-wide">{item.label}</span>
+              <span className="w-full truncate text-center tracking-wide">{item.label}</span>
             </Link>
           );
         })}

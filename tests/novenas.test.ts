@@ -8,6 +8,7 @@ import {
   novenaProgress,
   novenaState,
   novenasIn,
+  runWindow,
   shiftDays,
 } from '@/lib/rosary/novenas';
 
@@ -132,7 +133,7 @@ describe('keeping a novena', () => {
 
   it('counts the days actually prayed on', () => {
     const prayed = ['2026-12-16', '2026-12-17', '2026-12-19'];
-    const { kept, days } = novenaProgress(novena, prayed, '2026-12-20');
+    const { kept, days } = novenaProgress(novena.start, prayed, '2026-12-20');
     expect(kept).toBe(3);
     expect(days).toHaveLength(9);
     expect(days[0].prayed).toBe(true);
@@ -140,14 +141,42 @@ describe('keeping a novena', () => {
   });
 
   it('marks the days that have not happened yet as ahead, not as missed', () => {
-    const { days } = novenaProgress(novena, [], '2026-12-18');
+    const { days } = novenaProgress(novena.start, [], '2026-12-18');
     expect(days.filter((d) => d.ahead).map((d) => d.key)).toEqual([
       '2026-12-19', '2026-12-20', '2026-12-21', '2026-12-22', '2026-12-23', '2026-12-24',
     ]);
   });
 
   it('ignores prayer outside the nine days', () => {
-    const { kept } = novenaProgress(novena, ['2026-12-01', '2026-12-25'], '2026-12-25');
+    const { kept } = novenaProgress(novena.start, ['2026-12-01', '2026-12-25'], '2026-12-25');
     expect(kept).toBe(0);
+  });
+});
+
+describe('a novena begun on any day', () => {
+  it('runs nine days from the day it was started', () => {
+    const run = runWindow('christmas', '2026-07-02', '2026-07-02');
+    expect(run.startedOn).toBe('2026-07-02');
+    expect(run.end).toBe('2026-07-10');
+    expect(run.day).toBe(1);
+    expect(run.over).toBe(false);
+  });
+
+  it('counts the day, and knows when the nine are behind', () => {
+    expect(runWindow('rosary', '2026-07-02', '2026-07-06').day).toBe(5);
+    expect(runWindow('rosary', '2026-07-02', '2026-07-10').day).toBe(9);
+    expect(runWindow('rosary', '2026-07-02', '2026-07-10').over).toBe(false);
+    expect(runWindow('rosary', '2026-07-02', '2026-07-11').over).toBe(true);
+  });
+
+  it('handles one begun for a day still to come', () => {
+    const run = runWindow('fatima', '2026-09-01', '2026-08-25');
+    expect(run.over).toBe(false);
+    expect(run.day).toBe(0);
+  });
+
+  it('is kept by the same rosaries as any other', () => {
+    const prayed = ['2026-07-02', '2026-07-03', '2026-07-04'];
+    expect(novenaProgress('2026-07-02', prayed, '2026-07-05').kept).toBe(3);
   });
 });

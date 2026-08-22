@@ -269,18 +269,48 @@ export function novenaState(today: string): NovenaState {
 }
 
 /**
+ * A novena someone is actually praying: nine days from the day they began.
+ *
+ * The liturgical ones start nine days before their feast, but nothing stops a
+ * novena being prayed at any time for any reason, so what is stored is the day
+ * it started rather than the feast it belongs to.
+ */
+export type NovenaRun = {
+  novena: string;
+  /** First of the nine days. */
+  startedOn: string;
+  end: string;
+  /** 1 → 9 while it runs, 0 before, 10 once the nine days have passed. */
+  day: number;
+  /** True once the nine days are behind us. */
+  over: boolean;
+};
+
+export function runWindow(novena: string, startedOn: string, today: string): NovenaRun {
+  const end = shiftDays(startedOn, NOVENA_DAYS - 1);
+  const day = daysBetween(startedOn, today) + 1;
+  return {
+    novena,
+    startedOn,
+    end,
+    day: Math.min(NOVENA_DAYS + 1, Math.max(0, day)),
+    over: today > end,
+  };
+}
+
+/**
  * How many of the nine days were prayed on. A day counts when a rosary was
  * finished on it — the novena is not a separate thing to keep up with, it is
  * the rosary you already pray, nine days running.
  */
 export function novenaProgress(
-  novena: Novena,
+  startedOn: string,
   prayedDays: Iterable<string>,
   today: string,
 ): { kept: number; days: { key: string; prayed: boolean; ahead: boolean }[] } {
   const prayed = prayedDays instanceof Set ? prayedDays : new Set(prayedDays);
   const days = Array.from({ length: NOVENA_DAYS }, (_, i) => {
-    const key = shiftDays(novena.start, i);
+    const key = shiftDays(startedOn, i);
     return { key, prayed: prayed.has(key), ahead: key > today };
   });
   return { kept: days.filter((d) => d.prayed).length, days };
