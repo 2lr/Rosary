@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import AppNav from "@/components/AppNav";
 import { Card, cx } from "@/components/ui";
 import NovenaStarter from "@/components/NovenaStarter";
+import NovenaPrayerSheet from "@/components/NovenaPrayerSheet";
 import { translatorFor } from "@/lib/i18n/dictionary";
 import type { Lang } from "@/lib/i18n/config";
 import type { Stats } from "@/lib/rosary/stats";
@@ -44,6 +45,8 @@ export default function NovenasScreen({
   const [busy, setBusy] = useState<string | null>(null);
   /** Which card has its date form open: a novena key, or a run being corrected. */
   const [choosing, setChoosing] = useState<string | null>(null);
+  /** The novena whose words are open, with the day it is on. */
+  const [praying, setPraying] = useState<{ key: string; name: string; day: number } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -199,6 +202,12 @@ export default function NovenasScreen({
         void act(m.run.novena, m.run.startedOn, { moveTo }),
       onLeave: () => void act(m.run.novena, m.run.startedOn, { stop: true }),
       kept: m.run.keptAt !== null,
+      onPray: () =>
+        setPraying({
+          key: m.run.novena,
+          name: m.novena?.name[lang] ?? m.run.novena,
+          day: m.window.day,
+        }),
       onKept: (next: boolean) =>
         void act(m.run.novena, m.run.startedOn, { kept: next }),
     };
@@ -309,6 +318,17 @@ export default function NovenasScreen({
       </section>
 
       <AppNav t={t} />
+
+      {praying && (
+        <NovenaPrayerSheet
+          lang={lang}
+          t={t}
+          name={praying.name}
+          novena={praying.key}
+          day={praying.day}
+          onClose={() => setPraying(null)}
+        />
+      )}
     </div>
   );
 }
@@ -338,6 +358,7 @@ function RunCard({
   keptLine,
   kept,
   onKept,
+  onPray,
   editing,
   busy,
   t,
@@ -357,6 +378,7 @@ function RunCard({
   /** Said to have been kept, whatever the rosaries recorded. */
   kept: boolean;
   onKept: (next: boolean) => void;
+  onPray: () => void;
   editing: boolean;
   busy: boolean;
   t: ReturnType<typeof translatorFor>;
@@ -400,35 +422,49 @@ function RunCard({
           onCancel={onCancel}
         />
       ) : (
-        <div className="mt-2 flex items-center gap-3">
+        <>
+          {/* A novena is one prayer said nine days running. Without the words
+              there is nothing to pray, so they are one tap away. */}
           <button
             type="button"
-            onClick={onEdit}
-            disabled={busy}
-            className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
+            onClick={onPray}
+            className="tap mt-3 w-full rounded-full bg-[var(--bloom-accent)] px-4 py-2 text-sm text-[var(--bloom-on-accent)] transition"
           >
-            {t("novena.editDate")}
+            {t("novena.pray")}
           </button>
-          {/* The nine days are otherwise counted from rosaries recorded here,
-              which is only true of someone who opened the app every day. One
-              prayed on paper or from memory was still prayed. */}
-          <button
-            type="button"
-            onClick={() => onKept(!kept)}
-            disabled={busy}
-            className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
-          >
-            {kept ? t("novena.unmark") : t("novena.markKept")}
-          </button>
-          <button
-            type="button"
-            onClick={onLeave}
-            disabled={busy}
-            className="tap rounded-full px-2 py-1 text-[0.68rem] text-faint transition hover:text-[var(--bloom-ink)] disabled:opacity-40"
-          >
-            {t("novena.leave")}
-          </button>
-        </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={onEdit}
+              disabled={busy}
+              className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
+            >
+              {t("novena.editDate")}
+            </button>
+
+            {/* The nine days are otherwise counted from rosaries recorded here,
+                which is only true of someone who opened the app every day. One
+                prayed on paper or from memory was still prayed. */}
+            <button
+              type="button"
+              onClick={() => onKept(!kept)}
+              disabled={busy}
+              className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
+            >
+              {kept ? t("novena.unmark") : t("novena.markKept")}
+            </button>
+
+            <button
+              type="button"
+              onClick={onLeave}
+              disabled={busy}
+              className="tap rounded-full px-2 py-1 text-[0.68rem] text-faint transition hover:text-[var(--bloom-ink)] disabled:opacity-40"
+            >
+              {t("novena.leave")}
+            </button>
+          </div>
+        </>
       )}
     </Card>
   );
