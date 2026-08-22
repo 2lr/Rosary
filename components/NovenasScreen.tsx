@@ -10,6 +10,7 @@ import type { Lang } from "@/lib/i18n/config";
 import type { Stats } from "@/lib/rosary/stats";
 import {
   NOVENA_DAYS,
+  daysBetween,
   novenaByKey,
   novenaProgress,
   novenasIn,
@@ -134,14 +135,20 @@ export default function NovenasScreen({
     const window = runWindow(run.novena, run.startedOn, today);
     const startYear = Number(run.startedOn.slice(0, 4));
 
-    // The feast is worth naming when these nine days actually lead into it —
-    // which includes starting a day early or a day late, the usual case. A
-    // novena begun in August for a February feast is being prayed for its own
-    // sake, and naming a date five months off would only confuse.
+    // The feast is worth naming only when these nine days actually end into
+    // it: the ninth day is the eve, so the feast falls the day after. Starting
+    // a day early or a day late is the usual case and still counts. Anything
+    // else — a novena begun on the feast itself, or months away from it — is
+    // being prayed for its own sake, and naming a date it does not reach would
+    // say something untrue.
     const leadsTo =
       [startYear, startYear + 1]
         .map((year) => novenaByKey(run.novena, year))
-        .find((n) => n && n.feast >= run.startedOn && n.feast <= shiftDays(window.end, 1)) ?? null;
+        .find((n) => {
+          if (!n) return false;
+          const gap = daysBetween(window.end, n.feast);
+          return gap >= 0 && gap <= 2;
+        }) ?? null;
 
     return {
       run,
@@ -186,6 +193,7 @@ export default function NovenasScreen({
         (m.leadsTo ? ` · ${t("novena.feastOn", { date: show(m.leadsTo.feast) })}` : ""),
       days,
       today,
+      day: m.window.day,
       keptLine:
         t("novena.kept", { n: kept, of: NOVENA_DAYS }) +
         (decadesIn(m.run.startedOn) > 0
@@ -348,13 +356,22 @@ function MineSection({
   );
 }
 
-/** One novena being prayed, or about to be. */
+/**
+ * One novena being prayed, or about to be.
+ *
+ * Read top to bottom it answers, in order: which novena, where it has got to,
+ * which nine days those are, how much of it has been kept — and then the one
+ * thing there is to do about it, which is to pray it. Everything else is a
+ * correction, and corrections are put away behind a single word so that they
+ * do not compete with the prayer.
+ */
 function RunCard({
   title,
   when,
   dates,
   days,
   today,
+  day,
   keptLine,
   kept,
   onKept,
@@ -374,6 +391,8 @@ function RunCard({
   dates: string;
   days: { key: string; prayed: boolean; ahead: boolean }[];
   today: string;
+  /** 1 → 9 while it runs, 0 before it opens, 10 once it is over. */
+  day: number;
   keptLine: string;
   /** Said to have been kept, whatever the rosaries recorded. */
   kept: boolean;
@@ -389,6 +408,51 @@ function RunCard({
   onMove: (day: string) => void;
   onLeave: () => void;
 }) {
+  const [more, setMore] = useState(false);
+  const onADay = day >= 1 && day <= NOVENA_DAYS;
+  const over = day > NOVENA_DAYS;
+
+  // While it runs, the thing to do is pray it. Once the nine days have gone by,
+  // the thing to do is say whether they were kept — so that one takes the
+  // weight, and praying it steps back without going away.
+  const recordFirst = over && !kept;
+  const primary =
+    "tap w-full rounded-full bg-[var(--bloom-accent)] px-4 py-2.5 text-sm text-[var(--bloom-on-accent)] transition disabled:opacity-40";
+  const secondary =
+    "tap w-full rounded-full border px-4 py-2 text-sm transition disabled:opacity-40 " +
+    (kept
+      ? "border-transparent bg-[var(--bloom-fill)] text-muted"
+      : "border-[var(--bloom-border)] text-[var(--bloom-accent)]");
+
+  // A novena is one prayer said nine days running. Without the words there is
+  // nothing to pray, so they are one tap away, and the tap says which of the
+  // nine days it opens.
+  const pray = (
+    <button
+      key="pray"
+      type="button"
+      onClick={onPray}
+      className={recordFirst ? secondary : primary}
+    >
+      {onADay ? t("novena.prayDay", { n: day }) : t("novena.pray")}
+    </button>
+  );
+
+  // The nine days are otherwise counted from rosaries recorded here, which is
+  // only true of someone who opened the app every day. One prayed on paper or
+  // from memory was still prayed — so this stays in plain sight.
+  const record = (
+    <button
+      key="kept"
+      type="button"
+      onClick={() => onKept(!kept)}
+      disabled={busy}
+      className={recordFirst ? primary : secondary}
+    >
+      {kept ? t("novena.unmark") : t("novena.markKept")}
+    </button>
+  );
+
   return (
     <Card className="px-4 py-4">
       <div className="flex items-baseline justify-between gap-3">
@@ -399,7 +463,7 @@ function RunCard({
       {/* Which nine days these are. Without them there is no telling one novena
           from another once it is under way, nor whether the one being prayed is
           the one intended. */}
-      <p className="mt-1 text-[0.65rem] text-faint">{dates}</p>
+      <p className="mt-1 text-[0.7rem] text-muted">{dates}</p>
 
       <Days days={days} today={today} />
 
@@ -423,47 +487,41 @@ function RunCard({
         />
       ) : (
         <>
-          {/* A novena is one prayer said nine days running. Without the words
-              there is nothing to pray, so they are one tap away. */}
-          <button
-            type="button"
-            onClick={onPray}
-            className="tap mt-3 w-full rounded-full bg-[var(--bloom-accent)] px-4 py-2 text-sm text-[var(--bloom-on-accent)] transition"
-          >
-            {t("novena.pray")}
-          </button>
+          <div className="mt-3 space-y-2">{recordFirst ? [record, pray] : [pray, record]}</div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-3">
+          <div className="mt-2 flex justify-end">
             <button
               type="button"
-              onClick={onEdit}
-              disabled={busy}
-              className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
-            >
-              {t("novena.editDate")}
-            </button>
-
-            {/* The nine days are otherwise counted from rosaries recorded here,
-                which is only true of someone who opened the app every day. One
-                prayed on paper or from memory was still prayed. */}
-            <button
-              type="button"
-              onClick={() => onKept(!kept)}
-              disabled={busy}
-              className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
-            >
-              {kept ? t("novena.unmark") : t("novena.markKept")}
-            </button>
-
-            <button
-              type="button"
-              onClick={onLeave}
+              onClick={() => setMore((open) => !open)}
+              aria-expanded={more}
               disabled={busy}
               className="tap rounded-full px-2 py-1 text-[0.68rem] text-faint transition hover:text-[var(--bloom-ink)] disabled:opacity-40"
             >
-              {t("novena.leave")}
+              {t("novena.more")}
             </button>
           </div>
+
+          {more && (
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onEdit}
+                disabled={busy}
+                className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
+              >
+                {t("novena.editDate")}
+              </button>
+
+              <button
+                type="button"
+                onClick={onLeave}
+                disabled={busy}
+                className="tap rounded-full px-2 py-1 text-[0.68rem] text-faint transition hover:text-[var(--bloom-ink)] disabled:opacity-40"
+              >
+                {t("novena.leave")}
+              </button>
+            </div>
+          )}
         </>
       )}
     </Card>
