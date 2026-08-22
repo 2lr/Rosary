@@ -7,6 +7,8 @@ import LanguageToggle from '@/components/LanguageToggle';
 import AppearanceCard, { type Appearance } from '@/components/AppearanceCard';
 import { Button, Card, Field } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
+import { bloomFrom } from '@/lib/rosary/growth';
+import { applyBloomVars } from '@/lib/rosary/theme';
 import type { Lang } from '@/lib/i18n/config';
 import type { Stats } from '@/lib/rosary/stats';
 import {
@@ -70,6 +72,13 @@ export default function SettingsScreen({
         hailMary,
       }),
     });
+    // Repaint the whole app now rather than when the next page comes back
+    // from the server. The colours are computed here from the same function
+    // the server uses, so there is nothing to wait for.
+    applyBloomVars(
+      bloomFrom(stats, user.id, { colors: appearance.colors, shape: appearance.shape }),
+    );
+
     setBusy(false);
     setSaved(true);
     router.refresh();
