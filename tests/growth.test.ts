@@ -8,11 +8,14 @@ const withStats = (patch: Partial<Stats>): Stats => ({ ...EMPTY_STATS, ...patch 
 
 describe('stages', () => {
   it('rise only with decades prayed', () => {
+    // Read off the ladder rather than written down, so that re-cutting the
+    // thresholds — which is a promotion for everybody — does not need this
+    // test rewritten to say the same thing about different numbers.
     expect(stageFor(0).stage.key).toBe('seed');
-    expect(stageFor(4).stage.key).toBe('seed');
-    expect(stageFor(5).stage.key).toBe('bud');
-    expect(stageFor(999).stage.key).toBe('glass');
-    expect(stageFor(1000).stage.key).toBe('crown');
+    for (const stage of STAGES.slice(1)) {
+      expect(stageFor(stage.threshold - 1).stage.index).toBe(stage.index - 1);
+      expect(stageFor(stage.threshold).stage.key).toBe(stage.key);
+    }
   });
 
   it('are ordered by an increasing threshold', () => {

@@ -3,10 +3,18 @@ import type { Lang } from '@/lib/i18n/config';
 /**
  * The ladder of stages, and the degrees inside each one.
  *
- * It does not end. Sixteen stages are named, which covers about twenty years of
- * a chaplet a day; past those the ladder keeps building itself from a rule, so
+ * It does not end. Sixteen stages are named, which is about three years of a
+ * chaplet a day; past those the ladder keeps building itself from a rule, so
  * there is always a next name and a next number. Nobody will see the far end,
  * but nobody will hit a wall either — which is the point.
+ *
+ * The rungs were set three times too far apart to begin with: a chaplet a day
+ * reached the eighth stage on the two hundredth day and the last named one
+ * after nineteen years, which is not a ladder anybody climbs. They now rise by
+ * about half again each time — a first stage on the first day, the eighth
+ * inside two months, the sixteenth in under three years. Lowering a threshold
+ * only ever moves somebody up, never down, which is why it can be done to a
+ * ladder people are already standing on.
  *
  * Inside every stage are five degrees, so something moves every few decades
  * rather than every few hundred. The stage is what you are; the degree is what
@@ -39,7 +47,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'bud',
     name: { fr: 'Éclosion', en: 'Budding' },
-    threshold: 5,
+    threshold: 3,
     note: {
       fr: 'Un premier chapelet. Les grains prennent leur couleur.',
       en: 'A first chaplet. The beads take on their colour.',
@@ -48,7 +56,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'rose',
     name: { fr: 'Rosier', en: 'Rosebush' },
-    threshold: 25,
+    threshold: 12,
     note: {
       fr: 'Les premières roses s’ouvrent autour de la chaîne.',
       en: 'The first roses open around the chain.',
@@ -57,7 +65,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'bloom',
     name: { fr: 'Floraison', en: 'Blossom' },
-    threshold: 60,
+    threshold: 30,
     note: {
       fr: 'La prière est devenue une habitude. La couronne s’épaissit.',
       en: 'Prayer has become a habit. The crown thickens.',
@@ -66,7 +74,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'garden',
     name: { fr: 'Jardin', en: 'Garden' },
-    threshold: 120,
+    threshold: 60,
     note: {
       fr: 'Un jardin clos, patiemment cultivé, dizaine après dizaine.',
       en: 'An enclosed garden, patiently tended, decade after decade.',
@@ -75,7 +83,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'dawn',
     name: { fr: 'Aurore', en: 'Aurora' },
-    threshold: 250,
+    threshold: 100,
     note: {
       fr: 'La lumière traverse maintenant tout le rosaire.',
       en: 'Light now passes through the whole rosary.',
@@ -84,7 +92,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'glass',
     name: { fr: 'Vitrail', en: 'Stained Glass' },
-    threshold: 500,
+    threshold: 170,
     note: {
       fr: 'Chaque grain est devenu une pièce de verre coloré.',
       en: 'Every bead has become a piece of coloured glass.',
@@ -93,16 +101,16 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'crown',
     name: { fr: 'Couronne', en: 'Crown' },
-    threshold: 1000,
+    threshold: 280,
     note: {
-      fr: 'Mille dizaines. La couronne est achevée — et elle continue.',
-      en: 'A thousand decades. The crown is complete — and it goes on.',
+      fr: 'La couronne est achevée — et elle continue.',
+      en: 'The crown is complete — and it goes on.',
     },
   },
   {
     key: 'psalter',
     name: { fr: 'Psautier', en: 'Psalter' },
-    threshold: 1750,
+    threshold: 450,
     note: {
       fr: 'Le psautier de Marie, repris et repris, jusqu’à le savoir par cœur.',
       en: 'Mary’s psalter, taken up again and again, until you know it by heart.',
@@ -111,7 +119,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'litany',
     name: { fr: 'Litanie', en: 'Litany' },
-    threshold: 2750,
+    threshold: 700,
     note: {
       fr: 'Les titres s’ajoutent aux titres. La prière devient une litanie.',
       en: 'Title upon title. The prayer has become a litany.',
@@ -120,7 +128,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'chapel',
     name: { fr: 'Chapelle', en: 'Chapel' },
-    threshold: 4000,
+    threshold: 1000,
     note: {
       fr: 'Ce que vous avez prié tient maintenant debout, comme un lieu.',
       en: 'What you have prayed now stands up, like a place.',
@@ -129,7 +137,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'cloister',
     name: { fr: 'Cloître', en: 'Cloister' },
-    threshold: 6000,
+    threshold: 1400,
     note: {
       fr: 'Un tour, puis un autre. Le cloître se marche sans y penser.',
       en: 'One turn, then another. The cloister is walked without thinking.',
@@ -138,7 +146,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'cathedral',
     name: { fr: 'Cathédrale', en: 'Cathedral' },
-    threshold: 9000,
+    threshold: 2000,
     note: {
       fr: 'On ne bâtit pas cela en une vie. Vous en êtes pourtant là.',
       en: 'This is not built in one lifetime. You are here all the same.',
@@ -147,7 +155,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'constellation',
     name: { fr: 'Constellation', en: 'Constellation' },
-    threshold: 14000,
+    threshold: 2800,
     note: {
       fr: 'Chaque dizaine est une étoile ; ensemble elles dessinent une figure.',
       en: 'Every decade a star; together they draw a figure.',
@@ -156,7 +164,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'firmament',
     name: { fr: 'Firmament', en: 'Firmament' },
-    threshold: 22000,
+    threshold: 3800,
     note: {
       fr: 'Le ciel entier, tenu par une chaîne de grains.',
       en: 'The whole sky, held by a chain of beads.',
@@ -165,7 +173,7 @@ const NAMED: Omit<Stage, 'index'>[] = [
   {
     key: 'empyrean',
     name: { fr: 'Empyrée', en: 'Empyrean' },
-    threshold: 35000,
+    threshold: 5000,
     note: {
       fr: 'Au-delà, on ne compte plus. On prie, simplement.',
       en: 'Beyond this, nobody counts. One simply prays.',
@@ -197,8 +205,12 @@ const ENDLESS_NOTE: Record<Lang, string> = {
   en: 'There is no last stage any more. There is the next one.',
 };
 
-/** Each stage past the named ones is this much further than the one before. */
-const ENDLESS_RATIO = 1.55;
+/**
+ * Each stage past the named ones is this much further than the one before.
+ * It is where the named ladder's own ratio ends up, so the joint between the
+ * two is not felt.
+ */
+const ENDLESS_RATIO = 1.4;
 
 const NUMERALS: [number, string][] = [
   [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],

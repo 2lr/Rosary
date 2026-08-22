@@ -14,18 +14,40 @@ import {
 } from '@/lib/rosary/stages';
 
 describe('the ladder', () => {
-  it('keeps the stages people are already standing on', () => {
-    // Nobody should wake up demoted because the ladder grew.
-    expect(STAGES.slice(0, 8).map((s) => [s.key, s.threshold])).toEqual([
-      ['seed', 0],
-      ['bud', 5],
-      ['rose', 25],
-      ['bloom', 60],
-      ['garden', 120],
-      ['dawn', 250],
-      ['glass', 500],
-      ['crown', 1000],
-    ]);
+  it('never moves anyone down a rung when it is re-cut', () => {
+    // The thresholds of the ladder as it was shipped. They may come down —
+    // that is a promotion, and the whole point of re-cutting them — but the
+    // stage a given number of decades falls in must never go backwards, or
+    // somebody wakes up demoted from a stage they had reached.
+    const SHIPPED = [
+      0, 5, 25, 60, 120, 250, 500, 1000, 1750, 2750, 4000, 6000, 9000, 14_000, 22_000, 35_000,
+    ];
+    for (let index = 0; index < SHIPPED.length; index++) {
+      const decades = SHIPPED[index];
+      expect(stageFor(decades).stage.index, `${decades} decades`).toBeGreaterThanOrEqual(index);
+    }
+  });
+
+  it('climbs at the pace of somebody actually praying', () => {
+    // A chaplet a day is five decades. The rungs were once so far apart that
+    // the eighth stage took two hundred days and the last named one nineteen
+    // years; the ladder has to move faster than that to be a ladder at all.
+    const dayReaching = (index: number) => Math.ceil(thresholdAt(index) / 5);
+    expect(dayReaching(1)).toBeLessThanOrEqual(1);
+    expect(dayReaching(5)).toBeLessThanOrEqual(30);
+    expect(dayReaching(8)).toBeLessThanOrEqual(100);
+    expect(dayReaching(NAMED_STAGES - 1)).toBeLessThanOrEqual(1100);
+  });
+
+  it('joins the named ladder to the endless one without a jolt', () => {
+    // The step from the last named stage to the first built one should not be
+    // wider than the steps either side of it, or the ladder visibly changes
+    // gear at the sixteenth rung.
+    const step = (index: number) => thresholdAt(index + 1) / thresholdAt(index);
+    const before = step(NAMED_STAGES - 2);
+    const across = step(NAMED_STAGES - 1);
+    expect(across).toBeLessThan(before * 1.25);
+    expect(across).toBeGreaterThan(1.2);
   });
 
   it('names sixteen and then keeps going', () => {
