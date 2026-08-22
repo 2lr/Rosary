@@ -9,25 +9,31 @@ import { MYSTERY_SETS, MYSTERY_SET_ORDER, type MysterySetId } from '@/lib/rosary
 import type { PrayerMode, RosaryKind } from '@/lib/rosary/types';
 
 type Props = {
-  kind: RosaryKind;
   lang: Lang;
   defaultSet: MysterySetId;
   onClose: () => void;
   onStarted: (rosaryId: string) => void;
 };
 
-export default function StartSheet({ kind, lang, defaultSet, onClose, onStarted }: Props) {
+/**
+ * What is prayed is chosen here rather than on the home screen. The home screen
+ * asks one thing — start — and everything that used to sit under it as extra
+ * options lives in this sheet: which mysteries, or a rosary with none.
+ */
+type Choice = MysterySetId | 'free' | 'full';
+
+export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Props) {
   const t = useMemo(() => translatorFor(lang), [lang]);
-  const [set, setSet] = useState<MysterySetId>(defaultSet);
+  const [choice, setChoice] = useState<Choice>(defaultSet);
   const [mode, setMode] = useState<PrayerMode>('spoken');
   const [intention, setIntention] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => setSet(defaultSet), [defaultSet]);
+  useEffect(() => setChoice(defaultSet), [defaultSet]);
 
-  const title =
-    kind === 'chaplet' ? t('home.chaplet') : kind === 'full' ? t('home.full') : t('home.free');
+  const kind: RosaryKind = choice === 'free' ? 'free' : choice === 'full' ? 'full' : 'chaplet';
+  const mysterySet = kind === 'chaplet' ? (choice as MysterySetId) : null;
 
   async function start() {
     setBusy(true);
@@ -40,7 +46,7 @@ export default function StartSheet({ kind, lang, defaultSet, onClose, onStarted 
           kind,
           mode,
           lang,
-          mysterySet: kind === 'chaplet' ? set : null,
+          mysterySet,
           intention: intention.trim() || null,
         }),
       });
@@ -54,38 +60,40 @@ export default function StartSheet({ kind, lang, defaultSet, onClose, onStarted 
   }
 
   return (
-    <Sheet title={title} onClose={onClose} closeLabel={t('common.close')}>
-      {kind === 'chaplet' && (
-        <div className="space-y-2">
-          <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
-            {t('home.todaysMysteries')}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {MYSTERY_SET_ORDER.map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setSet(id)}
-                className={cx(
-                  'tap rounded-2xl border px-3 py-3 text-left text-sm transition',
-                  set === id
-                    ? 'border-[var(--bloom-accent)]/60 bg-[var(--bloom-accent)]/12 text-[var(--bloom-ink)]'
-                    : 'border-[var(--bloom-border)] bg-[var(--bloom-fill)] text-muted hover:bg-[var(--bloom-fill-2)]',
-                )}
-              >
-                <span className="block font-display text-base leading-tight">
-                  {MYSTERY_SETS[id].name[lang]}
-                </span>
-                {id === defaultSet && (
-                  <span className="mt-0.5 block text-[0.6rem] uppercase tracking-wider text-[var(--bloom-accent)]">
-                    {t('home.today')}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+    <Sheet title={t('home.myChaplet')} onClose={onClose} closeLabel={t('common.close')}>
+      <div className="space-y-2">
+        <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
+          {t('home.whichMysteries')}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {MYSTERY_SET_ORDER.map((id) => (
+            <Choice
+              key={id}
+              active={choice === id}
+              title={MYSTERY_SETS[id].name[lang]}
+              badge={id === defaultSet ? t('home.today') : undefined}
+              onClick={() => setChoice(id)}
+            />
+          ))}
         </div>
-      )}
+
+        {/* Neither of these has mysteries to pick, so they sit apart from the
+            four rather than pretending to be a fifth and a sixth. */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Choice
+            active={choice === 'free'}
+            title={t('home.free')}
+            description={t('home.freeDesc')}
+            onClick={() => setChoice('free')}
+          />
+          <Choice
+            active={choice === 'full'}
+            title={t('home.full')}
+            description={t('home.fullDesc')}
+            onClick={() => setChoice('full')}
+          />
+        </div>
+      </div>
 
       <div className="mt-5 space-y-2">
         <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">{t('home.mode')}</p>
@@ -130,6 +138,44 @@ export default function StartSheet({ kind, lang, defaultSet, onClose, onStarted 
         {busy ? t('auth.working') : t('home.start')}
       </Button>
     </Sheet>
+  );
+}
+
+function Choice({
+  active,
+  title,
+  description,
+  badge,
+  onClick,
+}: {
+  active: boolean;
+  title: string;
+  description?: string;
+  badge?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx(
+        'tap rounded-2xl border px-3 py-3 text-left transition',
+        active
+          ? 'border-[var(--bloom-accent)]/60 bg-[var(--bloom-accent)]/12 text-[var(--bloom-ink)]'
+          : 'border-[var(--bloom-border)] bg-[var(--bloom-fill)] text-muted hover:bg-[var(--bloom-fill-2)]',
+      )}
+    >
+      <span className="block font-display text-base leading-tight">{title}</span>
+      {badge && (
+        <span className="mt-0.5 block text-[0.6rem] uppercase tracking-wider text-[var(--bloom-accent)]">
+          {badge}
+        </span>
+      )}
+      {description && (
+        <span className="mt-0.5 block text-[0.68rem] leading-snug text-muted">{description}</span>
+      )}
+    </button>
   );
 }
 

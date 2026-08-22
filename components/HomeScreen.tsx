@@ -15,7 +15,7 @@ import type { Bloom } from '@/lib/rosary/growth';
 import { MYSTERY_SETS, type MysterySetId } from '@/lib/rosary/mysteries';
 import { buildSequence } from '@/lib/rosary/sequence';
 import { nextMilestone } from '@/lib/rosary/traits';
-import type { Rosary, RosaryKind } from '@/lib/rosary/types';
+import type { Rosary } from '@/lib/rosary/types';
 
 type Props = {
   user: { displayName: string | null; lang: Lang };
@@ -31,7 +31,7 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
   const t = useMemo(() => translatorFor(lang), [lang]);
   const sign = useMemo(() => nextMilestone(bloom.growth), [bloom.growth]);
 
-  const [sheet, setSheet] = useState<RosaryKind | null>(null);
+  const [starting, setStarting] = useState(false);
   const [viewing, setViewing] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => setNow(new Date()), []);
@@ -176,27 +176,9 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
           {set.mysteries.map((m) => m.title[lang]).join(' · ')}
         </p>
 
-        <Button size="lg" className="mt-4 w-full" onClick={() => setSheet('chaplet')}>
+        <Button size="lg" className="mt-4 w-full" onClick={() => setStarting(true)}>
           {t('home.startToday')}
         </Button>
-
-        <div className="mt-3 flex items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => setSheet('full')}
-            className="tap rounded-full px-2 py-1 text-xs text-muted transition hover:text-[var(--bloom-ink)]"
-          >
-            {t('home.full')}
-          </button>
-          <span aria-hidden className="text-whisper">·</span>
-          <button
-            type="button"
-            onClick={() => setSheet('free')}
-            className="tap rounded-full px-2 py-1 text-xs text-muted transition hover:text-[var(--bloom-ink)]"
-          >
-            {t('home.free')}
-          </button>
-        </div>
 
         {/* The day's own word, under the day's mysteries. Folded away: it is
             there for whoever wants it, and never in the way of praying. */}
@@ -217,12 +199,11 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
         <RosaryViewer bloom={bloom} lang={lang} onClose={() => setViewing(false)} />
       )}
 
-      {sheet && (
+      {starting && (
         <StartSheet
-          kind={sheet}
           lang={lang}
           defaultSet={todaysSet}
-          onClose={() => setSheet(null)}
+          onClose={() => setStarting(false)}
           onStarted={(id) => router.push(`/pray/${id}`)}
         />
       )}
