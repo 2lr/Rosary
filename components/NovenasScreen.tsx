@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AppNav from "@/components/AppNav";
 import { Card, cx } from "@/components/ui";
+import NovenaStarter from "@/components/NovenaStarter";
 import { translatorFor } from "@/lib/i18n/dictionary";
 import type { Lang } from "@/lib/i18n/config";
 import type { Stats } from "@/lib/rosary/stats";
@@ -38,6 +39,8 @@ export default function NovenasScreen({
 
   const [runs, setRuns] = useState<Run[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  /** Which card has its date form open: a novena key, or a run being corrected. */
+  const [choosing, setChoosing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -73,13 +76,17 @@ export default function NovenasScreen({
     [lang],
   );
 
-  async function act(novena: string, startedOn: string, stop = false) {
+  async function act(
+    novena: string,
+    startedOn: string,
+    options: { stop?: boolean; moveTo?: string } = {},
+  ) {
     setBusy(`${novena}:${startedOn}`);
     try {
       const response = await fetch("/api/novenas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ novena, startedOn, stop }),
+        body: JSON.stringify({ novena, startedOn, ...options }),
       });
       if (response.ok) {
         const data = (await response.json()) as { novenas: Run[] };
@@ -89,6 +96,7 @@ export default function NovenasScreen({
       // Same again.
     } finally {
       setBusy(null);
+      setChoosing(null);
     }
   }
 
@@ -132,7 +140,8 @@ export default function NovenasScreen({
     };
   });
 
-  const running = mine.filter((m) => !m.window.over);
+  const running = mine.filter((m) => !m.window.over && m.run.startedOn <= today);
+  const upcoming = mine.filter((m) => m.run.startedOn > today);
   const done = mine.filter((m) => m.window.over);
 
   const keptOf = (startedOn: string) =>
@@ -147,6 +156,41 @@ export default function NovenasScreen({
     (m) => keptOf(m.run.startedOn).kept === NOVENA_DAYS,
   ).length;
 
+  const show = (key: string) => dateOf.format(new Date(`${key}T12:00:00Z`));
+
+  type Mine = (typeof mine)[number];
+  const cardProps = (m: Mine) => {
+    const { kept, days } = keptOf(m.run.startedOn);
+    const id = `${m.run.novena}:${m.run.startedOn}`;
+    return {
+      title: m.novena?.name[lang] ?? m.run.novena,
+      when:
+        m.window.day >= 1 && m.window.day <= NOVENA_DAYS
+          ? t("novena.day", { n: m.window.day, of: NOVENA_DAYS })
+          : t("novena.startsOn", { date: show(m.run.startedOn) }),
+      dates:
+        t("novena.from", { from: show(m.run.startedOn), to: show(m.window.end) }) +
+        (m.leadsTo ? ` · ${t("novena.feastOn", { date: show(m.leadsTo.feast) })}` : ""),
+      days,
+      today,
+      kept:
+        t("novena.kept", { n: kept, of: NOVENA_DAYS }) +
+        (decadesIn(m.run.startedOn) > 0
+          ? ` · ${t("novena.decades", { n: decadesIn(m.run.startedOn) })}`
+          : ""),
+      editing: choosing === id,
+      busy: busy !== null,
+      t,
+      lang,
+      startedOn: m.run.startedOn,
+      onEdit: () => setChoosing(id),
+      onCancel: () => setChoosing(null),
+      onMove: (moveTo: string) =>
+        void act(m.run.novena, m.run.startedOn, { moveTo }),
+      onLeave: () => void act(m.run.novena, m.run.startedOn, { stop: true }),
+    };
+  };
+
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-28 pad-top">
       <header className="text-center">
@@ -159,68 +203,19 @@ export default function NovenasScreen({
       </header>
 
       {running.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-[0.65rem] uppercase tracking-[0.22em] text-faint">
-            {t("novena.running")}
-          </h2>
-          <div className="mt-3 space-y-3">
-            {running.map(({ run, novena, leadsTo, window }) => {
-              const { kept, days } = keptOf(run.startedOn);
-              return (
-                <Card
-                  key={`${run.novena}-${run.startedOn}`}
-                  className="px-4 py-4"
-                >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="min-w-0 truncate font-display text-lg">
-                      {novena?.name[lang] ?? run.novena}
-                    </p>
-                    <p className="shrink-0 text-[0.65rem] text-faint">
-                      {window.day >= 1 && window.day <= NOVENA_DAYS
-                        ? t("novena.day", { n: window.day, of: NOVENA_DAYS })
-                        : t("novena.startsOn", {
-                            date: dateOf.format(
-                              new Date(`${run.startedOn}T12:00:00Z`),
-                            ),
-                          })}
-                    </p>
-                  </div>
+        <MineSection title={t("novena.running")}>
+          {running.map((m) => (
+            <RunCard key={`${m.run.novena}-${m.run.startedOn}`} {...cardProps(m)} />
+          ))}
+        </MineSection>
+      )}
 
-                  {/* Which nine days these are. Without them there is no way to
-                      tell one novena from another once it is under way, nor
-                      whether the one being prayed is the one intended. */}
-                  <p className="mt-1 text-[0.65rem] text-faint">
-                    {t("novena.from", {
-                      from: dateOf.format(new Date(`${run.startedOn}T12:00:00Z`)),
-                      to: dateOf.format(new Date(`${window.end}T12:00:00Z`)),
-                    })}
-                    {leadsTo &&
-                      ` · ${t("novena.feastOn", {
-                        date: dateOf.format(new Date(`${leadsTo.feast}T12:00:00Z`)),
-                      })}`}
-                  </p>
-
-                  <Days days={days} today={today} />
-
-                  <p className="mt-2 text-[0.68rem] text-faint">
-                    {t("novena.kept", { n: kept, of: NOVENA_DAYS })}
-                    {decadesIn(run.startedOn) > 0 &&
-                      ` · ${t("novena.decades", { n: decadesIn(run.startedOn) })}`}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => void act(run.novena, run.startedOn, true)}
-                    disabled={busy === `${run.novena}:${run.startedOn}`}
-                    className="tap mt-2 rounded-full px-2 py-1 text-[0.68rem] text-faint transition hover:text-[var(--bloom-ink)] disabled:opacity-40"
-                  >
-                    {t("novena.leave")}
-                  </button>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
+      {upcoming.length > 0 && (
+        <MineSection title={t("novena.upcoming")}>
+          {upcoming.map((m) => (
+            <RunCard key={`${m.run.novena}-${m.run.startedOn}`} {...cardProps(m)} />
+          ))}
+        </MineSection>
       )}
 
       {done.length > 0 && (
@@ -303,27 +298,25 @@ export default function NovenasScreen({
                   <p className="mt-3 text-xs text-[var(--bloom-accent)]">
                     {t("novena.alreadyRunning")}
                   </p>
+                ) : choosing === novena.key ? (
+                  <NovenaStarter
+                    lang={lang}
+                    t={t}
+                    today={today}
+                    liturgical={soon ? novena.start : null}
+                    busy={busy !== null}
+                    onConfirm={(startedOn) => void act(novena.key, startedOn)}
+                    onCancel={() => setChoosing(null)}
+                  />
                 ) : (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void act(novena.key, today)}
-                      disabled={busy !== null}
-                      className="tap flex-1 rounded-full bg-[var(--bloom-accent)] px-4 py-2 text-sm text-[var(--bloom-on-accent)] transition disabled:opacity-40"
-                    >
-                      {t("novena.startToday")}
-                    </button>
-                    {soon && (
-                      <button
-                        type="button"
-                        onClick={() => void act(novena.key, novena.start)}
-                        disabled={busy !== null}
-                        className="tap flex-1 rounded-full border border-[var(--bloom-accent)]/45 px-4 py-2 text-sm text-[var(--bloom-accent)] transition disabled:opacity-40"
-                      >
-                        {t("novena.startOnDate")}
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setChoosing(novena.key)}
+                    disabled={busy !== null}
+                    className="tap mt-3 w-full rounded-full bg-[var(--bloom-accent)] px-4 py-2 text-sm text-[var(--bloom-on-accent)] transition disabled:opacity-40"
+                  >
+                    {t("novena.start")}
+                  </button>
                 )}
               </Card>
             );
@@ -333,6 +326,106 @@ export default function NovenasScreen({
 
       <AppNav t={t} />
     </div>
+  );
+}
+
+function MineSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mt-6">
+      <h2 className="text-[0.65rem] uppercase tracking-[0.22em] text-faint">{title}</h2>
+      <div className="mt-3 space-y-3">{children}</div>
+    </section>
+  );
+}
+
+/** One novena being prayed, or about to be. */
+function RunCard({
+  title,
+  when,
+  dates,
+  days,
+  today,
+  kept,
+  editing,
+  busy,
+  t,
+  lang,
+  startedOn,
+  onEdit,
+  onCancel,
+  onMove,
+  onLeave,
+}: {
+  title: string;
+  when: string;
+  dates: string;
+  days: { key: string; prayed: boolean; ahead: boolean }[];
+  today: string;
+  kept: string;
+  editing: boolean;
+  busy: boolean;
+  t: ReturnType<typeof translatorFor>;
+  lang: Lang;
+  startedOn: string;
+  onEdit: () => void;
+  onCancel: () => void;
+  onMove: (day: string) => void;
+  onLeave: () => void;
+}) {
+  return (
+    <Card className="px-4 py-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="min-w-0 truncate font-display text-lg">{title}</p>
+        <p className="shrink-0 text-[0.65rem] text-faint">{when}</p>
+      </div>
+
+      {/* Which nine days these are. Without them there is no telling one novena
+          from another once it is under way, nor whether the one being prayed is
+          the one intended. */}
+      <p className="mt-1 text-[0.65rem] text-faint">{dates}</p>
+
+      <Days days={days} today={today} />
+
+      <p className="mt-2 text-[0.68rem] text-faint">{kept}</p>
+
+      {editing ? (
+        <NovenaStarter
+          lang={lang}
+          t={t}
+          today={today}
+          liturgical={null}
+          current={startedOn}
+          busy={busy}
+          onConfirm={onMove}
+          onCancel={onCancel}
+        />
+      ) : (
+        <div className="mt-2 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={busy}
+            className="tap rounded-full px-2 py-1 text-[0.68rem] text-[var(--bloom-accent)] transition disabled:opacity-40"
+          >
+            {t("novena.editDate")}
+          </button>
+          <button
+            type="button"
+            onClick={onLeave}
+            disabled={busy}
+            className="tap rounded-full px-2 py-1 text-[0.68rem] text-faint transition hover:text-[var(--bloom-ink)] disabled:opacity-40"
+          >
+            {t("novena.leave")}
+          </button>
+        </div>
+      )}
+    </Card>
   );
 }
 

@@ -3,7 +3,7 @@ import { requireUser } from '@/lib/auth/guard';
 import { listNovenas, startNovena, stopNovena } from '@/lib/db/novenas';
 import { NOVENA_KEYS } from '@/lib/rosary/novenas';
 
-type Body = { novena?: string; startedOn?: string; stop?: boolean };
+type Body = { novena?: string; startedOn?: string; moveTo?: string; stop?: boolean };
 
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -33,8 +33,21 @@ export async function POST(request: Request) {
     const months = Math.abs(day.getTime() - Date.now()) / 2_592_000_000;
     if (months > 18) return fail('invalid_date');
 
-    if (body.stop === true) await stopNovena(user.id, body.novena, body.startedOn);
-    else await startNovena(user.id, body.novena, body.startedOn);
+    if (body.stop === true) {
+      await stopNovena(user.id, body.novena, body.startedOn);
+    } else if (typeof body.moveTo === 'string') {
+      // Correcting the first day of one already started. Done in one request so
+      // a failure halfway cannot leave the novena dropped and not re-added.
+      if (!DAY_KEY.test(body.moveTo) || Number.isNaN(Date.parse(`${body.moveTo}T00:00:00Z`))) {
+        return fail('invalid_date');
+      }
+      await startNovena(user.id, body.novena, body.moveTo);
+      if (body.moveTo !== body.startedOn) {
+        await stopNovena(user.id, body.novena, body.startedOn);
+      }
+    } else {
+      await startNovena(user.id, body.novena, body.startedOn);
+    }
 
     return json({ novenas: await listNovenas(user.id) });
   });
