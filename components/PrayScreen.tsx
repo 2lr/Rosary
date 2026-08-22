@@ -12,7 +12,7 @@ import { MYSTERY_SETS } from '@/lib/rosary/mysteries';
 import { prayerWith, type HailMaryVariant } from '@/lib/rosary/prayers';
 import { buildSequence, firstUndoneStep, totalDecades } from '@/lib/rosary/sequence';
 import { loopView } from '@/lib/rosary/loop';
-import { bloomFrom, stageFor } from '@/lib/rosary/growth';
+import { bloomFrom, degreeFor, stageFor } from '@/lib/rosary/growth';
 import { describeChanges, nextChange } from '@/lib/rosary/traits';
 import { ordinal } from '@/lib/i18n/config';
 import type { Bloom, BloomPreferences } from '@/lib/rosary/growth';
@@ -142,6 +142,9 @@ export default function PrayScreen({
         hailMarys={hailMarys}
         bloom={after}
         levelledUp={after.stage.key !== stageFor(baseline.totalDecades).stage.key}
+        degreeReached={
+          degreeFor(after.growth.input.decades).index !== degreeFor(baseline.totalDecades).index
+        }
         changes={describeChanges(before.growth, after.growth)}
         next={nextChange(after.growth)}
       />

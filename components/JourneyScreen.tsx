@@ -11,7 +11,8 @@ import { Card, Stat, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
 import type { Stats } from '@/lib/rosary/stats';
-import { STAGES, type Bloom } from '@/lib/rosary/growth';
+import { type Bloom } from '@/lib/rosary/growth';
+import { roman, stageWindow } from '@/lib/rosary/stages';
 import { MYSTERY_SETS, MYSTERY_SET_ORDER } from '@/lib/rosary/mysteries';
 import type { Rosary } from '@/lib/rosary/types';
 
@@ -139,13 +140,23 @@ export default function JourneyScreen({
         </div>
       </Card>
 
-      {/* The ladder of stages, so the next one is always visible. */}
+      {/* The ladder has no end, so it cannot all be listed: what is shown is
+          where you stand — the one behind, the one you are on with its degrees,
+          and the next few. */}
       <Card className="mt-3 px-4 py-4">
-        <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
-          {t('journey.stage')}
-        </p>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
+            {t('journey.stage')}
+          </p>
+          <p className="text-[0.65rem] text-faint">
+            {t('journey.degree', {
+              n: roman(bloom.degree.index),
+              of: roman(bloom.degree.of),
+            })}
+          </p>
+        </div>
         <ol className="mt-3 space-y-1.5">
-          {STAGES.map((stage) => {
+          {stageWindow(bloom.stage.index).map((stage) => {
             const reached = stats.totalDecades >= stage.threshold;
             const current = stage.key === bloom.stage.key;
             return (
@@ -169,16 +180,32 @@ export default function JourneyScreen({
                   />
                   <span className="font-display text-base">{stage.name[lang]}</span>
                 </span>
-                <span className="text-xs tabular-nums">{stage.threshold}</span>
+                <span className="flex items-center gap-2">
+                  {current && (
+                    <span className="flex items-center gap-1">
+                      {Array.from({ length: bloom.degree.of }, (_, i) => (
+                        <span
+                          key={i}
+                          className={cx(
+                            'h-1 w-1 rounded-full',
+                            i < bloom.degree.index
+                              ? 'bg-[var(--bloom-accent)]'
+                              : 'bg-[var(--bloom-fill-3)]',
+                          )}
+                        />
+                      ))}
+                    </span>
+                  )}
+                  <span className="text-xs tabular-nums">{stage.threshold}</span>
+                </span>
               </li>
             );
           })}
         </ol>
-        {bloom.nextStage && (
-          <p className="mt-3 text-xs text-muted">
-            {t('journey.toNext', { n: bloom.decadesToNext, stage: bloom.nextStage.name[lang] })}
-          </p>
-        )}
+        <p className="mt-3 text-xs text-muted">
+          {t('journey.toNext', { n: bloom.decadesToNext, stage: bloom.nextStage.name[lang] })}
+        </p>
+        <p className="mt-1 text-[0.65rem] text-whisper">{t('journey.ladderEndless')}</p>
       </Card>
 
       <section className="mt-5">

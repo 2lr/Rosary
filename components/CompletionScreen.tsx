@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import RosaryArt from '@/components/RosaryArt';
+import { roman } from '@/lib/rosary/stages';
 import BloomVars from '@/components/BloomVars';
 import RosaryViewer from '@/components/RosaryViewer';
 import { Button, ButtonLink, Card } from '@/components/ui';
@@ -16,6 +17,7 @@ export default function CompletionScreen({
   hailMarys,
   bloom,
   levelledUp,
+  degreeReached,
   changes,
   next,
 }: {
@@ -24,6 +26,8 @@ export default function CompletionScreen({
   hailMarys: number;
   bloom: Bloom;
   levelledUp: boolean;
+  /** A degree passed inside the same stage — smaller news, but news. */
+  degreeReached: boolean;
   /** What is visibly different from before this rosary. */
   changes: Change[];
   /** The nearest thing still to come, so there is always a next step. */
@@ -73,10 +77,19 @@ export default function CompletionScreen({
             {t('done.body', { decades, hailMarys })}
           </p>
 
-          {levelledUp && (
+          {levelledUp ? (
             <p className="mt-4 rounded-2xl border border-[var(--bloom-accent)]/35 bg-[var(--bloom-accent)]/10 px-4 py-3 text-sm">
               {t('done.stageReached', { stage: bloom.stage.name[lang] })}
             </p>
+          ) : (
+            degreeReached && (
+              <p className="mt-4 text-sm text-muted">
+                {t('done.degreeReached', {
+                  n: roman(bloom.degree.index),
+                  stage: bloom.stage.name[lang],
+                })}
+              </p>
+            )
           )}
         </div>
 

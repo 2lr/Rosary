@@ -4,104 +4,22 @@ import type { Stats } from './stats';
 import { fit, hexToHsl, hsl, hslToHex, isHexColor, lerp, lerpHue, type Hsl } from './color';
 import type { LoopShape } from './shapes';
 import { growthOf, type Growth } from './traits';
+import { degreeFor, stageFor, stageTone, type Degree, type Stage } from './stages';
 
-export type Stage = {
-  index: number;
-  key: string;
-  name: Record<Lang, string>;
-  /** Completed decades needed to reach this stage. */
-  threshold: number;
-  /** One line of encouragement shown under the artwork. */
-  note: Record<Lang, string>;
-};
-
-/**
- * Eight stages, each reached by praying — never by anything else. The artwork
- * gains an element at every stage, so the picture is literally the record of
- * the prayer behind it.
- */
-export const STAGES: Stage[] = [
-  {
-    index: 0,
-    key: 'seed',
-    name: { fr: 'Semence', en: 'Seed' },
-    threshold: 0,
-    note: {
-      fr: 'Tout commence par une dizaine. Votre rosaire est encore nu.',
-      en: 'Everything begins with one decade. Your rosary is still bare.',
-    },
-  },
-  {
-    index: 1,
-    key: 'bud',
-    name: { fr: 'Éclosion', en: 'Budding' },
-    threshold: 5,
-    note: {
-      fr: 'Un premier chapelet. Les grains prennent leur couleur.',
-      en: 'A first chaplet. The beads take on their colour.',
-    },
-  },
-  {
-    index: 2,
-    key: 'rose',
-    name: { fr: 'Rosier', en: 'Rosebush' },
-    threshold: 25,
-    note: {
-      fr: 'Les premières roses s’ouvrent autour de la chaîne.',
-      en: 'The first roses open around the chain.',
-    },
-  },
-  {
-    index: 3,
-    key: 'bloom',
-    name: { fr: 'Floraison', en: 'Blossom' },
-    threshold: 60,
-    note: {
-      fr: 'La prière est devenue une habitude. La couronne s’épaissit.',
-      en: 'Prayer has become a habit. The crown thickens.',
-    },
-  },
-  {
-    index: 4,
-    key: 'garden',
-    name: { fr: 'Jardin', en: 'Garden' },
-    threshold: 120,
-    note: {
-      fr: 'Un jardin clos, patiemment cultivé, dizaine après dizaine.',
-      en: 'An enclosed garden, patiently tended, decade after decade.',
-    },
-  },
-  {
-    index: 5,
-    key: 'dawn',
-    name: { fr: 'Aurore', en: 'Aurora' },
-    threshold: 250,
-    note: {
-      fr: 'La lumière traverse maintenant tout le rosaire.',
-      en: 'Light now passes through the whole rosary.',
-    },
-  },
-  {
-    index: 6,
-    key: 'glass',
-    name: { fr: 'Vitrail', en: 'Stained Glass' },
-    threshold: 500,
-    note: {
-      fr: 'Chaque grain est devenu une pièce de verre coloré.',
-      en: 'Every bead has become a piece of coloured glass.',
-    },
-  },
-  {
-    index: 7,
-    key: 'crown',
-    name: { fr: 'Couronne', en: 'Crown' },
-    threshold: 1000,
-    note: {
-      fr: 'Mille dizaines. La couronne est achevée — et elle continue.',
-      en: 'A thousand decades. The crown is complete — and it goes on.',
-    },
-  },
-];
+export {
+  DEGREES_PER_STAGE,
+  NAMED_STAGES,
+  STAGES,
+  degreeFor,
+  roman,
+  stageAt,
+  stageFor,
+  stageTone,
+  stageWindow,
+  thresholdAt,
+  type Degree,
+  type Stage,
+} from './stages';
 
 export type Palette = {
   /** Page gradient, lightest first. */
@@ -143,10 +61,13 @@ export type Palette = {
 
 export type Bloom = {
   stage: Stage;
-  nextStage: Stage | null;
+  /** There is always one: the ladder does not end. */
+  nextStage: Stage;
   /** 0 → 1 progress towards the next stage. */
   toNext: number;
   decadesToNext: number;
+  /** Where inside the stage — what moves every few decades. */
+  degree: Degree;
   /** Deterministic per-user variation. */
   seed: number;
   palette: Palette;
@@ -173,15 +94,6 @@ export function seedFrom(value: string): number {
     h = Math.imul(h, 16777619);
   }
   return (h >>> 0) / 4294967295;
-}
-
-export function stageFor(decades: number): { stage: Stage; next: Stage | null } {
-  let stage = STAGES[0];
-  for (const candidate of STAGES) {
-    if (decades >= candidate.threshold) stage = candidate;
-  }
-  const next = STAGES[stage.index + 1] ?? null;
-  return { stage, next };
 }
 
 /** The hue a rosary starts from, and the one it returns to when balanced. */
@@ -311,7 +223,7 @@ export function bloomFrom(
 ): Bloom {
   const { stage, next } = stageFor(stats.totalDecades);
   const seed = seedFrom(userId);
-  const t = stage.index / (STAGES.length - 1);
+  const t = stageTone(stage.index);
 
   const chosen =
     preferences.colors && preferences.colors.length === 3 && preferences.colors.every(isHexColor)
@@ -337,8 +249,9 @@ export function bloomFrom(
   const hue = colors.accent.h;
   const hueAlt = colors.chain.h;
 
-  const span = next ? next.threshold - stage.threshold : 1;
-  const toNext = next ? Math.min(1, (stats.totalDecades - stage.threshold) / span) : 1;
+  const span = Math.max(1, next.threshold - stage.threshold);
+  const toNext = Math.min(1, Math.max(0, (stats.totalDecades - stage.threshold) / span));
+  const degree = degreeFor(stats.totalDecades);
 
   const growth = growthOf({
     decades: stats.totalDecades,
@@ -356,7 +269,8 @@ export function bloomFrom(
     stage,
     nextStage: next,
     toNext,
-    decadesToNext: next ? Math.max(0, next.threshold - stats.totalDecades) : 0,
+    decadesToNext: Math.max(0, next.threshold - stats.totalDecades),
+    degree,
     seed,
     shape: preferences.shape ?? 'round',
     custom: chosen !== null,

@@ -22,9 +22,18 @@ describe('stages', () => {
     }
   });
 
-  it('stop offering a next stage at the last one', () => {
-    expect(stageFor(5000).next).toBeNull();
-    expect(bloomFrom(withStats({ totalDecades: 5000 }), 'u').toNext).toBe(1);
+  it('always offer a next one, however far along', () => {
+    // The ladder used to stop at a thousand decades and hand back nothing.
+    // It no longer ends, so there is always somewhere to be going.
+    for (const decades of [5000, 50_000, 5_000_000]) {
+      const { stage, next } = stageFor(decades);
+      expect(next.threshold).toBeGreaterThan(stage.threshold);
+
+      const bloom = bloomFrom(withStats({ totalDecades: decades }), 'u');
+      expect(bloom.decadesToNext).toBeGreaterThan(0);
+      expect(bloom.toNext).toBeLessThan(1);
+      expect(bloom.degree.index).toBeGreaterThanOrEqual(1);
+    }
   });
 });
 

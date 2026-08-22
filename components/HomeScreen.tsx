@@ -15,6 +15,7 @@ import type { Bloom } from '@/lib/rosary/growth';
 import { MYSTERY_SETS, type MysterySetId } from '@/lib/rosary/mysteries';
 import { buildSequence } from '@/lib/rosary/sequence';
 import { nextMilestone } from '@/lib/rosary/traits';
+import { roman } from '@/lib/rosary/stages';
 import type { Rosary } from '@/lib/rosary/types';
 
 type Props = {
@@ -109,22 +110,41 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
           {bloom.stage.note[lang]}
         </p>
 
-        {bloom.nextStage && (
-          <div className="mx-auto mt-3.5 max-w-[15rem]">
-            <div className="h-1 overflow-hidden rounded-full bg-[var(--bloom-fill-2)]">
-              <div
-                className="h-full rounded-full bg-[var(--bloom-accent)] transition-[width] duration-700"
-                style={{ width: `${Math.round(bloom.toNext * 100)}%` }}
-              />
-            </div>
-            <p className="mt-2 text-[0.68rem] text-faint">
-              {t('journey.toNext', {
-                n: bloom.decadesToNext,
-                stage: bloom.nextStage.name[lang],
-              })}
-            </p>
+        {/* Two scales, because they answer different questions. The dots say
+            what moves this week; the bar and the line say what you are climbing
+            towards. A stage alone left hundreds of decades with nothing to
+            show. */}
+        <div className="mx-auto mt-3 flex items-center justify-center gap-1.5">
+          {Array.from({ length: bloom.degree.of }, (_, i) => (
+            <span
+              key={i}
+              className={cx(
+                'h-1.5 rounded-full transition-all duration-500',
+                i < bloom.degree.index
+                  ? 'w-5 bg-[var(--bloom-accent)]'
+                  : 'w-1.5 bg-[var(--bloom-fill-3)]',
+              )}
+            />
+          ))}
+        </div>
+        <p className="mt-1.5 text-[0.6rem] uppercase tracking-[0.18em] text-faint">
+          {t('journey.degree', { n: roman(bloom.degree.index), of: roman(bloom.degree.of) })}
+        </p>
+
+        <div className="mx-auto mt-3.5 max-w-[15rem]">
+          <div className="h-1 overflow-hidden rounded-full bg-[var(--bloom-fill-2)]">
+            <div
+              className="h-full rounded-full bg-[var(--bloom-accent)] transition-[width] duration-700"
+              style={{ width: `${Math.round(bloom.toNext * 100)}%` }}
+            />
           </div>
-        )}
+          <p className="mt-2 text-[0.68rem] text-faint">
+            {t('journey.toNext', {
+              n: bloom.decadesToNext,
+              stage: bloom.nextStage.name[lang],
+            })}
+          </p>
+        </div>
 
         {/* Barely there on purpose: a hint of what is coming, for whoever
             looks for it, without turning prayer into a progress bar. A chaplet
