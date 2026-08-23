@@ -29,6 +29,8 @@ export default async function SettingsPage() {
           colors: user.colors,
           shape: user.shape,
           hailMary: user.hailMary,
+          notifyHour: user.notifyHour,
+          notifyLineage: user.notifyLineage,
         }}
         stats={stats}
       />

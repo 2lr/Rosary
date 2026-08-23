@@ -26,6 +26,12 @@ export type User = {
   inviteCode: string | null;
   /** Who let them in. Null on the very first account. */
   invitedBy: string | null;
+  /** Hour of their own day for the reminder. Null when they want none. */
+  notifyHour: number | null;
+  /** Whether they hear, in the evening, what the people below them prayed. */
+  notifyLineage: boolean;
+  /** Their zone, so an hour means what they think it means. */
+  timeZone: string | null;
   createdAt: string;
 };
 
@@ -40,6 +46,9 @@ type UserRow = {
   hail_mary: string | null;
   invite_code: string | null;
   invited_by: string | null;
+  notify_hour: number | null;
+  notify_lineage: number | null;
+  time_zone: string | null;
   created_at: string;
 };
 
@@ -67,6 +76,9 @@ function toUser(row: UserRow): User {
     hailMary: isHailMaryVariant(row.hail_mary) ? row.hail_mary : DEFAULT_HAIL_MARY_VARIANT,
     inviteCode: row.invite_code,
     invitedBy: row.invited_by,
+    notifyHour: row.notify_hour === null ? null : Number(row.notify_hour),
+    notifyLineage: Number(row.notify_lineage) === 1,
+    timeZone: row.time_zone,
     createdAt: row.created_at,
   };
 }
@@ -129,6 +141,9 @@ export async function createUser(input: {
     hailMary: DEFAULT_HAIL_MARY_VARIANT,
     inviteCode,
     invitedBy: input.invitedBy ?? null,
+    notifyHour: null,
+    notifyLineage: false,
+    timeZone: null,
     createdAt,
   };
 }
@@ -257,6 +272,9 @@ export async function updateUserPreferences(
     colors?: [string, string, string] | null;
     shape?: LoopShape;
     hailMary?: HailMaryVariant;
+    notifyHour?: number | null;
+    notifyLineage?: boolean;
+    timeZone?: string;
   },
 ): Promise<void> {
   if (patch.lang !== undefined) {
@@ -279,5 +297,17 @@ export async function updateUserPreferences(
   }
   if (patch.hailMary !== undefined) {
     await run('UPDATE users SET hail_mary = ? WHERE id = ?', [patch.hailMary, id]);
+  }
+  if (patch.notifyHour !== undefined) {
+    await run('UPDATE users SET notify_hour = ? WHERE id = ?', [patch.notifyHour, id]);
+  }
+  if (patch.notifyLineage !== undefined) {
+    await run('UPDATE users SET notify_lineage = ? WHERE id = ?', [
+      patch.notifyLineage ? 1 : 0,
+      id,
+    ]);
+  }
+  if (patch.timeZone !== undefined) {
+    await run('UPDATE users SET time_zone = ? WHERE id = ?', [patch.timeZone, id]);
   }
 }

@@ -2,6 +2,7 @@ import { fail, handle, json, readJson } from '@/lib/api';
 import { getCurrentUser, requireUser } from '@/lib/auth/guard';
 import { findUserById, updateUserPreferences } from '@/lib/db/users';
 import { isLang } from '@/lib/i18n/config';
+import { isValidHour } from '@/lib/push/clock';
 import { isHexColor, normalizeHex } from '@/lib/rosary/color';
 import { isHailMaryVariant } from '@/lib/rosary/prayers';
 import { isLoopShape } from '@/lib/rosary/shapes';
@@ -19,6 +20,12 @@ type Body = {
   colors?: unknown;
   shape?: string;
   hailMary?: string;
+  /** Hour of the user's own day for the reminder, or null to stop it. */
+  notifyHour?: number | null;
+  /** Whether to hear, in the evening, what the people below them prayed. */
+  notifyLineage?: boolean;
+  /** Their zone, so the hour means what they think it means. */
+  timeZone?: string;
 };
 
 export async function PATCH(request: Request) {
@@ -28,6 +35,9 @@ export async function PATCH(request: Request) {
     if (!body) return fail('invalid_body');
 
     if (body.lang !== undefined && !isLang(body.lang)) return fail('invalid_lang');
+    if (body.notifyHour !== undefined && body.notifyHour !== null && !isValidHour(body.notifyHour)) {
+      return fail('invalid_hour');
+    }
     if (body.shape !== undefined && !isLoopShape(body.shape)) return fail('invalid_shape');
     if (body.hailMary !== undefined && !isHailMaryVariant(body.hailMary)) {
       return fail('invalid_hail_mary');
@@ -55,6 +65,11 @@ export async function PATCH(request: Request) {
     }
 
     await updateUserPreferences(user.id, {
+      ...(body.notifyHour !== undefined ? { notifyHour: body.notifyHour } : {}),
+      ...(body.notifyLineage !== undefined ? { notifyLineage: !!body.notifyLineage } : {}),
+      ...(typeof body.timeZone === 'string' && body.timeZone.length <= 64
+        ? { timeZone: body.timeZone }
+        : {}),
       ...(body.lang !== undefined && isLang(body.lang) ? { lang: body.lang } : {}),
       ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
       ...(colors !== undefined ? { colors } : {}),

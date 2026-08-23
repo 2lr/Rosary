@@ -1,0 +1,46 @@
+# The app has no clock of its own, so something outside has to call it.
+#
+# Every half hour. A reminder set for nine o'clock only has to be caught inside
+# the hour it belongs to, so anything under sixty minutes is correct; half an
+# hour is the cheapest cadence that still puts the notification in the first
+# half of the chosen hour. On a private repository each run bills a whole
+# minute, and this is about 1,400 a month — worth knowing before making it
+# finer. The endpoint decides who is due and refuses to send the same word
+# twice in a day, so an extra call costs nothing but a request.
+#
+# Two secrets, both set once in the repository's settings:
+#   APP_URL      https://your-app.up.railway.app
+#   CRON_SECRET  the same value as the CRON_SECRET variable on the server
+name: Reminders
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the app to send what is due
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo '::warning::APP_URL or CRON_SECRET is not set; no reminders will be sent.'
+            exit 0
+          fi
+
+          CODE="$(curl -sS -o body.json -w '%{http_code}' -X POST "${APP_URL%/}/api/cron/notify" \
+            -H "Authorization: Bearer $CRON_SECRET" -H 'Content-Length: 0')"
+
+          echo "HTTP $CODE"
+          cat body.json || true
+          echo
+
+          # A refusal is worth failing on: it means the secret drifted and
+          # nobody is being reminded of anything.
+          [ "$CODE" = '200' ] || { echo '::error::The app refused the call.'; exit 1; }

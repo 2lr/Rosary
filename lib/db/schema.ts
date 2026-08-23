@@ -14,6 +14,9 @@ export const SCHEMA_STATEMENTS = [
      hail_mary     TEXT,
      invite_code   TEXT,
      invited_by    TEXT,
+     notify_hour   INTEGER,
+     notify_lineage INTEGER,
+     time_zone     TEXT,
      created_at    TEXT NOT NULL
    )`,
   `CREATE TABLE IF NOT EXISTS rosaries (
@@ -32,6 +35,23 @@ export const SCHEMA_STATEMENTS = [
      started_at        TEXT NOT NULL,
      updated_at        TEXT NOT NULL,
      completed_at      TEXT
+   )`,
+  `CREATE TABLE IF NOT EXISTS push_subscriptions (
+     id         TEXT PRIMARY KEY,
+     user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+     endpoint   TEXT NOT NULL UNIQUE,
+     p256dh     TEXT NOT NULL,
+     auth       TEXT NOT NULL,
+     created_at TEXT NOT NULL
+   )`,
+  `CREATE INDEX IF NOT EXISTS push_subscriptions_user
+     ON push_subscriptions (user_id)`,
+  `CREATE TABLE IF NOT EXISTS notifications_sent (
+     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+     kind    TEXT NOT NULL,
+     day     TEXT NOT NULL,
+     sent_at TEXT NOT NULL,
+     PRIMARY KEY (user_id, kind, day)
    )`,
   `CREATE TABLE IF NOT EXISTS prayer_notices (
      id         TEXT PRIMARY KEY,
@@ -98,4 +118,7 @@ export const MIGRATION_STATEMENTS = [
   `CREATE UNIQUE INDEX IF NOT EXISTS users_invite_code ON users (invite_code)`,
   `CREATE INDEX IF NOT EXISTS users_invited_by ON users (invited_by)`,
   `ALTER TABLE rosaries ADD COLUMN notify_email TEXT`,
+  `ALTER TABLE users ADD COLUMN notify_hour INTEGER`,
+  `ALTER TABLE users ADD COLUMN notify_lineage INTEGER`,
+  `ALTER TABLE users ADD COLUMN time_zone TEXT`,
 ];

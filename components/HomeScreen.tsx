@@ -8,6 +8,7 @@ import StartSheet from '@/components/StartSheet';
 import RosaryViewer from '@/components/RosaryViewer';
 import GospelCard from '@/components/GospelCard';
 import InviteCard from '@/components/InviteCard';
+import NotifyPrompt from '@/components/NotifyPrompt';
 import { finishNow, recordPrayed } from '@/lib/client/recordPrayed';
 import NovenaCard from '@/components/NovenaCard';
 import { Button, ButtonLink, Card, cx } from '@/components/ui';
@@ -173,6 +174,10 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
           </p>
         )}
       </section>
+
+      {/* Asked for on every visit until the browser has decided, one way or
+          the other. Never in front of the screen, only above it. */}
+      <NotifyPrompt t={t} />
 
       {openRosary && (
         <Card className="mt-6 p-4 animate-rise">

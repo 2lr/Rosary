@@ -22,11 +22,14 @@ export default function JourneyScreen({
   stats,
   bloom,
   rosaries,
+  lineage,
 }: {
   lang: Lang;
   stats: Stats;
   bloom: Bloom;
   rosaries: Rosary[];
+  /** What the people invited below this one have prayed. */
+  lineage: { invited: number; people: number; rosaries: number; decades: number };
 }) {
   const t = useMemo(() => translatorFor(lang), [lang]);
   const router = useRouter();
@@ -78,6 +81,11 @@ export default function JourneyScreen({
         <Stat value={stats.currentStreak} label={t('journey.streak')} />
         <Stat value={stats.longestStreak} label={t('journey.longestStreak')} />
         <Stat value={stats.daysPrayed} label={t('journey.daysPrayed')} />
+        {/* Not your own prayer, but prayer that happened because you gave
+            somebody a code. It belongs in the same grid as the rest. */}
+        {lineage.rosaries > 0 && (
+          <Stat value={lineage.rosaries} label={t('journey.lineage')} />
+        )}
       </section>
 
       {/* A month at a time, with the dates on show: an unlabelled grid of
