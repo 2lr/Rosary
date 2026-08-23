@@ -19,6 +19,7 @@ type RosaryRow = {
   mystery_set: string | null;
   lang: string;
   intention: string | null;
+  notify_email: string | null;
   status: string;
   progress: string;
   decades_completed: number;
@@ -55,6 +56,7 @@ function toRosary(row: RosaryRow): Rosary {
     mysterySet: isMysterySetId(row.mystery_set) ? row.mystery_set : null,
     lang: normalizeLang(row.lang),
     intention: row.intention,
+    notifyEmail: row.notify_email,
     status: row.status as RosaryStatus,
     progress: parseProgress(row.progress),
     decadesCompleted: Number(row.decades_completed) || 0,
@@ -71,15 +73,17 @@ export async function createRosary(input: {
   mysterySet: string | null;
   lang: string;
   intention: string | null;
+  /** Somebody to tell, once it is finished. */
+  notifyEmail?: string | null;
 }): Promise<Rosary> {
   const id = randomUUID();
   const now = new Date().toISOString();
 
   await run(
     `INSERT INTO rosaries
-       (id, user_id, kind, mode, mystery_set, lang, intention, status, progress,
+       (id, user_id, kind, mode, mystery_set, lang, intention, notify_email, status, progress,
         decades_completed, hail_marys, started_at, updated_at, completed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'in_progress', ?, 0, 0, ?, ?, NULL)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'in_progress', ?, 0, 0, ?, ?, NULL)`,
     [
       id,
       input.userId,
@@ -88,6 +92,7 @@ export async function createRosary(input: {
       input.mysterySet,
       input.lang,
       input.intention,
+      input.notifyEmail ?? null,
       JSON.stringify(EMPTY_PROGRESS),
       now,
       now,

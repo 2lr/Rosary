@@ -24,6 +24,7 @@ export const SCHEMA_STATEMENTS = [
      mystery_set       TEXT,
      lang              TEXT NOT NULL,
      intention         TEXT,
+     notify_email      TEXT,
      status            TEXT NOT NULL,
      progress          TEXT NOT NULL,
      decades_completed INTEGER NOT NULL DEFAULT 0,
@@ -32,6 +33,19 @@ export const SCHEMA_STATEMENTS = [
      updated_at        TEXT NOT NULL,
      completed_at      TEXT
    )`,
+  `CREATE TABLE IF NOT EXISTS prayer_notices (
+     id         TEXT PRIMARY KEY,
+     user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+     rosary_id  TEXT NOT NULL UNIQUE,
+     email      TEXT NOT NULL,
+     lang       TEXT NOT NULL,
+     verse      TEXT NOT NULL,
+     status     TEXT NOT NULL,
+     error      TEXT,
+     created_at TEXT NOT NULL
+   )`,
+  `CREATE INDEX IF NOT EXISTS prayer_notices_user
+     ON prayer_notices (user_id, created_at DESC)`,
   `CREATE TABLE IF NOT EXISTS novena_runs (
      id         TEXT PRIMARY KEY,
      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -83,4 +97,5 @@ export const MIGRATION_STATEMENTS = [
   // a failed migration is expected.
   `CREATE UNIQUE INDEX IF NOT EXISTS users_invite_code ON users (invite_code)`,
   `CREATE INDEX IF NOT EXISTS users_invited_by ON users (invited_by)`,
+  `ALTER TABLE rosaries ADD COLUMN notify_email TEXT`,
 ];

@@ -27,6 +27,7 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
   const [choice, setChoice] = useState<Choice>(defaultSet);
   const [mode, setMode] = useState<PrayerMode>('spoken');
   const [intention, setIntention] = useState('');
+  const [notifyEmail, setNotifyEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +49,7 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
           lang,
           mysterySet,
           intention: intention.trim() || null,
+          notifyEmail: notifyEmail.trim() || null,
         }),
       });
       if (!response.ok) throw new Error('start failed');
@@ -130,6 +132,34 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
           placeholder={t('home.intentionPlaceholder')}
           className="w-full resize-none rounded-2xl border border-[var(--bloom-border)] bg-[var(--bloom-fill)] px-4 py-3 text-[16px] leading-relaxed outline-none transition placeholder:text-[var(--bloom-placeholder)] focus:border-[var(--bloom-accent)]/60"
         />
+      </div>
+
+      {/* Praying for somebody, and letting them know. The address is used once,
+          when the chaplet is finished, and carries neither the name of whoever
+          prayed nor what they prayed for. */}
+      <div className="mt-4 space-y-2">
+        <label
+          htmlFor="notify"
+          className="flex items-baseline justify-between text-[0.65rem] uppercase tracking-[0.18em] text-faint"
+        >
+          <span>{t('home.forWhom')}</span>
+          <span className="normal-case tracking-normal">{t('home.optional')}</span>
+        </label>
+        <input
+          id="notify"
+          type="email"
+          inputMode="email"
+          autoCapitalize="none"
+          autoComplete="email"
+          spellCheck={false}
+          value={notifyEmail}
+          onChange={(e) => setNotifyEmail(e.target.value)}
+          placeholder={t('home.forWhomPlaceholder')}
+          className="w-full rounded-2xl border border-[var(--bloom-border)] bg-[var(--bloom-fill)] px-4 py-3 text-[16px] outline-none transition placeholder:text-[var(--bloom-placeholder)] focus:border-[var(--bloom-accent)]/60"
+        />
+        <p className="text-[0.65rem] leading-relaxed text-faint text-pretty">
+          {t('home.forWhomHint')}
+        </p>
       </div>
 
       {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}

@@ -1,5 +1,6 @@
 import { fail, handle, json, readJson } from '@/lib/api';
 import { requireUser } from '@/lib/auth/guard';
+import { notifyPrayer } from '@/lib/mail/notifyPrayer';
 import { deleteRosary, findRosary, saveProgress } from '@/lib/db/rosaries';
 import {
   buildSequence,
@@ -105,6 +106,14 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(intention === undefined ? {} : { intention }),
     });
 
+    // The word to whoever was prayed for goes out here and nowhere else: the
+    // moment the rosary is actually finished. A rosary already completed was
+    // turned away further up, so this runs on the transition and no other time;
+    // the notice table is the belt to that pair of braces.
+    if (status === 'completed' && updated) {
+      await notifyPrayer(updated, user.id, originOf(request));
+    }
+
     return json({ rosary: updated });
   });
 }
@@ -115,4 +124,18 @@ export async function DELETE(_request: Request, { params }: Params) {
     await deleteRosary((await params).id, user.id);
     return json({ ok: true });
   });
+}
+
+/**
+ * The address this request came in on, for the link inside the mail.
+ *
+ * Behind Railway's proxy the request URL is the internal one, so the forwarded
+ * headers are what say where the app actually answers.
+ */
+function originOf(request: Request): string | null {
+  const headers = request.headers;
+  const host = headers.get('x-forwarded-host') ?? headers.get('host');
+  if (!host) return null;
+  const proto = headers.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
+  return `${proto}://${host}`;
 }

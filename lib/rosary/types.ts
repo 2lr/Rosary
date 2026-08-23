@@ -60,6 +60,8 @@ export type Rosary = {
   mysterySet: MysterySetId | null;
   lang: 'fr' | 'en';
   intention: string | null;
+  /** Somebody to tell, once it is finished. Never shown to them. */
+  notifyEmail?: string | null;
   status: RosaryStatus;
   progress: RosaryProgress;
   /** Number of decades completed, denormalised for cheap statistics. */

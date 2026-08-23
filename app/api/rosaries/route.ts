@@ -1,6 +1,7 @@
 import { fail, handle, json, readJson } from '@/lib/api';
 import { requireUser } from '@/lib/auth/guard';
 import { createRosary, listRosaries } from '@/lib/db/rosaries';
+import { isValidEmail } from '@/lib/db/users';
 import { isMysterySetId, mysterySetForDate } from '@/lib/rosary/mysteries';
 import { isLang, normalizeLang } from '@/lib/i18n/config';
 import type { PrayerMode, RosaryKind } from '@/lib/rosary/types';
@@ -22,6 +23,8 @@ type Body = {
   mysterySet?: string | null;
   lang?: string;
   intention?: string | null;
+  /** Somebody to tell when it is finished. */
+  notifyEmail?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -48,6 +51,13 @@ export async function POST(request: Request) {
         ? body.intention.trim().slice(0, MAX_INTENTION)
         : null;
 
+    // Kept with the rosary and used once, when it is finished — praying for
+    // somebody is not a thing to announce before it has happened.
+    const notifyEmail =
+      typeof body.notifyEmail === 'string' && isValidEmail(body.notifyEmail.trim())
+        ? body.notifyEmail.trim().toLowerCase()
+        : null;
+
     const rosary = await createRosary({
       userId: user.id,
       kind,
@@ -55,6 +65,7 @@ export async function POST(request: Request) {
       mysterySet,
       lang,
       intention,
+      notifyEmail,
     });
 
     return json({ rosary }, { status: 201 });
