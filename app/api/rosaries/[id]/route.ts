@@ -30,6 +30,8 @@ type Body = {
   writings?: Record<string, string>;
   status?: RosaryStatus;
   intention?: string | null;
+  /** Every step at once: a rosary prayed on real beads, recorded afterwards. */
+  markAll?: boolean;
 };
 
 export async function PATCH(request: Request, { params }: Params) {
@@ -56,11 +58,18 @@ export async function PATCH(request: Request, { params }: Params) {
     });
     const valid = new Set(steps.map((s) => s.id));
 
-    const done = new Set<number>(
-      (Array.isArray(body.done) ? body.done : rosary.progress.done).filter(
-        (n) => typeof n === 'number' && valid.has(n),
-      ),
-    );
+    // A rosary prayed on a real chaplet is finished before the phone is ever
+    // opened, and tapping through seventy-nine beads to record it is not
+    // devotion, it is data entry. `markAll` says it was prayed; what that comes
+    // to is still counted off the sequence this server built rather than off
+    // anything the client sent.
+    const done = body.markAll
+      ? new Set<number>(valid)
+      : new Set<number>(
+          (Array.isArray(body.done) ? body.done : rosary.progress.done).filter(
+            (n) => typeof n === 'number' && valid.has(n),
+          ),
+        );
 
     const writings: Record<string, string> = { ...rosary.progress.writings };
     if (body.writings && typeof body.writings === 'object') {
@@ -73,8 +82,9 @@ export async function PATCH(request: Request, { params }: Params) {
       }
     }
 
-    const step =
-      typeof body.step === 'number' && body.step >= 0 && body.step < steps.length
+    const step = body.markAll
+      ? steps.length - 1
+      : typeof body.step === 'number' && body.step >= 0 && body.step < steps.length
         ? body.step
         : rosary.progress.step;
 

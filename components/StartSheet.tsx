@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Sheet from '@/components/Sheet';
+import { recordPrayed } from '@/lib/client/recordPrayed';
 import { Button, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
@@ -23,6 +25,7 @@ type Props = {
 type Choice = MysterySetId | 'free' | 'full';
 
 export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Props) {
+  const router = useRouter();
   const t = useMemo(() => translatorFor(lang), [lang]);
   const [choice, setChoice] = useState<Choice>(defaultSet);
   const [mode, setMode] = useState<PrayerMode>('spoken');
@@ -59,6 +62,27 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
       setError(t('error.generic'));
       setBusy(false);
     }
+  }
+
+  // The same choices, for a rosary already prayed on real beads: it is written
+  // down whole rather than tapped through, and counts for exactly the same.
+  async function record() {
+    setBusy(true);
+    setError(null);
+    const ok = await recordPrayed({
+      kind,
+      mysterySet,
+      lang,
+      intention: intention.trim() || null,
+      notifyEmail: notifyEmail.trim() || null,
+    });
+    if (!ok) {
+      setError(t('error.generic'));
+      setBusy(false);
+      return;
+    }
+    router.refresh();
+    onClose();
   }
 
   return (
@@ -167,6 +191,15 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
       <Button size="lg" className="mt-5 w-full" onClick={start} disabled={busy}>
         {busy ? t('auth.working') : t('home.start')}
       </Button>
+
+      <button
+        type="button"
+        onClick={() => void record()}
+        disabled={busy}
+        className="tap mt-2 w-full rounded-full border border-[var(--bloom-border)] px-4 py-2.5 text-sm text-[var(--bloom-accent)] transition disabled:opacity-40"
+      >
+        {t('home.alreadyPrayedShort')}
+      </button>
     </Sheet>
   );
 }
