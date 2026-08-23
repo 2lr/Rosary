@@ -9,7 +9,7 @@ import RosaryViewer from '@/components/RosaryViewer';
 import GospelCard from '@/components/GospelCard';
 import InviteCard from '@/components/InviteCard';
 import NotifyPrompt from '@/components/NotifyPrompt';
-import { finishNow, recordPrayed } from '@/lib/client/recordPrayed';
+import { finishNow } from '@/lib/client/recordPrayed';
 import NovenaCard from '@/components/NovenaCard';
 import { Button, ButtonLink, Card, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
@@ -33,7 +33,6 @@ type Props = {
 
 export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }: Props) {
   const router = useRouter();
-  const [recording, setRecording] = useState<'idle' | 'busy' | 'done'>('idle');
   const lang = user.lang;
   const t = useMemo(() => translatorFor(lang), [lang]);
   const sign = useMemo(() => nextMilestone(bloom.growth), [bloom.growth]);
@@ -230,32 +229,6 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
         <Button size="lg" className="mt-4 w-full" onClick={() => setStarting(true)}>
           {t('home.startToday')}
         </Button>
-
-        {/* Most days the beads are in a pocket and the phone comes out after.
-            One tap writes down the chaplet of the day exactly as praying it on
-            the screen would have. */}
-        <button
-          type="button"
-          disabled={recording === 'busy'}
-          onClick={async () => {
-            setRecording('busy');
-            const ok = await recordPrayed({
-              kind: 'chaplet',
-              mysterySet: set.id,
-              lang,
-            });
-            setRecording(ok ? 'done' : 'idle');
-            if (ok) {
-              router.refresh();
-              // Back to the invitation after a moment: somebody who prayed two
-              // chaplets should not be left looking at a receipt.
-              window.setTimeout(() => setRecording('idle'), 2600);
-            }
-          }}
-          className="tap mt-2 w-full rounded-full px-4 py-2 text-xs text-muted transition hover:text-[var(--bloom-ink)] disabled:opacity-40"
-        >
-          {recording === 'done' ? t('home.noted') : t('home.alreadyPrayed')}
-        </button>
 
         {/* Nine days towards a feast, kept by praying the rosary on each of
             them. Only here when there is one to keep. */}

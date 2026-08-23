@@ -47,6 +47,10 @@ export default function JourneyScreen({
   async function remove(id: string) {
     if (pendingDelete !== id) {
       setPendingDelete(id);
+      // It disarms itself rather than on blur: a tap does not always focus a
+      // button on a phone, which left the confirmation either stuck or gone
+      // depending on the browser. A destructive step should not sit armed.
+      window.setTimeout(() => setPendingDelete((current) => (current === id ? null : current)), 4000);
       return;
     }
     await fetch(`/api/rosaries/${id}`, { method: 'DELETE' });
@@ -246,15 +250,20 @@ export default function JourneyScreen({
                         {t('journey.resume')}
                       </Link>
                     )}
+                    {/* The confirmation was painted for a dark page — pale rose
+                        on a wash of rose — and on this cream one it was a red
+                        button with invisible writing on it. Solid red, white
+                        text: a destructive step should be the most legible
+                        thing on the row, not the least. */}
                     <button
                       type="button"
                       onClick={() => void remove(rosary.id)}
-                      onBlur={() => setPendingDelete(null)}
+                      aria-label={pendingDelete === rosary.id ? undefined : t('journey.delete')}
                       className={cx(
-                        'tap rounded-full px-2.5 py-1.5 text-xs transition',
+                        'tap rounded-full transition',
                         pendingDelete === rosary.id
-                          ? 'bg-rose-500/20 text-rose-200'
-                          : 'text-faint hover:text-rose-300',
+                          ? 'bg-rose-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm'
+                          : 'px-2.5 py-1.5 text-base leading-none text-faint hover:text-rose-700',
                       )}
                     >
                       {pendingDelete === rosary.id ? t('journey.confirmDelete') : '×'}

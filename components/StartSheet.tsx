@@ -188,6 +188,8 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
 
       {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
 
+      {/* Two answers to the same question, and neither is the small one: pray
+          it now on the screen, or say it was already prayed on real beads. */}
       <Button size="lg" className="mt-5 w-full" onClick={start} disabled={busy}>
         {busy ? t('auth.working') : t('home.start')}
       </Button>
@@ -196,7 +198,7 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
         type="button"
         onClick={() => void record()}
         disabled={busy}
-        className="tap mt-2 w-full rounded-full border border-[var(--bloom-border)] px-4 py-2.5 text-sm text-[var(--bloom-accent)] transition disabled:opacity-40"
+        className="tap mt-2.5 w-full rounded-full border border-[var(--bloom-accent)] px-4 py-3.5 text-base text-[var(--bloom-accent)] transition disabled:opacity-40"
       >
         {t('home.alreadyPrayedShort')}
       </button>
