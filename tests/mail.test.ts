@@ -63,6 +63,23 @@ describe('the word sent to somebody prayed for', () => {
     }
   });
 
+  it('writes the code out as well as putting it in the link', () => {
+    // Somebody who installs the app from a store rather than following the
+    // link is asked for a code, and has to be able to read one here.
+    for (const lang of LANGS) {
+      const notice = made(lang);
+      expect(notice.text).toContain('YZC E5X');
+      expect(notice.html).toContain('YZC E5X');
+    }
+  });
+
+  it('says the address itself is enough, since it is', () => {
+    for (const lang of LANGS) {
+      const notice = made(lang);
+      expect(notice.text.toLowerCase()).toMatch(lang === 'fr' ? /cette adresse/ : /this address/);
+    }
+  });
+
   it('says the verse and its reference, in the language it was prayed in', () => {
     expect(made('fr').text).toContain(verse.text.fr);
     expect(made('fr').text).toContain(verse.ref.fr);

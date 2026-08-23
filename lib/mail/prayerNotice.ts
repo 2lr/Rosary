@@ -10,9 +10,13 @@ import type { Verse } from '@/lib/mail/verses';
  *
  * What it deliberately does not carry: who prayed, and what for. The intention
  * is the one thing said between somebody and God, and it does not go out over
- * email — nor does the name of whoever wrote it. The link carries their
- * invitation code, which is what lets the recipient in and what quietly puts
- * them in that person's line; it says nothing about whose code it is.
+ * email — nor does the name of whoever wrote it.
+ *
+ * The way in is offered three times over, because people arrive by different
+ * roads: the link, which fills everything in; the code written out, for
+ * somebody who installs the app from a store and is asked for one; and the
+ * address itself, which the server already recognises as invited. None of the
+ * three says whose code it is.
  *
  * Pure, so that what goes out can be read in a test rather than in an inbox.
  */
@@ -27,6 +31,8 @@ const WORDS: Record<
     body: string;
     invitation: string;
     button: string;
+    orCode: string;
+    orAddress: string;
     footer: string;
   }
 > = {
@@ -36,8 +42,11 @@ const WORDS: Record<
     body: 'Cette personne a préféré ne pas dire son nom. Elle a simplement voulu que vous le sachiez.',
     invitation: 'Si vous voulez prier à votre tour, ce lien vous ouvre l’application.',
     button: 'Ouvrir Rosaire',
+    orCode: 'On n’y entre que sur invitation. Si le code vous est demandé, c’est celui-ci :',
+    orAddress:
+      'Et si vous créez votre compte avec cette adresse, il n’y a rien à saisir : vous êtes déjà attendu.',
     footer:
-      'Vous recevez ce message une seule fois, parce que quelqu’un a donné votre adresse en priant. Rien n’est enregistré à votre sujet et il n’y a rien à désinscrire.',
+      'Votre adresse a servi à vous écrire une fois, et c’est elle qui vous ouvre l’entrée ci-dessus. Rien d’autre n’est conservé à votre sujet.',
   },
   en: {
     subject: 'Somebody prayed for you today',
@@ -45,8 +54,11 @@ const WORDS: Record<
     body: 'They chose not to give their name. They only wanted you to know.',
     invitation: 'If you would like to pray in turn, this link opens the app.',
     button: 'Open Rosary',
+    orCode: 'Nobody comes in uninvited. If you are asked for a code, this is the one:',
+    orAddress:
+      'And if you make your account with this address, there is nothing to type: you are expected already.',
     footer:
-      'You are getting this once, because somebody gave your address while praying. Nothing about you is kept and there is nothing to unsubscribe from.',
+      'Your address was used to write to you once, and it is what opens the door above. Nothing else about you is kept.',
   },
 };
 
@@ -71,6 +83,7 @@ export function prayerNotice(input: {
   const url = `${input.appUrl.replace(/\/+$/, '')}/?code=${encodeURIComponent(code)}`;
   const line = verse.text[lang];
   const ref = verse.ref[lang];
+  const formatted = `${code.slice(0, 3)} ${code.slice(3)}`;
 
   const text = [
     w.opening,
@@ -82,6 +95,9 @@ export function prayerNotice(input: {
     '',
     w.invitation,
     url,
+    '',
+    `${w.orCode} ${formatted}`,
+    w.orAddress,
     '',
     w.footer,
   ].join('\n');
@@ -100,6 +116,9 @@ export function prayerNotice(input: {
     <p style="margin:0">
       <a href="${escapeHtml(url)}" style="display:inline-block;background:#3f5296;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:15px">${escapeHtml(w.button)}</a>
     </p>
+    <p style="margin:22px 0 6px;font-size:13px;line-height:1.6;color:#8a7f6d">${escapeHtml(w.orCode)}</p>
+    <p style="margin:0;font-size:24px;letter-spacing:0.22em;color:#2c2622">${escapeHtml(formatted)}</p>
+    <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#8a7f6d">${escapeHtml(w.orAddress)}</p>
     <p style="margin:24px 0 0;font-size:12px;line-height:1.6;color:#9b9184">${escapeHtml(w.footer)}</p>
   </div>
 </div>`;

@@ -8,6 +8,7 @@ import {
   hasAnyUser,
   isValidEmail,
 } from '@/lib/db/users';
+import { sponsorForEmail } from '@/lib/db/notices';
 import { normalizeLang } from '@/lib/i18n/config';
 
 type Body = {
@@ -33,14 +34,19 @@ export async function POST(request: Request) {
 
     if (await findUserByEmail(email)) return fail('email_taken', 409);
 
-    // Nobody comes in on their own: an account is somebody's guest. The one
-    // exception is the very first account on an empty install, which has
-    // nobody to be invited by — without it the app could never be started.
+    // Nobody comes in on their own: an account is somebody's guest. There are
+    // three ways to be one, and all three end with a host recorded.
+    //
+    // A code, typed or carried in by the link. Or the address itself: somebody
+    // who was prayed for, and had this address named while it happened, is
+    // already invited by whoever did that — they need type nothing. And the
+    // very first account on an empty install, which has nobody to be invited
+    // by, without which the app could never be started at all.
     let invitedBy: string | null = null;
     if (await hasAnyUser()) {
       const host = await findUserByInviteCode(body?.code);
-      if (!host) return fail('invalid_code');
-      invitedBy = host.id;
+      invitedBy = host?.id ?? (await sponsorForEmail(email));
+      if (!invitedBy) return fail('invalid_code');
     }
 
     const user = await createUser({

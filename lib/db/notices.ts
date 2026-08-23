@@ -85,3 +85,28 @@ export async function noticeRefusal(
   const address = email.trim().toLowerCase();
   return sent.some((row) => row.email === address) ? 'already_today' : null;
 }
+
+/**
+ * Who prayed for this address, if anybody has.
+ *
+ * An address that was given while somebody prayed is an invitation in itself:
+ * the person typed it deliberately, and what they got back was a message
+ * telling them so. Signing up with that same address is therefore enough to
+ * come in, and it comes in under them.
+ *
+ * The most recent stands, not the first: it is the message sitting in their
+ * inbox that brought them here. Whether the mail actually left the building is
+ * not the test — somebody naming the address is what makes the invitation, and
+ * on a server with no mailer configured that is still true.
+ */
+export async function sponsorForEmail(email: string): Promise<string | null> {
+  const address = email.trim().toLowerCase();
+  if (!address) return null;
+
+  const row = await one<{ user_id: string }>(
+    `SELECT user_id FROM prayer_notices
+       WHERE email = ? ORDER BY created_at DESC`,
+    [address],
+  );
+  return row?.user_id ?? null;
+}

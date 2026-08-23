@@ -96,13 +96,14 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
       </header>
 
       <form onSubmit={submit} className="mt-7 space-y-3.5">
-        {/* The door. Nobody gets an account without somebody else's code, so
-            this is asked first — before the name, before the address. */}
+        {/* The door. Nobody gets an account without an invitation, so this is
+            asked first — but it is not required here, because the address
+            itself can be the invitation: somebody prayed for it and named it,
+            and the server knows. Which of the two let them in is its call. */}
         {mode === 'signup' && (
           <Field
             label={t('auth.code')}
             hint={t('auth.codeHint')}
-            required
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             autoCapitalize="characters"
