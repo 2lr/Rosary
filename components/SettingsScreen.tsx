@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppNav from '@/components/AppNav';
 import LanguageToggle from '@/components/LanguageToggle';
 import AppearanceCard, { type Appearance } from '@/components/AppearanceCard';
+import InviteCard from '@/components/InviteCard';
 import { Button, Card, Field } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import { bloomFrom } from '@/lib/rosary/growth';
@@ -124,6 +125,10 @@ export default function SettingsScreen({
           {saved ? t('settings.saved') : t('settings.save')}
         </Button>
       </Card>
+
+      {/* Also on the home screen, because it is the only way anybody else gets
+          in — but this is where people come looking for their own code. */}
+      <InviteCard t={t} />
 
       <AppearanceCard
         t={t}

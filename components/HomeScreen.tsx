@@ -7,6 +7,7 @@ import AppNav from '@/components/AppNav';
 import StartSheet from '@/components/StartSheet';
 import RosaryViewer from '@/components/RosaryViewer';
 import GospelCard from '@/components/GospelCard';
+import InviteCard from '@/components/InviteCard';
 import NovenaCard from '@/components/NovenaCard';
 import { Button, ButtonLink, Card, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
@@ -220,6 +221,10 @@ export default function HomeScreen({ user, stats, bloom, openRosary, todaysSet }
           <GospelCard lang={lang} t={t} />
         </div>
       </section>
+
+      {/* The only door into this app is somebody's code, so the way to give
+          yours is on the first screen rather than buried in the settings. */}
+      <InviteCard t={t} />
 
       <section className="mt-6 grid grid-cols-3 gap-2.5">
         <MiniStat value={stats.totalCompleted} label={t('journey.rosaries')} />

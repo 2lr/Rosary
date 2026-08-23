@@ -12,6 +12,8 @@ export const SCHEMA_STATEMENTS = [
      colors        TEXT,
      loop_shape    TEXT,
      hail_mary     TEXT,
+     invite_code   TEXT,
+     invited_by    TEXT,
      created_at    TEXT NOT NULL
    )`,
   `CREATE TABLE IF NOT EXISTS rosaries (
@@ -73,4 +75,12 @@ export const MIGRATION_STATEMENTS = [
   `ALTER TABLE novena_days ADD COLUMN hail_marys INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE novena_days ADD COLUMN our_fathers INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE novena_days ADD COLUMN glory_bes INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE users ADD COLUMN invite_code TEXT`,
+  `ALTER TABLE users ADD COLUMN invited_by TEXT`,
+  // The indexes come after the columns they are on, and go here rather than
+  // with the schema: on a database that already exists the column does not
+  // arrive until the line above, and a failed schema statement is fatal where
+  // a failed migration is expected.
+  `CREATE UNIQUE INDEX IF NOT EXISTS users_invite_code ON users (invite_code)`,
+  `CREATE INDEX IF NOT EXISTS users_invited_by ON users (invited_by)`,
 ];

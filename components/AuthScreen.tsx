@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RosaryArt from '@/components/RosaryArt';
 import LanguageToggle from '@/components/LanguageToggle';
@@ -11,6 +11,7 @@ import { type Lang } from '@/lib/i18n/config';
 import { bloomFrom } from '@/lib/rosary/growth';
 import { EMPTY_STATS } from '@/lib/rosary/stats';
 import type { MessageKey } from '@/lib/i18n/dictionary';
+import { normalizeInviteCode } from '@/lib/invite';
 
 const ERROR_KEYS: Record<string, MessageKey> = {
   invalid_email: 'error.invalidEmail',
@@ -18,6 +19,7 @@ const ERROR_KEYS: Record<string, MessageKey> = {
   password_too_long: 'error.passwordTooLong',
   email_taken: 'error.emailTaken',
   invalid_credentials: 'error.invalidCredentials',
+  invalid_code: 'error.invalidCode',
 };
 
 export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
@@ -27,8 +29,17 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Somebody following an invitation link arrives with the code already in it,
+  // and should not have to copy it out of the address bar.
+  useEffect(() => {
+    const shared = new URLSearchParams(window.location.search).get('code');
+    const valid = normalizeInviteCode(shared);
+    if (valid) setCode(valid);
+  }, []);
 
   const t = useMemo(() => translatorFor(lang), [lang]);
   // A first-day rosary: bare, waiting. It is the promise of the whole app.
@@ -44,7 +55,7 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, lang, displayName: name || null }),
+        body: JSON.stringify({ email, password, lang, displayName: name || null, code }),
       });
       const data = (await response.json().catch(() => ({}))) as { error?: string };
 
@@ -85,6 +96,23 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
       </header>
 
       <form onSubmit={submit} className="mt-7 space-y-3.5">
+        {/* The door. Nobody gets an account without somebody else's code, so
+            this is asked first — before the name, before the address. */}
+        {mode === 'signup' && (
+          <Field
+            label={t('auth.code')}
+            hint={t('auth.codeHint')}
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            enterKeyHint="next"
+            className="tracking-[0.2em]"
+          />
+        )}
+
         {mode === 'signup' && (
           <Field
             label={t('auth.name')}
