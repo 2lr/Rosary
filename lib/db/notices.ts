@@ -2,6 +2,7 @@ import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { all, one, run } from './index';
 import type { Lang } from '@/lib/i18n/config';
+import type { PendingNotice } from '@/lib/mail/retry';
 import type { MailStatus } from '@/lib/mail/send';
 
 /**
@@ -128,5 +129,42 @@ export async function recentNotices(
        FROM prayer_notices WHERE user_id = ?
       ORDER BY created_at DESC LIMIT ${Math.max(1, Math.min(20, Math.floor(limit)))}`,
     [userId],
+  );
+}
+
+/**
+ * This person's notices, newest first, whatever became of them.
+ *
+ * Deliberately unfiltered. Which of these the catch-up sends is decided by
+ * `noticesToRetry`, where the rule can be read and tested — and it needs the
+ * successes as much as the failures, since a mail that did go out an hour ago
+ * is the reason not to write to that address again. Two hundred is far more
+ * than one catch-up can send and keeps the query bounded on an old account.
+ */
+export async function noticeHistory(userId: string): Promise<PendingNotice[]> {
+  return all<PendingNotice>(
+    `SELECT id, email, lang, status, created_at AS "createdAt", retried_at AS "retriedAt"
+       FROM prayer_notices
+      WHERE user_id = ?
+      ORDER BY created_at DESC LIMIT 200`,
+    [userId],
+  );
+}
+
+/**
+ * What became of a second attempt, written over the first.
+ *
+ * The row is updated rather than duplicated: it is still one rosary and one
+ * word to one person, and `created_at` keeps saying when the prayer was
+ * actually said. `retried_at` is when we tried again — the two are different
+ * facts and both are worth keeping.
+ */
+export async function markNoticeRetried(
+  id: string,
+  outcome: { status: NoticeStatus; error?: string | null; verse: string },
+): Promise<void> {
+  await run(
+    `UPDATE prayer_notices SET status = ?, error = ?, verse = ?, retried_at = ? WHERE id = ?`,
+    [outcome.status, outcome.error ?? null, outcome.verse, new Date().toISOString(), id],
   );
 }

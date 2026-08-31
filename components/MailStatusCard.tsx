@@ -18,6 +18,8 @@ import type { MessageKey, Translator } from '@/lib/i18n/dictionary';
 
 type Notice = { email: string; status: string; error: string | null; createdAt: string };
 
+type Feed = { notices: Notice[]; waiting: number };
+
 const LABELS: Record<string, MessageKey> = {
   sent: 'mail.sent',
   unconfigured: 'mail.unconfigured',
@@ -27,27 +29,34 @@ const LABELS: Record<string, MessageKey> = {
 };
 
 export default function MailStatusCard({ t, lang }: { t: Translator; lang: string }) {
-  const [notices, setNotices] = useState<Notice[] | null>(null);
+  const [feed, setFeed] = useState<Feed | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState<string | null>(null);
+
+  const load = async (): Promise<Feed | null> => {
+    try {
+      const response = await fetch('/api/notices');
+      if (!response.ok) return null;
+      return (await response.json()) as Feed;
+    } catch {
+      // Nothing to show rather than a broken card.
+      return null;
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const response = await fetch('/api/notices');
-        if (!response.ok) return;
-        const data = (await response.json()) as { notices: Notice[] };
-        if (!cancelled) setNotices(data.notices);
-      } catch {
-        // Nothing to show rather than a broken card.
-      }
-    })();
+    load().then((data) => {
+      if (data && !cancelled) setFeed(data);
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
   // Nothing has ever been sent: there is nothing to report and no card.
-  if (!notices || notices.length === 0) return null;
+  if (!feed || feed.notices.length === 0) return null;
+  const notices = feed.notices;
 
   const when = new Intl.DateTimeFormat(lang, {
     day: 'numeric',
@@ -86,6 +95,43 @@ export default function MailStatusCard({ t, lang }: { t: Translator; lang: strin
           </li>
         ))}
       </ul>
+
+      {feed.waiting > 0 && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setSaid(null);
+            try {
+              const response = await fetch('/api/notices', { method: 'POST' });
+              const result = (await response.json()) as { sent?: number; failed?: number };
+              const gone = result.sent ?? 0;
+              setSaid(
+                gone === 0
+                  ? t('mail.retryNone')
+                  : gone === 1
+                    ? t('mail.retryDone.one')
+                    : t('mail.retryDone').replace('{n}', String(gone)),
+              );
+            } catch {
+              setSaid(t('mail.retryNone'));
+            }
+            const fresh = await load();
+            if (fresh) setFeed(fresh);
+            setBusy(false);
+          }}
+          className="tap mt-4 w-full rounded-full bg-[var(--bloom-accent)] px-4 py-2.5 text-sm text-[var(--bloom-on-accent)] transition disabled:opacity-40"
+        >
+          {busy
+            ? t('mail.retryBusy')
+            : feed.waiting === 1
+              ? t('mail.retry.one')
+              : t('mail.retry').replace('{n}', String(feed.waiting))}
+        </button>
+      )}
+
+      {said && <p className="mt-2 text-center text-[0.7rem] text-muted">{said}</p>}
     </Card>
   );
 }
