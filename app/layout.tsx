@@ -24,15 +24,12 @@ const inter = Inter({
  * address, and the app does not otherwise know its own — APP_URL when it is
  * set, and the domain it lives at otherwise.
  *
- * The www, not the bare domain. DNS forbids a CNAME on the apex, so that one
- * is an ALIAS, and an ALIAS answers with an address where a CNAME answers with
- * a name — which is apparently what the certificate authority is looking for:
- * the www was issued a certificate within minutes and the apex still has none
- * hours later. Whichever address ends up canonical, this is the one that
- * currently answers without a warning, and a preview card pointing at a
- * warning is worse than no preview card.
+ * The bare domain. It is an ALIAS rather than a CNAME, which DNS forbids on an
+ * apex, and it was slower than the www to start serving its certificate — long
+ * enough that the delay looked like a difference in kind and was not. Both are
+ * live and both verify; this is the one people will type.
  */
-const SITE = new URL(process.env.APP_URL?.trim() || 'https://www.infiniterosary.com');
+const SITE = new URL(process.env.APP_URL?.trim() || 'https://infiniterosary.com');
 
 export const metadata: Metadata = {
   metadataBase: SITE,
