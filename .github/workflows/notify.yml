@@ -8,9 +8,13 @@
 # finer. The endpoint decides who is due and refuses to send the same word
 # twice in a day, so an extra call costs nothing but a request.
 #
-# Two secrets, both set once in the repository's settings:
-#   APP_URL      https://your-app.up.railway.app
+# One secret, set once in the repository's settings:
 #   CRON_SECRET  the same value as the CRON_SECRET variable on the server
+#
+# The address is not one. It is public, it is written below, and a secret is
+# for what must not be read — putting a URL there only makes it harder to see
+# what this job actually calls. A repository secret of the same name still
+# wins, for a deployment answering somewhere else.
 name: Reminders
 
 on:
@@ -24,13 +28,13 @@ jobs:
     steps:
       - name: Ask the app to send what is due
         env:
-          APP_URL: ${{ secrets.APP_URL }}
+          APP_URL: ${{ secrets.APP_URL || 'https://infiniterosary.com' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
 
-          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
-            echo '::warning::APP_URL or CRON_SECRET is not set; no reminders will be sent.'
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo '::warning::CRON_SECRET is not set; no reminders will be sent.'
             exit 0
           fi
 
