@@ -1,0 +1,147 @@
+# The keys the reminders need, minted straight into Railway.
+#
+# Web push is signed with a VAPID key pair, and the private half must never be
+# read by anybody — not in a chat, not in a log, not in an issue. So it is never
+# shown: this job generates the pair on a runner, hands both halves to Railway
+# over its API, and prints only the public one, which every browser that
+# subscribes is given anyway.
+#
+# Nothing is overwritten. A key pair that is already set stays as it is, because
+# replacing it silently unsubscribes every device that ever subscribed under the
+# old one.
+#
+# CRON_SECRET is not generated here. It has to match on both sides — the
+# repository secret the Reminders workflow sends, and the variable the server
+# checks — so it is taken from the repository secret and copied across, which
+# keeps one value in one place.
+#
+# Set the repository secret first (Settings → Secrets and variables → Actions):
+#   CRON_SECRET  any long random string of your choosing
+name: Push keys
+
+on:
+  workflow_dispatch:
+    inputs:
+      railway_token:
+        description: 'Railway PROJECT token (revoke it after this run)'
+        required: true
+      service:
+        description: 'Name of the application service'
+        required: false
+        default: 'Rosary'
+      subject:
+        description: 'Where a push service may complain — a mailto: or an https address'
+        required: false
+        default: 'https://infiniterosary.com'
+
+jobs:
+  keys:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SERVICE: ${{ inputs.service }}
+      SUBJECT: ${{ inputs.subject }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install -g @railway/cli
+
+      - name: Keep the token out of the logs
+        env:
+          TOKEN: ${{ inputs.railway_token }}
+        run: |
+          echo "::add-mask::$TOKEN"
+          echo "RAILWAY_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Read the project the token opens
+        run: |
+          set -euo pipefail
+          railway status --json > status.json
+
+          PROJECT_ID="$(jq -r '.id // empty' status.json)"
+          ENV_ID="$(jq -r '[.environments.edges[]?.node | select(.name=="production")][0].id // empty' status.json)"
+          [ -n "$ENV_ID" ] || ENV_ID="$(jq -r '.environments.edges[0].node.id // empty' status.json)"
+          SERVICE_ID="$(jq -r --arg s "$SERVICE" \
+            '[.services.edges[]?.node | select(.name==$s)][0].id // empty' status.json)"
+
+          if [ -z "$PROJECT_ID" ] || [ -z "$ENV_ID" ] || [ -z "$SERVICE_ID" ]; then
+            echo "::error::The token does not resolve to $SERVICE in a project and an environment."
+            exit 1
+          fi
+
+          {
+            echo "PROJECT_ID=$PROJECT_ID"
+            echo "ENV_ID=$ENV_ID"
+            echo "SERVICE_ID=$SERVICE_ID"
+          } >> "$GITHUB_ENV"
+
+      - name: Mint what is missing and set it
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          gql() {
+            jq -n --arg q "$1" --argjson v "$2" '{query:$q, variables:$v}' > payload.json
+            curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+              -H "Project-Access-Token: $RAILWAY_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data @payload.json > reply.json
+            if jq -e '.errors' reply.json >/dev/null; then
+              echo '::error::Railway refused the call:'
+              jq -r '.errors[].message' reply.json
+              exit 1
+            fi
+            cat reply.json
+          }
+
+          EXISTING="$(gql 'query($projectId: String!, $environmentId: String!, $serviceId: String!) { variables(projectId: $projectId, environmentId: $environmentId, serviceId: $serviceId) }' \
+            "$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" \
+               '{projectId:$p, environmentId:$e, serviceId:$s}')" \
+            | jq -r '[.data.variables // {} | keys[]] | join(",")')"
+          echo "Already set: ${EXISTING:-none}"
+
+          has() { echo ",$EXISTING," | grep -q ",$1,"; }
+
+          VARS='{}'
+          add() { VARS="$(jq -n --argjson v "$VARS" --arg k "$1" --arg x "$2" '$v + {($k): $x}')"; }
+
+          if has VAPID_PUBLIC_KEY && has VAPID_PRIVATE_KEY; then
+            echo 'The key pair is already there and is left alone.'
+          else
+            npx --yes web-push@3.6.7 generate-vapid-keys --json > keys.json
+            PUBLIC="$(jq -r '.publicKey' keys.json)"
+            PRIVATE="$(jq -r '.privateKey' keys.json)"
+            echo "::add-mask::$PRIVATE"
+            [ -n "$PUBLIC" ] && [ -n "$PRIVATE" ] || { echo '::error::No key pair was generated.'; exit 1; }
+            add VAPID_PUBLIC_KEY "$PUBLIC"
+            add VAPID_PRIVATE_KEY "$PRIVATE"
+            echo "Key pair minted. The public half, which is not a secret:"
+            echo "$PUBLIC"
+          fi
+
+          has VAPID_SUBJECT || add VAPID_SUBJECT "$SUBJECT"
+          has APP_URL || add APP_URL 'https://infiniterosary.com'
+
+          # Copied rather than generated: the same value has to be on both
+          # sides, and the repository secret is the side that cannot be read
+          # back out again.
+          if [ -n "${CRON_SECRET:-}" ]; then
+            add CRON_SECRET "$CRON_SECRET"
+            echo 'CRON_SECRET copied from the repository secret.'
+          else
+            echo '::warning::No CRON_SECRET repository secret; reminders will stay silent until one is set.'
+          fi
+
+          if [ "$(jq -r 'length' <<< "$VARS")" = '0' ]; then
+            echo 'Nothing to change.'
+            exit 0
+          fi
+
+          echo "Setting: $(jq -r 'keys | join(", ")' <<< "$VARS")"
+          gql 'mutation($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }' \
+            "$(jq -n --arg p "$PROJECT_ID" --arg e "$ENV_ID" --arg s "$SERVICE_ID" --argjson v "$VARS" \
+               '{input:{projectId:$p, environmentId:$e, serviceId:$s, variables:$v}}')" >/dev/null
+          echo 'Done. Railway redeploys the service on a variable change.'
