@@ -23,8 +23,16 @@ const inter = Inter({
  * to look like something when it lands in a message. That needs an absolute
  * address, and the app does not otherwise know its own — APP_URL when it is
  * set, and the domain it lives at otherwise.
+ *
+ * The www, not the bare domain. DNS forbids a CNAME on the apex, so that one
+ * is an ALIAS, and an ALIAS answers with an address where a CNAME answers with
+ * a name — which is apparently what the certificate authority is looking for:
+ * the www was issued a certificate within minutes and the apex still has none
+ * hours later. Whichever address ends up canonical, this is the one that
+ * currently answers without a warning, and a preview card pointing at a
+ * warning is worse than no preview card.
  */
-const SITE = new URL(process.env.APP_URL?.trim() || 'https://infiniterosary.com');
+const SITE = new URL(process.env.APP_URL?.trim() || 'https://www.infiniterosary.com');
 
 export const metadata: Metadata = {
   metadataBase: SITE,

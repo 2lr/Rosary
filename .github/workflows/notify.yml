@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Ask the app to send what is due
         env:
-          APP_URL: ${{ secrets.APP_URL || 'https://infiniterosary.com' }}
+          APP_URL: ${{ secrets.APP_URL || 'https://www.infiniterosary.com' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
