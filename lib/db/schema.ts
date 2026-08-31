@@ -71,7 +71,8 @@ export const SCHEMA_STATEMENTS = [
      verse      TEXT NOT NULL,
      status     TEXT NOT NULL,
      error      TEXT,
-     created_at TEXT NOT NULL
+     created_at TEXT NOT NULL,
+     retried_at TEXT
    )`,
   `CREATE INDEX IF NOT EXISTS prayer_notices_user
      ON prayer_notices (user_id, created_at DESC)`,
@@ -130,4 +131,5 @@ export const MIGRATION_STATEMENTS = [
   `ALTER TABLE users ADD COLUMN notify_hour INTEGER`,
   `ALTER TABLE users ADD COLUMN notify_lineage INTEGER`,
   `ALTER TABLE users ADD COLUMN time_zone TEXT`,
+  `ALTER TABLE prayer_notices ADD COLUMN retried_at TEXT`,
 ];
