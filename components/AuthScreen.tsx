@@ -20,12 +20,14 @@ const ERROR_KEYS: Record<string, MessageKey> = {
   email_taken: 'error.emailTaken',
   invalid_credentials: 'error.invalidCredentials',
   invalid_code: 'error.invalidCode',
+  invalid_token: 'error.invalidToken',
 };
 
 export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>(initialLang);
-  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signup');
+  const [sent, setSent] = useState<'no' | 'yes' | 'unconfigured'>('no');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -51,6 +53,19 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
     setError(null);
 
     try {
+      // Forgetting a password is a different errand: it asks for the address
+      // and nothing else, and it never says whether that address is known.
+      if (mode === 'forgot') {
+        const response = await fetch('/api/auth/forgot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = (await response.json().catch(() => ({}))) as { mail?: string };
+        setSent(data.mail === 'unconfigured' ? 'unconfigured' : 'yes');
+        return;
+      }
+
       const endpoint = mode === 'signup' ? '/api/auth/register' : '/api/auth/login';
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -88,12 +103,18 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
 
       <header className="mt-4 text-center animate-rise">
         <h1 className="font-display text-[2rem] leading-tight text-balance">
-          {t('auth.introTitle')}
+          {mode === 'forgot' ? t('auth.forgotTitle') : t('auth.introTitle')}
         </h1>
         <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted text-pretty">
-          {t('auth.introBody')}
+          {mode === 'forgot' ? t('auth.forgotBody') : t('auth.introBody')}
         </p>
       </header>
+
+      {mode === 'forgot' && sent !== 'no' && (
+        <p className="mt-6 rounded-2xl bg-[var(--bloom-fill)] px-4 py-3 text-sm leading-relaxed text-muted text-pretty">
+          {sent === 'unconfigured' ? t('auth.forgotUnconfigured') : t('auth.forgotSent')}
+        </p>
+      )}
 
       <form onSubmit={submit} className="mt-7 space-y-3.5">
         {/* The door. Nobody gets an account without an invitation, so this is
@@ -138,6 +159,7 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
           enterKeyHint="next"
         />
 
+        {mode !== 'forgot' && (
         <Field
           label={t('auth.password')}
           hint={mode === 'signup' ? t('auth.passwordHint') : undefined}
@@ -150,12 +172,54 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
           enterKeyHint="go"
           error={error}
         />
+        )}
+
+        {mode === 'forgot' && error && <p className="text-xs text-rose-700">{error}</p>}
 
         <Button type="submit" size="lg" className="w-full" disabled={busy}>
-          {busy ? t('auth.working') : mode === 'signup' ? t('auth.signUp') : t('auth.signIn')}
+          {busy
+            ? t('auth.working')
+            : mode === 'signup'
+              ? t('auth.signUp')
+              : mode === 'forgot'
+                ? t('auth.forgotSend')
+                : t('auth.signIn')}
         </Button>
       </form>
 
+      {/* Only offered where it is the actual problem: somebody who cannot get
+          in. It is not a third way to make an account. */}
+      {mode === 'signin' && (
+        <p className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setMode('forgot');
+              setError(null);
+              setSent('no');
+            }}
+            className="tap text-xs text-faint underline-offset-4 transition hover:text-[var(--bloom-ink)] hover:underline"
+          >
+            {t('auth.forgot')}
+          </button>
+        </p>
+      )}
+
+      {mode === 'forgot' ? (
+        <p className="mt-5 text-center text-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setMode('signin');
+              setError(null);
+              setSent('no');
+            }}
+            className="tap font-medium text-[var(--bloom-accent)] underline-offset-4 hover:underline"
+          >
+            {t('auth.backToSignIn')}
+          </button>
+        </p>
+      ) : (
       <p className="mt-5 text-center text-sm text-muted">
         {mode === 'signup' ? t('auth.haveAccount') : t('auth.noAccount')}{' '}
         <button
@@ -169,6 +233,7 @@ export default function AuthScreen({ initialLang }: { initialLang: Lang }) {
           {mode === 'signup' ? t('auth.signIn') : t('auth.signUp')}
         </button>
       </p>
+      )}
 
       <p className="mt-auto pt-8 text-center text-xs text-faint">{t('tagline')}</p>
     </main>

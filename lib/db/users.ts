@@ -311,3 +311,69 @@ export async function updateUserPreferences(
     await run('UPDATE users SET time_zone = ? WHERE id = ?', [patch.timeZone, id]);
   }
 }
+
+/**
+ * Changing somebody's password, which is the whole point of a reset.
+ *
+ * Nothing else about the account is touched, and no old password is asked
+ * for: whoever gets here proved themselves by holding the mail.
+ */
+export async function setPassword(id: string, password: string): Promise<void> {
+  await run('UPDATE users SET password_hash = ? WHERE id = ?', [await hashPassword(password), id]);
+}
+
+/**
+ * A reset asked for, and the token that will be accepted for it.
+ *
+ * Any earlier one is dropped first. Two live tokens for one account means two
+ * chances for a stolen mail to work, and the person only ever holds the last.
+ */
+export async function openReset(
+  userId: string,
+  tokenHash: string,
+  expiresAt: string,
+): Promise<void> {
+  await run('DELETE FROM password_resets WHERE user_id = ?', [userId]);
+  await run(
+    `INSERT INTO password_resets (token_hash, user_id, created_at, expires_at, used_at)
+     VALUES (?, ?, ?, ?, NULL)`,
+    [tokenHash, userId, new Date().toISOString(), expiresAt],
+  );
+}
+
+export async function findReset(
+  tokenHash: string,
+): Promise<{ userId: string; expiresAt: string; usedAt: string | null } | null> {
+  const row = await one<{ user_id: string; expires_at: string; used_at: string | null }>(
+    'SELECT user_id, expires_at, used_at FROM password_resets WHERE token_hash = ?',
+    [tokenHash],
+  );
+  return row ? { userId: row.user_id, expiresAt: row.expires_at, usedAt: row.used_at } : null;
+}
+
+/**
+ * Spending a token, and refusing to spend it twice.
+ *
+ * The update carries its own condition, so two requests arriving together
+ * cannot both come away believing they were the one to use it.
+ */
+export async function consumeReset(tokenHash: string): Promise<boolean> {
+  await run('UPDATE password_resets SET used_at = ? WHERE token_hash = ? AND used_at IS NULL', [
+    new Date().toISOString(),
+    tokenHash,
+  ]);
+  const row = await one<{ used_at: string | null }>(
+    'SELECT used_at FROM password_resets WHERE token_hash = ?',
+    [tokenHash],
+  );
+  return Boolean(row?.used_at);
+}
+
+/** How many resets this account has asked for lately, to bound the asking. */
+export async function recentResets(userId: string, since: string): Promise<number> {
+  const row = await one<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM password_resets WHERE user_id = ? AND created_at >= ?',
+    [userId, since],
+  );
+  return Number(row?.n) || 0;
+}
