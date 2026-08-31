@@ -6,6 +6,8 @@ import AppNav from '@/components/AppNav';
 import LanguageToggle from '@/components/LanguageToggle';
 import AppearanceCard, { type Appearance } from '@/components/AppearanceCard';
 import InviteCard from '@/components/InviteCard';
+import InstallCard from '@/components/InstallCard';
+import MailStatusCard from '@/components/MailStatusCard';
 import NotificationsCard from '@/components/NotificationsCard';
 import { Button, Card, Field } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
@@ -131,9 +133,15 @@ export default function SettingsScreen({
 
       {/* Also on the home screen, because it is the only way anybody else gets
           in — but this is where people come looking for their own code. */}
+      {/* Before the reminders, because on iOS it is what makes them possible. */}
+      <InstallCard t={t} />
+
       <NotificationsCard t={t} hour={user.notifyHour} lineage={user.notifyLineage} />
 
       <InviteCard t={t} />
+
+      {/* Only there once something has been sent: what became of it. */}
+      <MailStatusCard t={t} lang={lang} />
 
       <AppearanceCard
         t={t}

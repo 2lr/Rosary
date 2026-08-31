@@ -110,3 +110,23 @@ export async function sponsorForEmail(email: string): Promise<string | null> {
   );
   return row?.user_id ?? null;
 }
+
+/**
+ * The last few words this person sent, and what became of each.
+ *
+ * For the one question nobody could answer from inside the app: did that
+ * actually go out, and if not, why? The provider's own refusal is kept
+ * verbatim and shown as-is — a mail server's complaint is only useful in its
+ * own words, and paraphrasing it loses the line that says what to fix.
+ */
+export async function recentNotices(
+  userId: string,
+  limit = 3,
+): Promise<{ email: string; status: string; error: string | null; createdAt: string }[]> {
+  return all<{ email: string; status: string; error: string | null; createdAt: string }>(
+    `SELECT email, status, error, created_at AS "createdAt"
+       FROM prayer_notices WHERE user_id = ?
+      ORDER BY created_at DESC LIMIT ${Math.max(1, Math.min(20, Math.floor(limit)))}`,
+    [userId],
+  );
+}
