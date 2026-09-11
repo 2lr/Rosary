@@ -27,7 +27,10 @@ const WORDS: Record<
   Lang,
   {
     subject: string;
+    /** For a rosary prayed some earlier day and written down since. */
+    subjectPast: string;
     opening: string;
+    openingPast: string;
     body: string;
     invitation: string;
     button: string;
@@ -38,7 +41,9 @@ const WORDS: Record<
 > = {
   fr: {
     subject: 'Quelqu’un a prié pour vous aujourd’hui',
+    subjectPast: 'Quelqu’un a prié pour vous',
     opening: 'Aujourd’hui, quelqu’un a prié un chapelet pour vous.',
+    openingPast: 'Ces jours-ci, quelqu’un a prié un chapelet pour vous.',
     body: 'Cette personne a préféré ne pas dire son nom. Elle a simplement voulu que vous le sachiez.',
     invitation: 'Si vous voulez prier à votre tour, ce lien vous ouvre l’application.',
     button: 'Ouvrir Rosaire',
@@ -50,7 +55,9 @@ const WORDS: Record<
   },
   en: {
     subject: 'Somebody prayed for you today',
+    subjectPast: 'Somebody prayed for you',
     opening: 'Today somebody prayed a rosary for you.',
+    openingPast: 'Somebody prayed a rosary for you these past days.',
     body: 'They chose not to give their name. They only wanted you to know.',
     invitation: 'If you would like to pray in turn, this link opens the app.',
     button: 'Open Rosary',
@@ -77,16 +84,24 @@ export function prayerNotice(input: {
   code: string;
   /** Where the app lives, without a trailing slash. */
   appUrl: string;
+  /**
+   * Whether it was prayed today. A rosary said on beads on Tuesday and written
+   * down on Friday is still worth telling somebody about — but not with the
+   * word "today" in it, which would be the one false thing in the letter.
+   */
+  today?: boolean;
 }): Notice {
   const { lang, verse, code } = input;
   const w = WORDS[lang];
+  const subject = input.today === false ? w.subjectPast : w.subject;
+  const opening = input.today === false ? w.openingPast : w.opening;
   const url = `${input.appUrl.replace(/\/+$/, '')}/?code=${encodeURIComponent(code)}`;
   const line = verse.text[lang];
   const ref = verse.ref[lang];
   const formatted = `${code.slice(0, 3)} ${code.slice(3)}`;
 
   const text = [
-    w.opening,
+    opening,
     '',
     `« ${line} »`,
     `— ${ref}`,
@@ -106,7 +121,7 @@ export function prayerNotice(input: {
   // and there is nothing here that needs a stylesheet to be read.
   const html = `<div style="margin:0;padding:24px;background:#f6f2ea;font-family:Georgia,'Times New Roman',serif;color:#2c2622">
   <div style="max-width:520px;margin:0 auto;background:#fbf8f3;border:1px solid #e6ddcd;border-radius:20px;padding:28px">
-    <p style="margin:0;font-size:17px;line-height:1.6">${escapeHtml(w.opening)}</p>
+    <p style="margin:0;font-size:17px;line-height:1.6">${escapeHtml(opening)}</p>
     <blockquote style="margin:22px 0;padding:0 0 0 16px;border-left:2px solid #c9b892;font-size:19px;line-height:1.6;font-style:italic">
       ${escapeHtml(line)}
       <div style="margin-top:8px;font-size:13px;font-style:normal;color:#8a7f6d">${escapeHtml(ref)}</div>
@@ -123,5 +138,5 @@ export function prayerNotice(input: {
   </div>
 </div>`;
 
-  return { subject: w.subject, text, html };
+  return { subject, text, html };
 }

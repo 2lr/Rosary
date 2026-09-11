@@ -8,6 +8,7 @@ import { Button, cx } from '@/components/ui';
 import { translatorFor } from '@/lib/i18n/dictionary';
 import type { Lang } from '@/lib/i18n/config';
 import { MYSTERY_SETS, MYSTERY_SET_ORDER, type MysterySetId } from '@/lib/rosary/mysteries';
+import { MAX_BACKDATE_DAYS, instantFor, localDayKey } from '@/lib/rosary/pastDay';
 import type { PrayerMode, RosaryKind } from '@/lib/rosary/types';
 
 type Props = {
@@ -33,6 +34,20 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
   const [notifyEmail, setNotifyEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The day it was prayed, for beads told away from the phone. Today until
+  // said otherwise, and read off this phone's own calendar rather than the
+  // server's: "yesterday" means yesterday where the person is standing.
+  const today = useMemo(() => localDayKey(new Date()), []);
+  const yesterday = useMemo(
+    () => localDayKey(new Date(Date.parse(instantFor(today)) - 86_400_000)),
+    [today],
+  );
+  const earliest = useMemo(
+    () => localDayKey(new Date(Date.parse(instantFor(today)) - MAX_BACKDATE_DAYS * 86_400_000)),
+    [today],
+  );
+  const [prayedOn, setPrayedOn] = useState(today);
 
   useEffect(() => setChoice(defaultSet), [defaultSet]);
 
@@ -75,6 +90,7 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
       lang,
       intention: intention.trim() || null,
       notifyEmail: notifyEmail.trim() || null,
+      prayedOn: prayedOn === today ? null : prayedOn,
     });
     if (!ok) {
       setError(t('error.generic'));
@@ -194,15 +210,85 @@ export default function StartSheet({ lang, defaultSet, onClose, onStarted }: Pro
         {busy ? t('auth.working') : t('home.start')}
       </Button>
 
-      <button
-        type="button"
-        onClick={() => void record()}
-        disabled={busy}
-        className="tap mt-2.5 w-full rounded-full border border-[var(--bloom-accent)] px-4 py-3.5 text-base text-[var(--bloom-accent)] transition disabled:opacity-40"
-      >
-        {t('home.alreadyPrayedShort')}
-      </button>
+      {/* The other answer, kept together as one block so that the day belongs
+          visibly to it and not to the button above: a chaplet told on real
+          beads, often remembered days later. Two taps for the two days people
+          actually mean, and the calendar for the rest. */}
+      <div className="mt-5 space-y-3 rounded-3xl border border-[var(--bloom-border)] bg-[var(--bloom-fill)]/60 p-3">
+        <p className="text-[0.65rem] uppercase tracking-[0.18em] text-faint">
+          {t('home.prayedWhen')}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Day active={prayedOn === today} label={t('home.today')} onClick={() => setPrayedOn(today)} />
+          <Day
+            active={prayedOn === yesterday}
+            label={t('home.yesterday')}
+            onClick={() => setPrayedOn(yesterday)}
+          />
+          <input
+            type="date"
+            value={prayedOn}
+            min={earliest}
+            max={today}
+            onChange={(e) => setPrayedOn(e.target.value || today)}
+            aria-label={t('home.otherDay')}
+            className={cx(
+              'tap min-w-0 flex-1 rounded-full border px-3 py-2 text-sm transition',
+              prayedOn !== today && prayedOn !== yesterday
+                ? 'border-[var(--bloom-accent)]/60 bg-[var(--bloom-accent)]/12 text-[var(--bloom-ink)]'
+                : 'border-[var(--bloom-border)] bg-[var(--bloom-fill)] text-muted',
+            )}
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void record()}
+          disabled={busy}
+          className="tap w-full rounded-full border border-[var(--bloom-accent)] bg-[var(--bloom-surface)] px-4 py-3.5 text-base text-[var(--bloom-accent)] transition disabled:opacity-40"
+        >
+          {prayedOn === today
+            ? t('home.alreadyPrayedShort')
+            : t('home.alreadyPrayedOn').replace('{date}', dayName(prayedOn, lang))}
+        </button>
+      </div>
     </Sheet>
+  );
+}
+
+/** A day already written out, for a button that has to be read at a glance. */
+function dayName(day: string, lang: Lang): string {
+  return new Intl.DateTimeFormat(lang, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(instantFor(day)));
+}
+
+function Day({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx(
+        'tap rounded-full border px-4 py-2 text-sm transition',
+        active
+          ? 'border-[var(--bloom-accent)]/60 bg-[var(--bloom-accent)]/12 text-[var(--bloom-ink)]'
+          : 'border-[var(--bloom-border)] text-muted',
+      )}
+    >
+      {label}
+    </button>
   );
 }
 

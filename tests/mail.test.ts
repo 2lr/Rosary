@@ -246,3 +246,30 @@ describe('catching up the words that never went out', () => {
     expect(noticesToRetry(rows, now, 1)[0].id).toBe('recent');
   });
 });
+
+describe('a word about a rosary prayed some earlier day', () => {
+  const verse = VERSES[0];
+  const made = (lang: 'fr' | 'en', today: boolean) =>
+    prayerNotice({ lang, verse, code: 'YZCE5X', appUrl: 'https://rosaire.example.com', today });
+
+  it('does not say "today" when it was not today', () => {
+    expect(made('fr', false).text.toLowerCase()).not.toContain('aujourd');
+    expect(made('fr', false).subject.toLowerCase()).not.toContain('aujourd');
+    expect(made('en', false).text.toLowerCase()).not.toContain('today');
+    expect(made('en', false).subject.toLowerCase()).not.toContain('today');
+  });
+
+  it('still says the one thing it is for', () => {
+    for (const lang of LANGS) {
+      const notice = made(lang, false);
+      expect(notice.text).toMatch(lang === 'fr' ? /prié un chapelet pour vous/ : /prayed a rosary for you/);
+      expect(notice.html).toContain('YZC E5X');
+      expect(notice.text).toContain(verse.text[lang]);
+    }
+  });
+
+  it('keeps saying it when it was today', () => {
+    expect(made('fr', true).text.toLowerCase()).toContain('aujourd');
+    expect(made('en', true).subject.toLowerCase()).toContain('today');
+  });
+});

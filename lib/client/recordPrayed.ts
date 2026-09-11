@@ -4,7 +4,9 @@ import type { RosaryKind } from '@/lib/rosary/types';
 /**
  * Recording a rosary that was prayed away from the phone.
  *
- * On a real chaplet you have already finished before you think to open the app.
+ * On a real chaplet you have already finished before you think to open the app,
+ * and sometimes days before. A day may be named, and the rosary is then written
+ * into that day — the server decides where it lands; nothing here asserts it.
  * This writes it down in one gesture: the rosary is created exactly as it would
  * have been, then closed with every bead marked, so it counts for the same as
  * one prayed on the screen — the same decades, the same growth, and the same
@@ -19,6 +21,8 @@ export async function recordPrayed(input: {
   lang: string;
   intention?: string | null;
   notifyEmail?: string | null;
+  /** The day it was prayed, YYYY-MM-DD, when that was not today. */
+  prayedOn?: string | null;
 }): Promise<boolean> {
   const created = await fetch('/api/rosaries', {
     method: 'POST',
@@ -30,6 +34,7 @@ export async function recordPrayed(input: {
       lang: input.lang,
       intention: input.intention ?? null,
       notifyEmail: input.notifyEmail ?? null,
+      prayedOn: input.prayedOn ?? null,
     }),
   });
   if (!created.ok) return false;
