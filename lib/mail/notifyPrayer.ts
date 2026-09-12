@@ -59,8 +59,18 @@ export async function notifyPrayer(
       return;
     }
 
-    const verse = verseFor(email, new Date().toISOString().slice(0, 10));
-    const notice = prayerNotice({ lang: rosary.lang, verse, code, appUrl: base });
+    // Written down days later, the letter must not say "today".
+    const today = new Date().toISOString().slice(0, 10);
+    const prayedToday = (rosary.completedAt ?? '').slice(0, 10) === today;
+
+    const verse = verseFor(email, today);
+    const notice = prayerNotice({
+      lang: rosary.lang,
+      verse,
+      code,
+      appUrl: base,
+      today: prayedToday,
+    });
     const result = await sendMail({ to: email, ...notice });
 
     await recordNotice({

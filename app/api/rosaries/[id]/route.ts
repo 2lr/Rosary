@@ -8,6 +8,7 @@ import {
   countHailMarys,
   totalDecades,
 } from '@/lib/rosary/sequence';
+import { instantFor, withinBackdate } from '@/lib/rosary/pastDay';
 import type { RosaryProgress, RosaryStatus } from '@/lib/rosary/types';
 
 const MAX_WRITING = 4000;
@@ -108,12 +109,25 @@ export async function PATCH(request: Request, { params }: Params) {
           ? null
           : String(body.intention).trim().slice(0, MAX_INTENTION) || null;
 
+    // A rosary closes on the day it was begun, not on the day the phone was
+    // picked up: that is what puts a chaplet prayed on Tuesday's beads and
+    // written down on Friday into Tuesday, where the streak and the calendar
+    // can see it. A rosary begun today closes now, as it always did, and one
+    // begun outside the window somebody may still write to closes now too —
+    // an old unfinished rosary finished off is finished today.
+    const startedOn = rosary.startedAt.slice(0, 10);
+    const backdated =
+      status === 'completed' &&
+      startedOn !== new Date().toISOString().slice(0, 10) &&
+      withinBackdate(startedOn, new Date().toISOString().slice(0, 10));
+
     const updated = await saveProgress(id, user.id, {
       progress,
       decadesCompleted: decades,
       hailMarys: countHailMarys(steps, done),
       status,
       ...(intention === undefined ? {} : { intention }),
+      ...(backdated ? { completedAt: instantFor(startedOn) } : {}),
     });
 
     // The word to whoever was prayed for goes out here and nowhere else: the

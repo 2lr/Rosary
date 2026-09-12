@@ -75,9 +75,15 @@ export async function createRosary(input: {
   intention: string | null;
   /** Somebody to tell, once it is finished. */
   notifyEmail?: string | null;
+  /**
+   * When it was actually prayed, if that was not now — already validated and
+   * turned into an instant by the route. It stands in for the clock so that a
+   * rosary recorded days later sits in the history on the day it was said.
+   */
+  prayedAt?: string | null;
 }): Promise<Rosary> {
   const id = randomUUID();
-  const now = new Date().toISOString();
+  const now = input.prayedAt ?? new Date().toISOString();
 
   await run(
     `INSERT INTO rosaries
@@ -140,6 +146,12 @@ export async function saveProgress(
     hailMarys: number;
     status: RosaryStatus;
     intention?: string | null;
+    /**
+     * When it was finished, if that was not now. Only ever the day the rosary
+     * was begun on — a rosary recorded afterwards is closed on the day it was
+     * prayed, not on the day somebody got round to writing it down.
+     */
+    completedAt?: string | null;
   },
 ): Promise<Rosary | null> {
   const now = new Date().toISOString();
@@ -164,7 +176,7 @@ export async function saveProgress(
 
   if (patch.status === 'completed') {
     assignments.push('completed_at = ?');
-    values.push(now);
+    values.push(patch.completedAt ?? now);
   }
   if (patch.intention !== undefined) {
     assignments.push('intention = ?');

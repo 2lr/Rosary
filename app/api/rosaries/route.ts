@@ -3,6 +3,7 @@ import { requireUser } from '@/lib/auth/guard';
 import { createRosary, listRosaries } from '@/lib/db/rosaries';
 import { isValidEmail } from '@/lib/db/users';
 import { isMysterySetId, mysterySetForDate } from '@/lib/rosary/mysteries';
+import { instantFor, isDayKey, withinBackdate } from '@/lib/rosary/pastDay';
 import { isLang, normalizeLang } from '@/lib/i18n/config';
 import type { PrayerMode, RosaryKind } from '@/lib/rosary/types';
 
@@ -25,6 +26,8 @@ type Body = {
   intention?: string | null;
   /** Somebody to tell when it is finished. */
   notifyEmail?: string | null;
+  /** The day it was prayed, YYYY-MM-DD, when that was not today. */
+  prayedOn?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -39,11 +42,25 @@ export async function POST(request: Request) {
     const mode = MODES.find((m) => m === body.mode) ?? 'spoken';
     const lang = isLang(body.lang) ? body.lang : normalizeLang(user.lang);
 
+    // A day may be named for a rosary prayed on beads and written down later.
+    // The window is checked here rather than trusted: a date typed into a form
+    // is a number from a stranger until it has been looked at.
+    const today = new Date();
+    let prayedAt: string | null = null;
+    if (body.prayedOn !== undefined && body.prayedOn !== null && body.prayedOn !== '') {
+      if (!isDayKey(body.prayedOn)) return fail('invalid_day');
+      if (!withinBackdate(body.prayedOn, today.toISOString().slice(0, 10))) {
+        return fail('day_out_of_range');
+      }
+      prayedAt = instantFor(body.prayedOn);
+    }
+
     let mysterySet: string | null = null;
     if (kind === 'chaplet') {
+      // The mysteries of the day it was prayed, not of the day it was typed in.
       mysterySet = isMysterySetId(body.mysterySet)
         ? body.mysterySet
-        : mysterySetForDate(new Date());
+        : mysterySetForDate(prayedAt ? new Date(prayedAt) : today);
     }
 
     const intention =
@@ -66,6 +83,7 @@ export async function POST(request: Request) {
       lang,
       intention,
       notifyEmail,
+      prayedAt,
     });
 
     return json({ rosary }, { status: 201 });
